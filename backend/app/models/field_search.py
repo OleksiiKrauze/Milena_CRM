@@ -1,0 +1,54 @@
+import enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum as SQLEnum, Table
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.db import Base
+
+
+class FieldSearchStatus(str, enum.Enum):
+    """Field search status enum"""
+    planning = "planning"
+    active = "active"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+# Association table with extra fields for field search participants
+field_search_participants = Table(
+    'field_search_participants',
+    Base.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('field_search_id', Integer, ForeignKey('field_searches.id', ondelete='CASCADE'), nullable=False),
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
+    Column('role_on_field', String(50)),  # coordinator, navigator, searcher, driver
+    Column('group_name', String(50))  # Group A, Group B, etc.
+)
+
+
+class FieldSearch(Base):
+    """Field search model"""
+    __tablename__ = 'field_searches'
+
+    id = Column(Integer, primary_key=True, index=True)
+    search_id = Column(Integer, ForeignKey('searches.id', ondelete='CASCADE'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    initiator_inforg_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
+
+    start_date = Column(Date)
+    flyer_id = Column(Integer, ForeignKey('flyers.id', ondelete='SET NULL'))
+
+    meeting_datetime = Column(DateTime(timezone=True))
+    meeting_place = Column(String(500))
+
+    coordinator_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
+
+    status = Column(SQLEnum(FieldSearchStatus), default=FieldSearchStatus.planning, nullable=False, index=True)
+    end_date = Column(Date)
+    result = Column(Text)
+    notes = Column(Text)
+
+    # Relationships
+    search = relationship('Search', back_populates='field_searches')
+    initiator_inforg = relationship('User', foreign_keys=[initiator_inforg_id])
+    flyer = relationship('Flyer', foreign_keys=[flyer_id])
+    coordinator = relationship('User', foreign_keys=[coordinator_id])

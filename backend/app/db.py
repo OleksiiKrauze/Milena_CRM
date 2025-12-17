@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 def _env(name: str, default: str | None = None) -> str:
     val = os.getenv(name, default)
@@ -18,3 +18,13 @@ DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+Base = declarative_base()
+
+def get_db():
+    """Dependency for FastAPI to get database session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

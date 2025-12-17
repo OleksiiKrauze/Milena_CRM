@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose:*)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker volume prune:*)",
+      "Bash(docker volume ls:*)",
+      "Bash(docker volume:*)",
+      "Bash(timeout 10 docker-compose logs:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npm run dev:*)",
+      "Bash(docker cp:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzY4NTU3ODg4fQ.hP9e8ndmxadlrONHv10KrdW-zrc4ZeZ91_QGjKyP9oc\")",
+      "Bash(docker logs:*)"
+    ]
+  }
+}

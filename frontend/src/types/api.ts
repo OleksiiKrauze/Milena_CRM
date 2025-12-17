@@ -1,0 +1,273 @@
+// Auth types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  last_name: string;
+  first_name: string;
+  middle_name?: string;
+  phone: string;
+  email: string;
+  password: string;
+  city: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface User {
+  id: number;
+  last_name: string;
+  first_name: string;
+  middle_name: string | null;
+  full_name: string;
+  phone: string;
+  email: string;
+  city: string;
+  status: string;
+  comment: string | null;
+  roles: Role[];
+  directions: Direction[];
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  parent_role_id: number | null;
+}
+
+export interface RoleDetail {
+  id: number;
+  name: string;
+  description: string | null;
+  parent_role_id: number | null;
+  parent_role_name: string | null;
+}
+
+export interface RoleCreate {
+  name: string;
+  description?: string;
+  parent_role_id?: number;
+}
+
+export interface RoleUpdate {
+  name?: string;
+  description?: string;
+  parent_role_id?: number;
+}
+
+export interface Direction {
+  id: number;
+  name: string;
+  description: string | null;
+  responsible_user_id: number | null;
+  responsible_user_name: string | null;
+}
+
+export interface DirectionCreate {
+  name: string;
+  description?: string;
+  responsible_user_id?: number;
+}
+
+export interface DirectionUpdate {
+  name?: string;
+  description?: string;
+  responsible_user_id?: number;
+}
+
+export interface UserUpdate {
+  status?: string;
+  comment?: string;
+  role_ids?: number[];
+  direction_ids?: number[];
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
+export interface UsersListResponse {
+  users: User[];
+  total: number;
+}
+
+// User brief type
+export interface UserBrief {
+  id: number;
+  full_name: string;
+}
+
+// Case types
+export interface Case {
+  id: number;
+  created_at: string;
+  created_by_user_id: number | null;
+  created_by: UserBrief | null;
+  updated_at: string | null;
+  updated_by_user_id: number | null;
+  updated_by: UserBrief | null;
+  // Applicant - split name fields
+  applicant_last_name: string;
+  applicant_first_name: string;
+  applicant_middle_name: string | null;
+  applicant_phone: string | null;
+  applicant_relation: string | null;
+  // Missing person - location fields
+  missing_settlement: string | null;
+  missing_region: string | null;
+  missing_address: string | null;
+  // Missing person - split name fields
+  missing_last_name: string;
+  missing_first_name: string;
+  missing_middle_name: string | null;
+  missing_gender: string | null;
+  missing_birthdate: string | null;
+  missing_photos: string[];
+  missing_last_seen_datetime: string | null;
+  missing_last_seen_place: string | null;
+  missing_description: string | null;
+  missing_special_signs: string | null;
+  missing_diseases: string | null;
+  // Computed full names
+  applicant_full_name: string;
+  missing_full_name: string;
+  case_status: string;
+  decision_type: string;
+  decision_comment: string | null;
+  tags: string[];
+}
+
+export interface CaseCreate {
+  // Applicant - split name fields
+  applicant_last_name: string;
+  applicant_first_name: string;
+  applicant_middle_name?: string;
+  applicant_phone?: string;
+  applicant_relation?: string;
+  // Missing person - location fields
+  missing_settlement?: string;
+  missing_region?: string;
+  missing_address?: string;
+  // Missing person - split name fields
+  missing_last_name: string;
+  missing_first_name: string;
+  missing_middle_name?: string;
+  missing_gender?: string;
+  missing_birthdate?: string;
+  missing_photos?: string[];
+  missing_last_seen_datetime?: string;
+  missing_last_seen_place?: string;
+  missing_description?: string;
+  missing_special_signs?: string;
+  missing_diseases?: string;
+  decision_type?: string;
+  decision_comment?: string;
+  tags?: string[];
+}
+
+export interface CaseUpdate extends Partial<CaseCreate> {
+  case_status?: string;
+  decision_type?: string;
+}
+
+export interface CaseListResponse {
+  total: number;
+  cases: Case[];
+}
+
+export interface CaseFull extends Case {
+  searches?: Search[];
+}
+
+// Search types
+export interface Search {
+  id: number;
+  case_id: number;
+  created_at: string;
+  initiator_inforg_id: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  result: string | null;
+  current_flyer_id: number | null;
+  status: string;
+  notes: string | null;
+}
+
+// Field search types
+export interface FieldSearch {
+  id: number;
+  case_id: number;
+  created_at: string;
+  initiator_inforg_id: number | null;
+  start_date: string | null;
+  flyer_id: number | null;
+  meeting_datetime: string | null;
+  meeting_place: string | null;
+  coordinator_id: number | null;
+  status: string;
+  end_date: string | null;
+  result: string | null;
+  notes: string | null;
+}
+
+// Institutions call types
+export interface InstitutionsCall {
+  id: number;
+  case_id: number;
+  created_at: string;
+  user_id: number | null;
+  organization_name: string;
+  organization_type: string | null;
+  phone: string | null;
+  result: string | null;
+  notes: string | null;
+}
+
+export interface InstitutionsCallCreate {
+  case_id: number;
+  user_id?: number;
+  organization_name: string;
+  organization_type?: string;
+  phone?: string;
+  result?: string;
+  notes?: string;
+}
+
+// Dashboard types
+export interface DashboardStats {
+  cases: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  searches: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  field_searches: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  distributions: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  total_users: number;
+  total_institutions_calls: number;
+}
+
+// API Error types
+export interface APIError {
+  error: {
+    status_code: number;
+    message: string;
+    path: string;
+    details?: unknown[];
+  };
+}
