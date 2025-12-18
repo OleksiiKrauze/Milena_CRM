@@ -67,3 +67,9 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Production files
+.env.production
+nginx/ssl/
+frontend/dist/
+scripts/*.log
