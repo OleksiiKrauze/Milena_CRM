@@ -50,6 +50,14 @@ class UserBrief(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CaseBrief(BaseModel):
+    """Schema for brief case info"""
+    id: int
+    missing_full_name: str
+
+    model_config = {"from_attributes": True}
+
+
 class UserResponse(BaseModel):
     """Schema for user response"""
     id: int

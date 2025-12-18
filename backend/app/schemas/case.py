@@ -34,6 +34,16 @@ class CaseCreate(BaseModel):
     missing_description: Optional[str] = None
     missing_special_signs: Optional[str] = None
     missing_diseases: Optional[str] = None
+    missing_phone: Optional[str] = Field(None, max_length=50)
+    missing_clothing: Optional[str] = None
+    missing_belongings: Optional[str] = None
+
+    # Additional case information
+    additional_search_regions: Optional[List[str]] = []
+    police_report_filed: Optional[bool] = False
+    search_terrain_type: Optional[str] = Field(None, max_length=50)
+    disappearance_circumstances: Optional[str] = None
+    additional_info: Optional[str] = None
 
     # Case metadata
     decision_type: Optional[str] = "На розгляді"
@@ -67,6 +77,16 @@ class CaseUpdate(BaseModel):
     missing_description: Optional[str] = None
     missing_special_signs: Optional[str] = None
     missing_diseases: Optional[str] = None
+    missing_phone: Optional[str] = Field(None, max_length=50)
+    missing_clothing: Optional[str] = None
+    missing_belongings: Optional[str] = None
+
+    # Additional case information
+    additional_search_regions: Optional[List[str]] = None
+    police_report_filed: Optional[bool] = None
+    search_terrain_type: Optional[str] = Field(None, max_length=50)
+    disappearance_circumstances: Optional[str] = None
+    additional_info: Optional[str] = None
 
     # Case metadata
     case_status: Optional[str] = None
@@ -109,6 +129,16 @@ class CaseResponse(BaseModel):
     missing_description: Optional[str]
     missing_special_signs: Optional[str]
     missing_diseases: Optional[str]
+    missing_phone: Optional[str]
+    missing_clothing: Optional[str]
+    missing_belongings: Optional[str]
+
+    # Additional case information
+    additional_search_regions: List[str]
+    police_report_filed: bool
+    search_terrain_type: Optional[str]
+    disappearance_circumstances: Optional[str]
+    additional_info: Optional[str]
 
     # Computed full names
     applicant_full_name: str

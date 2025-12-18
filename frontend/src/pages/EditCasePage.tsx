@@ -145,6 +145,7 @@ export function EditCasePage() {
       queryClient.invalidateQueries({ queryKey: ['case', id] });
       queryClient.invalidateQueries({ queryKey: ['case-full', id] });
       queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       navigate(`/cases/${data.id}`);
     },
     onError: (error: any) => {

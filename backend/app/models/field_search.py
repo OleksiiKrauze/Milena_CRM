@@ -8,6 +8,7 @@ from app.db import Base
 class FieldSearchStatus(str, enum.Enum):
     """Field search status enum"""
     planning = "planning"
+    prepared = "prepared"
     active = "active"
     completed = "completed"
     cancelled = "cancelled"
@@ -52,3 +53,8 @@ class FieldSearch(Base):
     initiator_inforg = relationship('User', foreign_keys=[initiator_inforg_id])
     flyer = relationship('Flyer', foreign_keys=[flyer_id])
     coordinator = relationship('User', foreign_keys=[coordinator_id])
+
+    @property
+    def case_id(self) -> int:
+        """Get case_id from related search"""
+        return self.search.case_id if self.search else None

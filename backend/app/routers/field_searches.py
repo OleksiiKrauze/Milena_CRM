@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete
 from typing import List, Optional
 from app.db import get_db
@@ -9,6 +9,7 @@ from app.schemas.field_search import (
 )
 from app.models.field_search import FieldSearch, FieldSearchStatus, field_search_participants
 from app.models.case import Case
+from app.models.search import Search
 from app.models.flyer import Flyer
 from app.models.user import User
 from app.routers.auth import get_current_user
@@ -22,13 +23,13 @@ def create_field_search(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new field search for a case"""
-    # Verify case exists
-    case = db.query(Case).filter(Case.id == field_search_data.case_id).first()
-    if not case:
+    """Create a new field search for a search"""
+    # Verify search exists
+    search = db.query(Search).filter(Search.id == field_search_data.search_id).first()
+    if not search:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Case with id {field_search_data.case_id} not found"
+            detail=f"Search with id {field_search_data.search_id} not found"
         )
 
     # Verify users if provided
@@ -69,7 +70,7 @@ def create_field_search(
             )
 
     db_field_search = FieldSearch(
-        case_id=field_search_data.case_id,
+        search_id=field_search_data.search_id,
         initiator_inforg_id=field_search_data.initiator_inforg_id,
         start_date=field_search_data.start_date,
         flyer_id=field_search_data.flyer_id,
@@ -99,11 +100,15 @@ def list_field_searches(
     current_user: User = Depends(get_current_user)
 ):
     """Get list of field searches with pagination and filters"""
-    query = db.query(FieldSearch)
+    query = db.query(FieldSearch).options(
+        joinedload(FieldSearch.search).joinedload(Search.case),
+        joinedload(FieldSearch.initiator_inforg),
+        joinedload(FieldSearch.coordinator)
+    )
 
-    # Filter by case_id if provided
+    # Filter by case_id if provided (need to join through search)
     if case_id:
-        query = query.filter(FieldSearch.case_id == case_id)
+        query = query.join(FieldSearch.search).filter(Search.case_id == case_id)
 
     # Filter by status if provided
     if status_filter:

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
+import logging
 from app.db import get_db
 from app.schemas.search import SearchCreate, SearchUpdate, SearchResponse, SearchListResponse, SearchFullResponse
 from app.models.search import Search, SearchStatus
 from app.models.case import Case
 from app.models.user import User
 from app.routers.auth import get_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/searches", tags=["Searches"])
 
@@ -57,6 +60,21 @@ def create_search(
     )
 
     db.add(db_search)
+    db.flush()  # Get search ID
+
+    # Update case decision_type to "Пошук" when creating a search
+    logger.info(f"Case {case.id} current decision_type: '{case.decision_type}'")
+    if case.decision_type != "Пошук":
+        logger.info(f"Updating case {case.id} decision_type to 'Пошук'")
+        updated_rows = db.query(Case).filter(Case.id == search_data.case_id).update(
+            {"decision_type": "Пошук", "updated_by_user_id": current_user.id},
+            synchronize_session="fetch"
+        )
+        logger.info(f"Updated {updated_rows} rows for case {case.id}")
+        db.flush()
+    else:
+        logger.info(f"Case {case.id} already has decision_type='Пошук', skipping update")
+
     db.commit()
     db.refresh(db_search)
 
@@ -69,11 +87,15 @@ def list_searches(
     limit: int = Query(50, ge=1, le=100, description="Max number of records to return"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     status_filter: Optional[str] = Query(None, description="Filter by search status"),
+    result_filter: Optional[str] = Query(None, description="Filter by search result"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get list of searches with pagination and filters"""
-    query = db.query(Search)
+    query = db.query(Search).options(
+        joinedload(Search.case),
+        joinedload(Search.initiator_inforg)
+    )
 
     # Filter by case_id if provided
     if case_id:
@@ -90,6 +112,10 @@ def list_searches(
                 detail=f"Invalid status: {status_filter}"
             )
 
+    # Filter by result if provided
+    if result_filter:
+        query = query.filter(Search.result == result_filter)
+
     total = query.count()
     searches = query.order_by(Search.created_at.desc()).offset(skip).limit(limit).all()
 
@@ -103,7 +129,10 @@ def get_search(
     current_user: User = Depends(get_current_user)
 ):
     """Get search by ID"""
-    db_search = db.query(Search).filter(Search.id == search_id).first()
+    db_search = db.query(Search).options(
+        joinedload(Search.case),
+        joinedload(Search.initiator_inforg)
+    ).filter(Search.id == search_id).first()
 
     if not db_search:
         raise HTTPException(
@@ -152,6 +181,11 @@ def update_search(
                 detail=f"User with id {update_data['initiator_inforg_id']} not found"
             )
 
+    # Auto-set status to completed when result is alive, dead, or location_known
+    if "result" in update_data and update_data["result"] in ["alive", "dead", "location_known"]:
+        logger.info(f"Search {search_id} result set to '{update_data['result']}', auto-setting status to 'completed'")
+        update_data["status"] = SearchStatus.completed
+
     for field, value in update_data.items():
         setattr(db_search, field, value)
 
@@ -189,7 +223,10 @@ def get_search_full(
     current_user: User = Depends(get_current_user)
 ):
     """Get search by ID with all related data (flyers, distributions, map grids)"""
-    db_search = db.query(Search).filter(Search.id == search_id).first()
+    db_search = db.query(Search).options(
+        joinedload(Search.case),
+        joinedload(Search.initiator_inforg)
+    ).filter(Search.id == search_id).first()
 
     if not db_search:
         raise HTTPException(

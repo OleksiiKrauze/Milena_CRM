@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, date
+from app.schemas.auth import UserBrief, CaseBrief
 
 
 class ParticipantInfo(BaseModel):
@@ -13,6 +14,15 @@ class ParticipantInfo(BaseModel):
 class AddParticipantsRequest(BaseModel):
     """Schema for adding participants to field search"""
     participants: List[ParticipantInfo] = Field(..., min_length=1)
+
+
+class SearchBrief(BaseModel):
+    """Schema for brief search info"""
+    id: int
+    case_id: int
+    case: Optional[CaseBrief]
+
+    model_config = {"from_attributes": True}
 
 
 class FieldSearchCreate(BaseModel):
@@ -48,13 +58,17 @@ class FieldSearchResponse(BaseModel):
     """Schema for field search response"""
     id: int
     search_id: int
+    search: Optional[SearchBrief]
+    case_id: Optional[int]
     created_at: datetime
     initiator_inforg_id: Optional[int]
+    initiator_inforg: Optional[UserBrief]
     start_date: Optional[date]
     flyer_id: Optional[int]
     meeting_datetime: Optional[datetime]
     meeting_place: Optional[str]
     coordinator_id: Optional[int]
+    coordinator: Optional[UserBrief]
     status: str
     end_date: Optional[date]
     result: Optional[str]

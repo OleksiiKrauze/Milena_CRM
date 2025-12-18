@@ -33,6 +33,15 @@ const createCaseSchema = z.object({
   missing_description: z.string().optional(),
   missing_special_signs: z.string().optional(),
   missing_diseases: z.string().optional(),
+  missing_phone: z.string().optional(),
+  missing_clothing: z.string().optional(),
+  missing_belongings: z.string().optional(),
+  // Additional case information
+  additional_search_regions: z.string().optional(),
+  police_report_filed: z.boolean().default(false),
+  search_terrain_type: z.string().optional(),
+  disappearance_circumstances: z.string().optional(),
+  additional_info: z.string().optional(),
   // Case metadata
   decision_type: z.string().default('На розгляді'),
   decision_comment: z.string().optional(),
@@ -82,16 +91,20 @@ export function CreateCasePage() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateCaseForm) => {
-      const { tags, ...rest } = data;
+      const { tags, additional_search_regions, ...rest } = data;
       return casesApi.create({
         ...rest,
         missing_photos: uploadedPhotos,
         tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+        additional_search_regions: additional_search_regions
+          ? additional_search_regions.split(',').map((r) => r.trim()).filter(Boolean)
+          : [],
       });
     },
     onSuccess: (data) => {
       // Invalidate cases list cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       navigate(`/cases/${data.id}`);
     },
     onError: (error: any) => {
@@ -334,13 +347,134 @@ export function CreateCasePage() {
                   <p className="text-sm text-red-600 mt-1">{errors.missing_diseases.message}</p>
                 )}
               </div>
+
+              <Input
+                label="Номер телефону зниклого"
+                type="tel"
+                placeholder="+380991234567"
+                error={errors.missing_phone?.message}
+                {...register('missing_phone')}
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Одяг
+                </label>
+                <textarea
+                  {...register('missing_clothing')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={2}
+                  placeholder="Синя куртка, чорні джинси, білі кросівки..."
+                />
+                {errors.missing_clothing && (
+                  <p className="text-sm text-red-600 mt-1">{errors.missing_clothing.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Що було з собою
+                </label>
+                <textarea
+                  {...register('missing_belongings')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={2}
+                  placeholder="Рюкзак, телефон, документи..."
+                />
+                {errors.missing_belongings && (
+                  <p className="text-sm text-red-600 mt-1">{errors.missing_belongings.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Additional Search Information */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Додаткова інформація про пошук</h3>
+
+              <Input
+                label="Додаткові області пошуку (через кому)"
+                placeholder="Київська область, Житомирська область"
+                error={errors.additional_search_regions?.message}
+                {...register('additional_search_regions')}
+              />
+
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register('police_report_filed')}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Заява до поліції подана <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">
+                  Без заяви до поліції пошук не може бути розпочатий
+                </p>
+                {errors.police_report_filed && (
+                  <p className="text-sm text-red-600 mt-1">{errors.police_report_filed.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Тип місцевості пошуку
+                </label>
+                <select
+                  {...register('search_terrain_type')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Не вказано</option>
+                  <option value="Місто">Місто</option>
+                  <option value="Ліс">Ліс</option>
+                  <option value="Поле">Поле</option>
+                  <option value="Вода">Вода</option>
+                  <option value="Інше">Інше</option>
+                </select>
+                {errors.search_terrain_type && (
+                  <p className="text-sm text-red-600 mt-1">{errors.search_terrain_type.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Обставини зникнення
+                </label>
+                <textarea
+                  {...register('disappearance_circumstances')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={3}
+                  placeholder="Опишіть обставини за яких людина зникла..."
+                />
+                {errors.disappearance_circumstances && (
+                  <p className="text-sm text-red-600 mt-1">{errors.disappearance_circumstances.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Додаткова інформація
+                </label>
+                <textarea
+                  {...register('additional_info')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={3}
+                  placeholder="Будь-яка інша важлива інформація..."
+                />
+                {errors.additional_info && (
+                  <p className="text-sm text-red-600 mt-1">{errors.additional_info.message}</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
           {/* Case Metadata */}
           <Card>
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Додаткова інформація</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Статус</h3>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

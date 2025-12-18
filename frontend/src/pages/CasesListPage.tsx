@@ -50,10 +50,21 @@ export function CasesListPage() {
                 <p className="text-gray-600">Заявки не знайдено</p>
               </div>
             ) : (
-              data.cases.map((caseItem) => (
-                <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
-                  <Card className="active:bg-gray-50 transition-colors">
-                    <CardContent className="p-4">
+              data.cases.map((caseItem) => {
+                // Определяем цвет фона в зависимости от decision_type
+                let bgColor = '';
+                if (caseItem.decision_type === 'Пошук') {
+                  bgColor = 'bg-green-50';
+                } else if (caseItem.decision_type === 'Відмова') {
+                  bgColor = 'bg-gray-100';
+                } else if (caseItem.decision_type === 'На розгляді') {
+                  bgColor = 'bg-pink-50';
+                }
+
+                return (
+                  <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
+                    <Card className={`active:opacity-90 transition-colors ${bgColor}`}>
+                      <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="font-semibold text-gray-900">
                           {caseItem.missing_full_name}
@@ -84,10 +95,11 @@ export function CasesListPage() {
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })
             )}
           </div>
         )}

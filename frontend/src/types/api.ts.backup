@@ -107,25 +107,14 @@ export interface UserBrief {
 // Field search types
 export interface FieldSearch {
   id: number;
-  search_id: number;
-  search: {
-    id: number;
-    case_id: number;
-    case: {
-      id: number;
-      missing_full_name: string;
-    } | null;
-  } | null;
-  case_id: number | null;
+  case_id: number;
   created_at: string;
   initiator_inforg_id: number | null;
-  initiator_inforg: UserBrief | null;
-  coordinator_id: number | null;
-  coordinator: UserBrief | null;
   start_date: string | null;
   flyer_id: number | null;
   meeting_datetime: string | null;
   meeting_place: string | null;
+  coordinator_id: number | null;
   status: string;
   end_date: string | null;
   result: string | null;
@@ -136,10 +125,6 @@ export interface FieldSearch {
 export interface Search {
   id: number;
   case_id: number;
-  case: {
-    id: number;
-    missing_full_name: string;
-  } | null;
   created_at: string;
   initiator_inforg_id: number | null;
   initiator_inforg: UserBrief | null;
@@ -217,15 +202,6 @@ export interface Case {
   missing_description: string | null;
   missing_special_signs: string | null;
   missing_diseases: string | null;
-  missing_phone: string | null;
-  missing_clothing: string | null;
-  missing_belongings: string | null;
-  // Additional case information
-  additional_search_regions: string[];
-  police_report_filed: boolean;
-  search_terrain_type: string | null;
-  disappearance_circumstances: string | null;
-  additional_info: string | null;
   // Computed full names
   applicant_full_name: string;
   missing_full_name: string;
@@ -258,15 +234,6 @@ export interface CaseCreate {
   missing_description?: string;
   missing_special_signs?: string;
   missing_diseases?: string;
-  missing_phone?: string;
-  missing_clothing?: string;
-  missing_belongings?: string;
-  // Additional case information
-  additional_search_regions?: string[];
-  police_report_filed?: boolean;
-  search_terrain_type?: string;
-  disappearance_circumstances?: string;
-  additional_info?: string;
   decision_type?: string;
   decision_comment?: string;
   tags?: string[];

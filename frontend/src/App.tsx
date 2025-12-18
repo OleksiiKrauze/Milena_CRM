@@ -16,6 +16,14 @@ import { UserDetailsPage } from '@/pages/UserDetailsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RolesManagementPage } from '@/pages/RolesManagementPage';
 import { DirectionsManagementPage } from '@/pages/DirectionsManagementPage';
+import { SearchListPage } from '@/pages/SearchListPage';
+import { CreateSearchPage } from '@/pages/CreateSearchPage';
+import { SearchDetailsPage } from '@/pages/SearchDetailsPage';
+import { EditSearchPage } from '@/pages/EditSearchPage';
+import { FieldSearchListPage } from '@/pages/FieldSearchListPage';
+import { FieldSearchDetailsPage } from '@/pages/FieldSearchDetailsPage';
+import { CreateFieldSearchPage } from '@/pages/CreateFieldSearchPage';
+import { EditFieldSearchPage } from '@/pages/EditFieldSearchPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -109,6 +117,70 @@ export function App() {
             element={
               <ProtectedRoute>
                 <CaseDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cases/:caseId/create-search"
+            element={
+              <ProtectedRoute>
+                <CreateSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches"
+            element={
+              <ProtectedRoute>
+                <SearchListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches/:id"
+            element={
+              <ProtectedRoute>
+                <SearchDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/field-searches"
+            element={
+              <ProtectedRoute>
+                <FieldSearchListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/field-searches/:id"
+            element={
+              <ProtectedRoute>
+                <FieldSearchDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/field-searches/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditFieldSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches/:searchId/create-field-search"
+            element={
+              <ProtectedRoute>
+                <CreateFieldSearchPage />
               </ProtectedRoute>
             }
           />

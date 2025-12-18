@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, Enum as SQLEnum, ARRAY, String
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, Enum as SQLEnum, ARRAY, String, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -52,6 +52,16 @@ class Case(Base):
     missing_description = Column(Text)
     missing_special_signs = Column(Text)
     missing_diseases = Column(Text)
+    missing_phone = Column(String(50))
+    missing_clothing = Column(Text)
+    missing_belongings = Column(Text)
+
+    # Additional case information
+    additional_search_regions = Column(ARRAY(String), default=list)
+    police_report_filed = Column(Boolean, default=False)
+    search_terrain_type = Column(String(50))  # Місто, Ліс, Поле, Вода, Інше
+    disappearance_circumstances = Column(Text)
+    additional_info = Column(Text)
 
     case_status = Column(SQLEnum(CaseStatus), default=CaseStatus.new, nullable=False, index=True)
     decision_type = Column(String(50), default="На розгляді", nullable=False, index=True)

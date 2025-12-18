@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '@/api/dashboard';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Loading } from '@/components/ui';
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardApi.getStats,
@@ -39,7 +41,10 @@ export function DashboardPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Cases Stats */}
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/cases')}
+          >
             <CardHeader>
               <CardTitle>Заявки</CardTitle>
             </CardHeader>
@@ -74,7 +79,10 @@ export function DashboardPage() {
           </Card>
 
           {/* Searches Stats */}
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/searches')}
+          >
             <CardHeader>
               <CardTitle>Пошуки</CardTitle>
             </CardHeader>
@@ -97,7 +105,10 @@ export function DashboardPage() {
           </Card>
 
           {/* Field Searches Stats */}
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate('/field-searches')}
+          >
             <CardHeader>
               <CardTitle>Виїзди на місцевість</CardTitle>
             </CardHeader>

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from app.schemas.map_grid import MapGridResponse
     from app.schemas.field_search import FieldSearchResponse
 
-from app.schemas.auth import UserBrief
+from app.schemas.auth import UserBrief, CaseBrief
 
 
 class SearchCreate(BaseModel):
@@ -39,6 +39,7 @@ class SearchResponse(BaseModel):
     """Schema for search response"""
     id: int
     case_id: int
+    case: Optional[CaseBrief]
     created_at: datetime
     initiator_inforg_id: Optional[int]
     initiator_inforg: Optional[UserBrief]

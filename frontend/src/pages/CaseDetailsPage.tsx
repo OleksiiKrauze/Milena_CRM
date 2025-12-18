@@ -114,6 +114,33 @@ export function CaseDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Status Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Статус</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Статус заявки</p>
+                <div className="mt-1">
+                  <Badge variant={getStatusBadgeVariant(caseData.case_status)}>
+                    {caseData.case_status}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Рішення по заявці</p>
+                <p className="font-medium text-lg">{caseData.decision_type}</p>
+              </div>
+              {caseData.decision_comment && (
+                <div>
+                  <p className="text-sm text-gray-600">Коментар до рішення</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.decision_comment}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Applicant Info */}
           <Card>
             <CardHeader>
@@ -229,13 +256,91 @@ export function CaseDetailsPage() {
                   <p className="font-medium whitespace-pre-wrap">{caseData.missing_diseases}</p>
                 </div>
               )}
+              {caseData.missing_phone && (
+                <div>
+                  <p className="text-sm text-gray-600">Номер телефону</p>
+                  <p className="font-medium">
+                    <a href={`tel:${caseData.missing_phone}`} className="text-primary-600 hover:underline">
+                      {caseData.missing_phone}
+                    </a>
+                  </p>
+                </div>
+              )}
+              {caseData.missing_clothing && (
+                <div>
+                  <p className="text-sm text-gray-600">Одяг</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_clothing}</p>
+                </div>
+              )}
+              {caseData.missing_belongings && (
+                <div>
+                  <p className="text-sm text-gray-600">Що було з собою</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_belongings}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Additional Search Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Інформація про пошук</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {caseData.additional_search_regions && caseData.additional_search_regions.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Додаткові області пошуку</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {caseData.additional_search_regions.map((region, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm"
+                      >
+                        {region}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-600">Заява до поліції</p>
+                <p className={`font-medium ${caseData.police_report_filed ? 'text-green-600' : 'text-red-600'}`}>
+                  {caseData.police_report_filed ? 'Подана ✓' : 'Не подана ✗'}
+                </p>
+              </div>
+              {caseData.search_terrain_type && (
+                <div>
+                  <p className="text-sm text-gray-600">Тип місцевості пошуку</p>
+                  <p className="font-medium">{caseData.search_terrain_type}</p>
+                </div>
+              )}
+              {caseData.disappearance_circumstances && (
+                <div>
+                  <p className="text-sm text-gray-600">Обставини зникнення</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.disappearance_circumstances}</p>
+                </div>
+              )}
+              {caseData.additional_info && (
+                <div>
+                  <p className="text-sm text-gray-600">Додаткова інформація</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.additional_info}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Searches */}
           <Card>
             <CardHeader>
-              <CardTitle>Пошуки ({caseData.searches?.length || 0})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Пошуки ({caseData.searches?.length || 0})</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/cases/${caseData.id}/create-search`)}
+                >
+                  + Створити пошук
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {!caseData.searches || caseData.searches.length === 0 ? (
@@ -245,18 +350,31 @@ export function CaseDetailsPage() {
                   {caseData.searches.map((search) => (
                     <div
                       key={search.id}
-                      className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => navigate(`/searches/${search.id}`)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <p className="font-medium">Пошук #{search.id}</p>
                         <Badge variant={getStatusBadgeVariant(search.status)}>
-                          {search.status}
+                          {search.status === 'planned' && 'Запланований'}
+                          {search.status === 'active' && 'Активний'}
+                          {search.status === 'completed' && 'Завершений'}
+                          {search.status === 'cancelled' && 'Скасований'}
                         </Badge>
                       </div>
                       <div className="space-y-1 text-sm text-gray-600">
                         {search.start_date && <p>Розпочато: {formatDate(search.start_date)}</p>}
                         {search.end_date && <p>Завершено: {formatDate(search.end_date)}</p>}
-                        {search.result && <p>Результат: {search.result}</p>}
+                        {search.result && (
+                          <p>
+                            Результат:{' '}
+                            {search.result === 'alive' && 'Живий'}
+                            {search.result === 'dead' && 'Мертвий'}
+                            {search.result === 'location_known' && 'Місцезнаходження відомо'}
+                            {search.result === 'not_found' && 'Не знайдений'}
+                            {!['alive', 'dead', 'location_known', 'not_found'].includes(search.result) && search.result}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
