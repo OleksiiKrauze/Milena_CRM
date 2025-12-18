@@ -91,3 +91,103 @@ The primary development workflow uses `docker-compose.yml` from the backend subd
 - SQLAlchemy engine is created with `pool_pre_ping=True` for connection health checks
 - Database URL format: `postgresql+psycopg2://user:pass@host:port/dbname`
 - SessionLocal factory is configured with `autocommit=False, autoflush=False`
+
+## Production Deployment
+
+The application is deployed on AWS EC2 (eu-central-1) at **https://crm.przmilena.click**
+
+For detailed production deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Production Architecture
+
+- **Nginx**: HTTPS termination, reverse proxy, serves frontend static files and uploaded images
+- **Backend**: FastAPI container (internal port 8000, no hot-reload)
+- **PostgreSQL**: Database container (internal port 5432)
+- **Let's Encrypt**: SSL certificates (auto-renewal via cron)
+- **Cron Jobs**: Daily database backups (02:00) and SSL renewal (03:00)
+
+### Critical Production Configurations
+
+**1. Environment Files**
+- `.env.production` - Backend production secrets (NEVER commit to Git!)
+- `frontend/.env.production` - Must contain `VITE_API_URL=/api` for correct API routing
+
+**2. Docker Compose**
+Always use the `--env-file` flag to ensure correct environment variables:
+```bash
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+```
+
+**3. Shared Volumes**
+The `uploads_data` volume MUST be mounted to both backend AND nginx:
+```yaml
+backend:
+  volumes:
+    - uploads_data:/app/uploads
+nginx:
+  volumes:
+    - uploads_data:/app/uploads:ro  # Critical for serving uploaded images!
+```
+
+**4. Image URLs**
+Backend returns relative paths `/uploads/file.png`. Frontend MUST use these directly without prepending any domain:
+```typescript
+// CORRECT:
+<img src={photoUrl} />  // photoUrl is already "/uploads/file.png"
+
+// WRONG:
+<img src={`http://localhost:8000${photoUrl}`} />
+```
+
+### Deployment Workflow
+
+**After making code changes:**
+
+1. **Local**: Commit and push changes to Git
+   ```bash
+   git add .
+   git commit -m "Changes description"
+   git push origin main
+   ```
+
+2. **Server**: Pull changes and update
+   ```bash
+   ssh ubuntu@server
+   cd ~/MilenaCRM
+   git pull origin main
+
+   # ALWAYS rebuild frontend after pulling changes!
+   cd frontend
+   npm ci
+   npm run build
+   cd ..
+
+   # Rebuild and restart containers
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production down
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production build --no-cache
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+   ```
+
+**If only frontend changed:**
+```bash
+cd ~/MilenaCRM/frontend
+npm run build
+cd ..
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production restart nginx
+```
+
+### Common Production Issues
+
+**Issue: Images not loading (Mixed Content error)**
+- **Cause**: Frontend built without `frontend/.env.production` or hardcoded `localhost:8000` in code
+- **Fix**: Ensure `frontend/.env.production` exists with `VITE_API_URL=/api`, rebuild frontend
+
+**Issue: Backend can't connect to database**
+- **Cause**: Using wrong environment file or `.env.production` has leading spaces
+- **Fix**: Always use `--env-file .env.production` flag, check file has no leading spaces
+
+**Issue: Nginx returns 404 for uploaded images**
+- **Cause**: Nginx doesn't have access to `uploads_data` volume
+- **Fix**: Verify nginx volumes in `docker-compose.prod.yml` includes `uploads_data:/app/uploads:ro`
+
+For complete troubleshooting guide, see [DEPLOYMENT.md](DEPLOYMENT.md).
