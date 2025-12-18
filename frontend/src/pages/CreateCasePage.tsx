@@ -272,7 +272,7 @@ export function CreateCasePage() {
                     {uploadedPhotos.map((photoUrl, index) => (
                       <div key={index} className="relative group">
                         <img
-                          src={`http://localhost:8000${photoUrl}`}
+                          src={photoUrl}
                           alt={`Фото ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg border border-gray-200"
                         />

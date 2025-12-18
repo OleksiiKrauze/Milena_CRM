@@ -217,10 +217,10 @@ export function CaseDetailsPage() {
                     {caseData.missing_photos.map((photoUrl, index) => (
                       <img
                         key={index}
-                        src={`http://localhost:8000${photoUrl}`}
+                        src={photoUrl}
                         alt={`Фото ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => window.open(`http://localhost:8000${photoUrl}`, '_blank')}
+                        onClick={() => window.open(photoUrl, '_blank')}
                       />
                     ))}
                   </div>
