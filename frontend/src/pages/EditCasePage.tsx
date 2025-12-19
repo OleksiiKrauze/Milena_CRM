@@ -49,8 +49,6 @@ const editCaseSchema = z.object({
   tags: z.string().optional(),
 });
 
-type EditCaseForm = z.infer<typeof editCaseSchema>;
-
 export function EditCasePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

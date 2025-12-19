@@ -49,8 +49,6 @@ const createCaseSchema = z.object({
   tags: z.string().optional(),
 });
 
-type CreateCaseForm = z.infer<typeof createCaseSchema>;
-
 export function CreateCasePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
