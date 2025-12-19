@@ -95,7 +95,7 @@ export function CreateCasePage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateCaseForm) => {
+    mutationFn: (data: any) => {
       const { tags, additional_search_regions, ...rest } = data;
 
       // Clean empty strings - convert to undefined
@@ -128,7 +128,7 @@ export function CreateCasePage() {
     },
   });
 
-  const onSubmit = (data: CreateCaseForm) => {
+  const onSubmit = (data: any) => {
     setApiError(null);
     createMutation.mutate(data);
   };

@@ -135,7 +135,7 @@ export function EditCasePage() {
   };
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditCaseForm) => {
+    mutationFn: (data: any) => {
       const { tags, additional_search_regions, ...rest } = data;
 
       // Convert empty strings to undefined for optional fields
@@ -170,7 +170,7 @@ export function EditCasePage() {
     },
   });
 
-  const onSubmit = (data: EditCaseForm) => {
+  const onSubmit = (data: any) => {
     setApiError(null);
     updateMutation.mutate(data);
   };
