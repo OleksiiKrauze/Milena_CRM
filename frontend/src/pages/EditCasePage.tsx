@@ -37,14 +37,14 @@ const editCaseSchema = z.object({
   missing_belongings: z.string().optional(),
   // Additional case information
   additional_search_regions: z.string().optional(),
-  police_report_filed: z.boolean().default(false),
+  police_report_filed: z.boolean().optional().default(false),
   search_terrain_type: z.string().optional(),
   initial_info: z.string().optional(),
   disappearance_circumstances: z.string().optional(),
   additional_info: z.string().optional(),
   // Case metadata
   case_status: z.string().optional(),
-  decision_type: z.string().default('На розгляді'),
+  decision_type: z.string().optional().default('На розгляді'),
   decision_comment: z.string().optional(),
   tags: z.string().optional(),
 });
