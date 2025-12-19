@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
-import { Container, Card, CardContent, Badge, Loading, getStatusBadgeVariant } from '@/components/ui';
+import { Container, Card, CardContent, Loading } from '@/components/ui';
 import { formatDate } from '@/utils/formatters';
 import { Search } from 'lucide-react';
 
 export function CasesListPage() {
-  const [decisionTypeFilter, setDecisionTypeFilter] = useState<string>('');
+  const [searchParams] = useSearchParams();
+  const urlDecisionType = searchParams.get('decision_type') || '';
+  const [decisionTypeFilter, setDecisionTypeFilter] = useState<string>(urlDecisionType);
+
+  useEffect(() => {
+    if (urlDecisionType) {
+      setDecisionTypeFilter(urlDecisionType);
+    }
+  }, [urlDecisionType]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['cases', decisionTypeFilter],
@@ -65,13 +73,10 @@ export function CasesListPage() {
                   <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
                     <Card className={`active:opacity-90 transition-colors ${bgColor}`}>
                       <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="font-semibold text-gray-900">
                           {caseItem.missing_full_name}
                         </h3>
-                        <Badge variant={getStatusBadgeVariant(caseItem.case_status)}>
-                          {caseItem.case_status}
-                        </Badge>
                       </div>
                       <div className="space-y-1 text-sm text-gray-600">
                         <p>
@@ -81,6 +86,10 @@ export function CasesListPage() {
                         <p>
                           <span className="font-medium">Створена:</span>{' '}
                           {formatDate(caseItem.created_at)}
+                        </p>
+                        <p>
+                          <span className="font-medium">Рішення:</span>{' '}
+                          {caseItem.decision_type}
                         </p>
                         {caseItem.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">

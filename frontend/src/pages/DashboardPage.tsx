@@ -41,40 +41,31 @@ export function DashboardPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Cases Stats */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/cases')}
-          >
+          <Card>
             <CardHeader>
               <CardTitle>Заявки</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/cases')}
+                >
                   <p className="text-3xl font-bold text-primary-600">
                     {stats?.cases?.total || 0}
                   </p>
                   <p className="text-sm text-gray-600">Всього заявок</p>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {stats?.cases?.by_status?.new || 0}
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/cases?decision_type=%D0%9D%D0%B0%20%D1%80%D0%BE%D0%B7%D0%B3%D0%BB%D1%8F%D0%B4%D1%96')}
+                >
+                  <p className="text-3xl font-bold text-pink-600">
+                    {stats?.cases?.by_decision?.['На розгляді'] || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Нові</p>
+                  <p className="text-sm text-gray-600">На розгляді</p>
                 </div>
               </div>
-              {stats?.cases?.by_status && (
-                <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                  {Object.entries(stats.cases.by_status).map(([status, count]) => (
-                    <div key={status} className="flex justify-between text-sm">
-                      <span className="text-gray-600 capitalize">
-                        {status.replace(/_/g, ' ')}
-                      </span>
-                      <span className="font-medium">{count as number}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
 

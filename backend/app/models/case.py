@@ -1,21 +1,8 @@
-import enum
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, Enum as SQLEnum, ARRAY, String, Boolean
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ARRAY, String, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base
-
-
-class CaseStatus(str, enum.Enum):
-    """Case status enum"""
-    new = "new"
-    in_review = "in_review"
-    in_search = "in_search"
-    suspended = "suspended"
-    closed_found_alive = "closed_found_alive"
-    closed_found_dead = "closed_found_dead"
-    closed_location_known_no_search = "closed_location_known_no_search"
-    closed_other = "closed_other"
 
 
 class Case(Base):
@@ -64,7 +51,6 @@ class Case(Base):
     initial_info = Column(Text)  # Первинна інформація - первичный ввод всех данных
     additional_info = Column(Text)
 
-    case_status = Column(SQLEnum(CaseStatus), default=CaseStatus.new, nullable=False, index=True)
     decision_type = Column(String(50), default="На розгляді", nullable=False, index=True)
     decision_comment = Column(Text)
 

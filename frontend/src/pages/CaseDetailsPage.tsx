@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
-import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
+import { Container, Card, CardHeader, CardTitle, CardContent, Loading, Button } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
 
 export function CaseDetailsPage() {
@@ -56,12 +56,7 @@ export function CaseDetailsPage() {
           {/* Main Info */}
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <CardTitle>Основна інформація</CardTitle>
-                <Badge variant={getStatusBadgeVariant(caseData.case_status)}>
-                  {caseData.case_status}
-                </Badge>
-              </div>
+              <CardTitle>Основна інформація</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
@@ -120,14 +115,6 @@ export function CaseDetailsPage() {
               <CardTitle>Статус</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600">Статус заявки</p>
-                <div className="mt-1">
-                  <Badge variant={getStatusBadgeVariant(caseData.case_status)}>
-                    {caseData.case_status}
-                  </Badge>
-                </div>
-              </div>
               <div>
                 <p className="text-sm text-gray-600">Рішення по заявці</p>
                 <p className="font-medium text-lg">{caseData.decision_type}</p>

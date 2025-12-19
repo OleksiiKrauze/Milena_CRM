@@ -232,7 +232,6 @@ export interface Case {
   // Computed full names
   applicant_full_name: string;
   missing_full_name: string;
-  case_status: string;
   decision_type: string;
   decision_comment: string | null;
   tags: string[];
@@ -317,7 +316,7 @@ export interface InstitutionsCallCreate {
 export interface DashboardStats {
   cases: {
     total: number;
-    by_status: Record<string, number>;
+    by_decision: Record<string, number>;
   };
   searches: {
     total: number;

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.db import get_db
 from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse, CaseListResponse, CaseFullResponse
-from app.models.case import Case, CaseStatus
+from app.models.case import Case
 from app.models.user import User
 from app.routers.auth import get_current_user
 
@@ -41,7 +41,6 @@ def create_case(
         missing_description=case_data.missing_description,
         missing_special_signs=case_data.missing_special_signs,
         missing_diseases=case_data.missing_diseases,
-        case_status=CaseStatus.new,
         decision_type=case_data.decision_type,
         decision_comment=case_data.decision_comment,
         tags=case_data.tags or []
@@ -112,16 +111,6 @@ def update_case(
 
     # Update fields if provided
     update_data = case_data.model_dump(exclude_unset=True)
-
-    # Handle case_status separately to convert string to enum
-    if "case_status" in update_data:
-        try:
-            update_data["case_status"] = CaseStatus[update_data["case_status"]]
-        except KeyError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid case status: {update_data['case_status']}"
-            )
 
     for field, value in update_data.items():
         setattr(db_case, field, value)

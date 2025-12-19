@@ -91,7 +91,6 @@ class CaseUpdate(BaseModel):
     additional_info: Optional[str] = None
 
     # Case metadata
-    case_status: Optional[str] = None
     decision_type: Optional[str] = None
     decision_comment: Optional[str] = None
     tags: Optional[List[str]] = None
@@ -148,7 +147,6 @@ class CaseResponse(BaseModel):
     missing_full_name: str
 
     # Case metadata
-    case_status: str
     decision_type: str
     decision_comment: Optional[str]
     tags: List[str]

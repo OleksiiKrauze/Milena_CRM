@@ -43,7 +43,6 @@ const editCaseSchema = z.object({
   disappearance_circumstances: z.string().optional(),
   additional_info: z.string().optional(),
   // Case metadata
-  case_status: z.string().optional(),
   decision_type: z.string().optional().default('На розгляді'),
   decision_comment: z.string().optional(),
   tags: z.string().optional(),
@@ -97,7 +96,6 @@ export function EditCasePage() {
         missing_description: caseData.missing_description || '',
         missing_special_signs: caseData.missing_special_signs || '',
         missing_diseases: caseData.missing_diseases || '',
-        case_status: caseData.case_status,
         decision_type: caseData.decision_type,
         decision_comment: caseData.decision_comment || '',
         tags: caseData.tags.join(', '),

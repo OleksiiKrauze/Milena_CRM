@@ -23,12 +23,12 @@ def get_dashboard_stats(
 
     # Case statistics
     total_cases = db.query(Case).count()
-    cases_by_status = db.query(
-        Case.case_status,
+    cases_by_decision = db.query(
+        Case.decision_type,
         func.count(Case.id)
-    ).group_by(Case.case_status).all()
+    ).group_by(Case.decision_type).all()
 
-    cases_by_status_dict = {status.name: count for status, count in cases_by_status}
+    cases_by_decision_dict = {decision_type: count for decision_type, count in cases_by_decision}
 
     # Search statistics
     total_searches = db.query(Search).count()
@@ -64,7 +64,7 @@ def get_dashboard_stats(
     return DashboardStats(
         cases=CaseStats(
             total=total_cases,
-            by_status=cases_by_status_dict
+            by_decision=cases_by_decision_dict
         ),
         searches=SearchStats(
             total=total_searches,

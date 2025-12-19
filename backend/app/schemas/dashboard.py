@@ -5,7 +5,7 @@ from typing import Dict
 class CaseStats(BaseModel):
     """Statistics for cases"""
     total: int
-    by_status: Dict[str, int]
+    by_decision: Dict[str, int]
 
 
 class SearchStats(BaseModel):

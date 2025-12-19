@@ -1,5 +1,5 @@
 from app.models.user import User, Role, Direction, UserStatus, user_roles, user_directions
-from app.models.case import Case, CaseStatus
+from app.models.case import Case
 from app.models.search import Search, SearchStatus
 from app.models.flyer import Flyer
 from app.models.distribution import Distribution, DistributionStatus
@@ -10,7 +10,7 @@ from app.models.event import Event
 
 __all__ = [
     'User', 'Role', 'Direction', 'UserStatus', 'user_roles', 'user_directions',
-    'Case', 'CaseStatus',
+    'Case',
     'Search', 'SearchStatus',
     'Flyer',
     'Distribution', 'DistributionStatus',
