@@ -72,6 +72,10 @@ export function EditCasePage() {
     reset,
   } = useForm<EditCaseForm>({
     resolver: zodResolver(editCaseSchema),
+    defaultValues: {
+      police_report_filed: false,
+      decision_type: 'На розгляді',
+    },
   });
 
   // Populate form when data loads

@@ -64,6 +64,10 @@ export function CreateCasePage() {
     formState: { errors },
   } = useForm<CreateCaseForm>({
     resolver: zodResolver(createCaseSchema),
+    defaultValues: {
+      police_report_filed: false,
+      decision_type: 'На розгляді',
+    },
   });
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
