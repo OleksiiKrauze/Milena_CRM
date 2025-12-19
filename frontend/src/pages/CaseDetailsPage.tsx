@@ -314,16 +314,17 @@ export function CaseDetailsPage() {
                       className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => navigate(`/searches/${search.id}`)}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="mb-2">
                         <p className="font-medium">Пошук #{search.id}</p>
-                        <Badge variant={getStatusBadgeVariant(search.status)}>
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>
+                          Статус:{' '}
                           {search.status === 'planned' && 'Запланований'}
                           {search.status === 'active' && 'Активний'}
                           {search.status === 'completed' && 'Завершений'}
                           {search.status === 'cancelled' && 'Скасований'}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                        </p>
                         {search.start_date && <p>Розпочато: {formatDate(search.start_date)}</p>}
                         {search.end_date && <p>Завершено: {formatDate(search.end_date)}</p>}
                         {search.result && (
