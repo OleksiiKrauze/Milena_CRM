@@ -61,7 +61,7 @@ export function CreateCasePage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState,
   } = useForm({
     resolver: zodResolver(createCaseSchema) as any,
     defaultValues: {
@@ -69,6 +69,7 @@ export function CreateCasePage() {
       decision_type: 'На розгляді',
     },
   });
+  const errors = formState.errors as any;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

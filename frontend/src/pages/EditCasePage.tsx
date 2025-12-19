@@ -68,7 +68,7 @@ export function EditCasePage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState,
     reset,
   } = useForm({
     resolver: zodResolver(editCaseSchema) as any,
@@ -77,6 +77,7 @@ export function EditCasePage() {
       decision_type: 'На розгляді',
     },
   });
+  const errors = formState.errors as any;
 
   // Populate form when data loads
   useEffect(() => {
