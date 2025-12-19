@@ -99,6 +99,18 @@ export function SearchDetailsPage() {
                   №{searchData.case_id}
                 </p>
               </div>
+              {searchData.case && (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-600">ПІБ заявника</p>
+                    <p className="font-medium">{searchData.case.applicant_full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">ПІБ зниклого</p>
+                    <p className="font-medium">{searchData.case.missing_full_name}</p>
+                  </div>
+                </>
+              )}
               {searchData.initiator_inforg && (
                 <div>
                   <p className="text-sm text-gray-600">Ініціатор (інфорг)</p>

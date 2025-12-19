@@ -138,6 +138,7 @@ export interface Search {
   case_id: number;
   case: {
     id: number;
+    applicant_full_name: string;
     missing_full_name: string;
   } | null;
   created_at: string;

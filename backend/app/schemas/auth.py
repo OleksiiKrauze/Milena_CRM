@@ -53,6 +53,7 @@ class UserBrief(BaseModel):
 class CaseBrief(BaseModel):
     """Schema for brief case info"""
     id: int
+    applicant_full_name: str
     missing_full_name: str
 
     model_config = {"from_attributes": True}
