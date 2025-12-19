@@ -62,8 +62,8 @@ export function CreateCasePage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateCaseForm>({
-    resolver: zodResolver(createCaseSchema),
+  } = useForm({
+    resolver: zodResolver(createCaseSchema) as any,
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
@@ -111,9 +111,9 @@ export function CreateCasePage() {
       return casesApi.create({
         ...cleanedData,
         missing_photos: uploadedPhotos,
-        tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+        tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
-          ? additional_search_regions.split(',').map((r) => r.trim()).filter(Boolean)
+          ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
       });
     },

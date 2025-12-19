@@ -70,8 +70,8 @@ export function EditCasePage() {
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<EditCaseForm>({
-    resolver: zodResolver(editCaseSchema),
+  } = useForm({
+    resolver: zodResolver(editCaseSchema) as any,
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
@@ -151,9 +151,9 @@ export function EditCasePage() {
       return casesApi.update(Number(id), {
         ...cleanedData,
         missing_photos: uploadedPhotos,
-        tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+        tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
-          ? additional_search_regions.split(',').map((r) => r.trim()).filter(Boolean)
+          ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
       });
     },
