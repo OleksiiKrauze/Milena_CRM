@@ -171,7 +171,7 @@ export function SearchDetailsPage() {
                       <p className="text-sm text-gray-600 whitespace-pre-wrap">{event.description}</p>
                       {event.media_files && event.media_files.length > 0 && (
                         <div className="mt-2 flex gap-1">
-                          {event.media_files.slice(0, 3).map((file, index) => (
+                          {event.media_files.slice(0, 3).map((_, index) => (
                             <div key={index} className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
                               📎
                             </div>

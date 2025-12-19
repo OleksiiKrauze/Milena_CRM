@@ -66,7 +66,7 @@ export function CreateEventPage() {
 
       return eventsApi.create(eventData);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['search', searchId] });
       queryClient.invalidateQueries({ queryKey: ['search-full', searchId] });

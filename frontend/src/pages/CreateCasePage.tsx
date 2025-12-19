@@ -40,6 +40,7 @@ const createCaseSchema = z.object({
   additional_search_regions: z.string().optional(),
   police_report_filed: z.boolean().default(false),
   search_terrain_type: z.string().optional(),
+  initial_info: z.string().optional(),
   disappearance_circumstances: z.string().optional(),
   additional_info: z.string().optional(),
   // Case metadata

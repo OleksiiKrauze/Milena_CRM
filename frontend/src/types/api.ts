@@ -330,6 +330,14 @@ export interface DashboardStats {
     total: number;
     by_status: Record<string, number>;
   };
+  flyers?: {
+    total: number;
+    by_status: Record<string, number>;
+  };
+  institutions_calls?: {
+    total: number;
+    by_status: Record<string, number>;
+  };
   total_users: number;
   total_institutions_calls: number;
 }
