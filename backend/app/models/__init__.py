@@ -6,6 +6,7 @@ from app.models.distribution import Distribution, DistributionStatus
 from app.models.field_search import FieldSearch, FieldSearchStatus, field_search_participants
 from app.models.map_grid import MapGrid, GridCell, GridCellStatus
 from app.models.institutions_call import InstitutionsCall
+from app.models.event import Event
 
 __all__ = [
     'User', 'Role', 'Direction', 'UserStatus', 'user_roles', 'user_directions',
@@ -16,4 +17,5 @@ __all__ = [
     'FieldSearch', 'FieldSearchStatus', 'field_search_participants',
     'MapGrid', 'GridCell', 'GridCellStatus',
     'InstitutionsCall',
+    'Event',
 ]

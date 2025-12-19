@@ -43,6 +43,7 @@ class CaseCreate(BaseModel):
     police_report_filed: Optional[bool] = False
     search_terrain_type: Optional[str] = Field(None, max_length=50)
     disappearance_circumstances: Optional[str] = None
+    initial_info: Optional[str] = None
     additional_info: Optional[str] = None
 
     # Case metadata
@@ -86,6 +87,7 @@ class CaseUpdate(BaseModel):
     police_report_filed: Optional[bool] = None
     search_terrain_type: Optional[str] = Field(None, max_length=50)
     disappearance_circumstances: Optional[str] = None
+    initial_info: Optional[str] = None
     additional_info: Optional[str] = None
 
     # Case metadata
@@ -138,6 +140,7 @@ class CaseResponse(BaseModel):
     police_report_filed: bool
     search_terrain_type: Optional[str]
     disappearance_circumstances: Optional[str]
+    initial_info: Optional[str]
     additional_info: Optional[str]
 
     # Computed full names

@@ -24,6 +24,9 @@ import { FieldSearchListPage } from '@/pages/FieldSearchListPage';
 import { FieldSearchDetailsPage } from '@/pages/FieldSearchDetailsPage';
 import { CreateFieldSearchPage } from '@/pages/CreateFieldSearchPage';
 import { EditFieldSearchPage } from '@/pages/EditFieldSearchPage';
+import { CreateEventPage } from '@/pages/CreateEventPage';
+import { EventDetailsPage } from '@/pages/EventDetailsPage';
+import { EditEventPage } from '@/pages/EditEventPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -181,6 +184,30 @@ export function App() {
             element={
               <ProtectedRoute>
                 <CreateFieldSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches/:searchId/create-event"
+            element={
+              <ProtectedRoute>
+                <CreateEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id"
+            element={
+              <ProtectedRoute>
+                <EventDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditEventPage />
               </ProtectedRoute>
             }
           />

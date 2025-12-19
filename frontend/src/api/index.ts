@@ -5,3 +5,6 @@ export { dashboardApi } from './dashboard';
 export { institutionsApi } from './institutions';
 export { usersApi } from './users';
 export { managementApi } from './management';
+export { eventsApi } from './events';
+export { searchesApi } from './searches';
+export { fieldSearchesApi } from './field-searches';

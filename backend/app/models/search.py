@@ -50,3 +50,4 @@ class Search(Base):
     distributions = relationship('Distribution', back_populates='search', cascade='all, delete-orphan')
     map_grids = relationship('MapGrid', back_populates='search', cascade='all, delete-orphan')
     field_searches = relationship('FieldSearch', back_populates='search', cascade='all, delete-orphan')
+    events = relationship('Event', back_populates='search', cascade='all, delete-orphan')

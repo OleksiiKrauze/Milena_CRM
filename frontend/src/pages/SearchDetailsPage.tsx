@@ -138,6 +138,63 @@ export function SearchDetailsPage() {
             </CardContent>
           </Card>
 
+          {/* Events */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Події ({searchData.events?.length || 0})</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/searches/${searchData.id}/create-event`)}
+                >
+                  + Додати подію
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!searchData.events || searchData.events.length === 0 ? (
+                <p className="text-sm text-gray-600">Події не додано</p>
+              ) : (
+                <div className="space-y-3">
+                  {searchData.events.map((event) => (
+                    <div
+                      key={event.id}
+                      className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => navigate(`/events/${event.id}`)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="font-medium">{event.event_type}</p>
+                        <span className="text-xs text-gray-500">
+                          {formatDateTime(event.event_datetime)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap">{event.description}</p>
+                      {event.media_files && event.media_files.length > 0 && (
+                        <div className="mt-2 flex gap-1">
+                          {event.media_files.slice(0, 3).map((file, index) => (
+                            <div key={index} className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
+                              📎
+                            </div>
+                          ))}
+                          {event.media_files.length > 3 && (
+                            <div className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
+                              +{event.media_files.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {event.created_by && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Додав: {event.created_by.full_name} • {formatDateTime(event.created_at)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Field Searches */}
           <Card>
             <CardHeader>

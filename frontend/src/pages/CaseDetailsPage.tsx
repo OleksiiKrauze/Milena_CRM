@@ -151,22 +151,20 @@ export function CaseDetailsPage() {
                 <p className="text-sm text-gray-600">ПІБ</p>
                 <p className="font-medium">{caseData.applicant_full_name}</p>
               </div>
-              {caseData.applicant_phone && (
-                <div>
-                  <p className="text-sm text-gray-600">Телефон</p>
-                  <p className="font-medium">
+              <div>
+                <p className="text-sm text-gray-600">Телефон</p>
+                <p className="font-medium">
+                  {caseData.applicant_phone ? (
                     <a href={`tel:${caseData.applicant_phone}`} className="text-primary-600 hover:underline">
                       {caseData.applicant_phone}
                     </a>
-                  </p>
-                </div>
-              )}
-              {caseData.applicant_relation && (
-                <div>
-                  <p className="text-sm text-gray-600">Ким приходиться</p>
-                  <p className="font-medium">{caseData.applicant_relation}</p>
-                </div>
-              )}
+                  ) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Ким приходиться</p>
+                <p className="font-medium">{caseData.applicant_relation || '-'}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -176,40 +174,30 @@ export function CaseDetailsPage() {
               <CardTitle>Дані пропавшого</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {caseData.missing_settlement && (
-                <div>
-                  <p className="text-sm text-gray-600">Населений пункт</p>
-                  <p className="font-medium">{caseData.missing_settlement}</p>
-                </div>
-              )}
-              {caseData.missing_region && (
-                <div>
-                  <p className="text-sm text-gray-600">Область</p>
-                  <p className="font-medium">{caseData.missing_region}</p>
-                </div>
-              )}
-              {caseData.missing_address && (
-                <div>
-                  <p className="text-sm text-gray-600">Адреса проживання</p>
-                  <p className="font-medium">{caseData.missing_address}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-gray-600">Населений пункт</p>
+                <p className="font-medium">{caseData.missing_settlement || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Область</p>
+                <p className="font-medium">{caseData.missing_region || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Адреса проживання</p>
+                <p className="font-medium">{caseData.missing_address || '-'}</p>
+              </div>
               <div>
                 <p className="text-sm text-gray-600">ПІБ</p>
                 <p className="font-medium text-lg">{caseData.missing_full_name}</p>
               </div>
-              {caseData.missing_gender && (
-                <div>
-                  <p className="text-sm text-gray-600">Стать</p>
-                  <p className="font-medium">{caseData.missing_gender}</p>
-                </div>
-              )}
-              {caseData.missing_birthdate && (
-                <div>
-                  <p className="text-sm text-gray-600">Дата народження</p>
-                  <p className="font-medium">{formatDate(caseData.missing_birthdate)}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-gray-600">Стать</p>
+                <p className="font-medium">{caseData.missing_gender || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Дата народження</p>
+                <p className="font-medium">{caseData.missing_birthdate ? formatDate(caseData.missing_birthdate) : '-'}</p>
+              </div>
               {caseData.missing_photos && caseData.missing_photos.length > 0 && (
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Фото ({caseData.missing_photos.length})</p>
@@ -226,58 +214,44 @@ export function CaseDetailsPage() {
                   </div>
                 </div>
               )}
-              {caseData.missing_last_seen_datetime && (
-                <div>
-                  <p className="text-sm text-gray-600">Коли бачили востаннє</p>
-                  <p className="font-medium">{formatDateTime(caseData.missing_last_seen_datetime)}</p>
-                </div>
-              )}
-              {caseData.missing_last_seen_place && (
-                <div>
-                  <p className="text-sm text-gray-600">Де бачили востаннє</p>
-                  <p className="font-medium">{caseData.missing_last_seen_place}</p>
-                </div>
-              )}
-              {caseData.missing_description && (
-                <div>
-                  <p className="text-sm text-gray-600">Опис</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_description}</p>
-                </div>
-              )}
-              {caseData.missing_special_signs && (
-                <div>
-                  <p className="text-sm text-gray-600">Особливі прикмети</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_special_signs}</p>
-                </div>
-              )}
-              {caseData.missing_diseases && (
-                <div>
-                  <p className="text-sm text-gray-600">Захворювання</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_diseases}</p>
-                </div>
-              )}
-              {caseData.missing_phone && (
-                <div>
-                  <p className="text-sm text-gray-600">Номер телефону</p>
-                  <p className="font-medium">
+              <div>
+                <p className="text-sm text-gray-600">Коли бачили востаннє</p>
+                <p className="font-medium">{caseData.missing_last_seen_datetime ? formatDateTime(caseData.missing_last_seen_datetime) : '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Де бачили востаннє</p>
+                <p className="font-medium">{caseData.missing_last_seen_place || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Опис</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.missing_description || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Особливі прикмети</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.missing_special_signs || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Захворювання</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.missing_diseases || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Номер телефону</p>
+                <p className="font-medium">
+                  {caseData.missing_phone ? (
                     <a href={`tel:${caseData.missing_phone}`} className="text-primary-600 hover:underline">
                       {caseData.missing_phone}
                     </a>
-                  </p>
-                </div>
-              )}
-              {caseData.missing_clothing && (
-                <div>
-                  <p className="text-sm text-gray-600">Одяг</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_clothing}</p>
-                </div>
-              )}
-              {caseData.missing_belongings && (
-                <div>
-                  <p className="text-sm text-gray-600">Що було з собою</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.missing_belongings}</p>
-                </div>
-              )}
+                  ) : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Одяг</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.missing_clothing || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Що було з собою</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.missing_belongings || '-'}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -287,9 +261,9 @@ export function CaseDetailsPage() {
               <CardTitle>Інформація про пошук</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {caseData.additional_search_regions && caseData.additional_search_regions.length > 0 && (
-                <div>
-                  <p className="text-sm text-gray-600">Додаткові області пошуку</p>
+              <div>
+                <p className="text-sm text-gray-600">Додаткові області пошуку</p>
+                {caseData.additional_search_regions && caseData.additional_search_regions.length > 0 ? (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {caseData.additional_search_regions.map((region, index) => (
                       <span
@@ -300,32 +274,32 @@ export function CaseDetailsPage() {
                       </span>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="font-medium">-</p>
+                )}
+              </div>
               <div>
                 <p className="text-sm text-gray-600">Заява до поліції</p>
                 <p className={`font-medium ${caseData.police_report_filed ? 'text-green-600' : 'text-red-600'}`}>
                   {caseData.police_report_filed ? 'Подана ✓' : 'Не подана ✗'}
                 </p>
               </div>
-              {caseData.search_terrain_type && (
-                <div>
-                  <p className="text-sm text-gray-600">Тип місцевості пошуку</p>
-                  <p className="font-medium">{caseData.search_terrain_type}</p>
-                </div>
-              )}
-              {caseData.disappearance_circumstances && (
-                <div>
-                  <p className="text-sm text-gray-600">Обставини зникнення</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.disappearance_circumstances}</p>
-                </div>
-              )}
-              {caseData.additional_info && (
-                <div>
-                  <p className="text-sm text-gray-600">Додаткова інформація</p>
-                  <p className="font-medium whitespace-pre-wrap">{caseData.additional_info}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-gray-600">Тип місцевості пошуку</p>
+                <p className="font-medium">{caseData.search_terrain_type || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Первинна інформація</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.initial_info || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Обставини зникнення</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.disappearance_circumstances || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Додаткова інформація</p>
+                <p className="font-medium whitespace-pre-wrap">{caseData.additional_info || '-'}</p>
+              </div>
             </CardContent>
           </Card>
 

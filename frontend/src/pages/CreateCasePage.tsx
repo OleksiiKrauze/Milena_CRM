@@ -92,8 +92,19 @@ export function CreateCasePage() {
   const createMutation = useMutation({
     mutationFn: (data: CreateCaseForm) => {
       const { tags, additional_search_regions, ...rest } = data;
+
+      // Clean empty strings - convert to undefined
+      const cleanedData: any = {};
+      for (const [key, value] of Object.entries(rest)) {
+        if (value === '') {
+          cleanedData[key] = undefined;
+        } else {
+          cleanedData[key] = value;
+        }
+      }
+
       return casesApi.create({
-        ...rest,
+        ...cleanedData,
         missing_photos: uploadedPhotos,
         tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
@@ -436,6 +447,21 @@ export function CreateCasePage() {
                 </select>
                 {errors.search_terrain_type && (
                   <p className="text-sm text-red-600 mt-1">{errors.search_terrain_type.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Первинна інформація
+                </label>
+                <textarea
+                  {...register('initial_info')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={6}
+                  placeholder="Введіть всю відому інформацію про зниклого та обставини зникнення. Пізніше ці дані можна буде розподілити по відповідних полях..."
+                />
+                {errors.initial_info && (
+                  <p className="text-sm text-red-600 mt-1">{errors.initial_info.message}</p>
                 )}
               </div>
 

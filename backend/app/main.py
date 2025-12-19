@@ -27,6 +27,7 @@ from app.routers import distributions
 from app.routers import field_searches
 from app.routers import map_grids
 from app.routers import institutions_calls
+from app.routers import events
 from app.routers import dashboard
 from app.routers import management
 from app.routers import upload
@@ -125,6 +126,7 @@ app.include_router(distributions.router)
 app.include_router(field_searches.router)
 app.include_router(map_grids.router)
 app.include_router(institutions_calls.router)
+app.include_router(events.router)
 app.include_router(dashboard.router)
 app.include_router(management.router)
 app.include_router(upload.router)

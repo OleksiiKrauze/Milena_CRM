@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from app.schemas.distribution import DistributionResponse
     from app.schemas.map_grid import MapGridResponse
     from app.schemas.field_search import FieldSearchResponse
+    from app.schemas.event import EventResponse
 
 from app.schemas.auth import UserBrief, CaseBrief
 
@@ -66,6 +67,7 @@ class SearchFullResponse(SearchResponse):
     distributions: List["DistributionResponse"] = []
     map_grids: List["MapGridResponse"] = []
     field_searches: List["FieldSearchResponse"] = []
+    events: List["EventResponse"] = []
 
     model_config = {"from_attributes": True, "use_enum_values": True}
 
@@ -75,5 +77,6 @@ from app.schemas.flyer import FlyerResponse
 from app.schemas.distribution import DistributionResponse
 from app.schemas.map_grid import MapGridResponse
 from app.schemas.field_search import FieldSearchResponse
+from app.schemas.event import EventResponse
 
 SearchFullResponse.model_rebuild()

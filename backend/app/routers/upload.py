@@ -11,18 +11,36 @@ UPLOAD_DIR = Path("/app/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Allowed image extensions
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+# Allowed media extensions (images, video, audio)
+ALLOWED_MEDIA_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",  # Images
+    ".mp4", ".mov", ".avi", ".mkv", ".webm",   # Video
+    ".mp3", ".wav", ".ogg", ".m4a", ".aac"     # Audio
+}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_MEDIA_FILE_SIZE = 50 * 1024 * 1024  # 50 MB for video/audio
 
 
 def validate_image_file(file: UploadFile) -> None:
-    """Validate uploaded file"""
+    """Validate uploaded image file"""
     # Check extension
     file_ext = Path(file.filename).suffix.lower()
-    if file_ext not in ALLOWED_EXTENSIONS:
+    if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+        )
+
+
+def validate_media_file(file: UploadFile) -> None:
+    """Validate uploaded media file (image, video, audio)"""
+    # Check extension
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_MEDIA_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_MEDIA_EXTENSIONS)}"
         )
 
 
@@ -56,6 +74,53 @@ async def upload_images(files: List[UploadFile] = File(...)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File {file.filename} is too large. Maximum size: 10 MB"
+            )
+
+        # Generate unique filename
+        file_ext = Path(file.filename).suffix.lower()
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = UPLOAD_DIR / unique_filename
+
+        # Save file
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        # Return URL (relative path)
+        uploaded_urls.append(f"/uploads/{unique_filename}")
+
+    return uploaded_urls
+
+
+@router.post("/media", response_model=List[str])
+async def upload_media(files: List[UploadFile] = File(...)):
+    """
+    Upload one or multiple media files (images, video, audio)
+    Returns list of URLs to uploaded files
+    """
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No files provided"
+        )
+
+    if len(files) > 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 10 files allowed"
+        )
+
+    uploaded_urls = []
+
+    for file in files:
+        # Validate file
+        validate_media_file(file)
+
+        # Check file size
+        content = await file.read()
+        if len(content) > MAX_MEDIA_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File {file.filename} is too large. Maximum size: 50 MB"
             )
 
         # Generate unique filename

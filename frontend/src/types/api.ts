@@ -184,6 +184,7 @@ export interface SearchFull extends Search {
   distributions?: any[];
   map_grids?: any[];
   field_searches?: FieldSearch[];
+  events?: Event[];
 }
 
 // Case types
@@ -225,6 +226,7 @@ export interface Case {
   police_report_filed: boolean;
   search_terrain_type: string | null;
   disappearance_circumstances: string | null;
+  initial_info: string | null;
   additional_info: string | null;
   // Computed full names
   applicant_full_name: string;
@@ -266,6 +268,7 @@ export interface CaseCreate {
   police_report_filed?: boolean;
   search_terrain_type?: string;
   disappearance_circumstances?: string;
+  initial_info?: string;
   additional_info?: string;
   decision_type?: string;
   decision_comment?: string;
@@ -329,6 +332,42 @@ export interface DashboardStats {
   };
   total_users: number;
   total_institutions_calls: number;
+}
+
+// Event types
+export interface Event {
+  id: number;
+  search_id: number;
+  created_at: string;
+  created_by_user_id: number | null;
+  created_by: UserBrief | null;
+  event_datetime: string;
+  event_type: string;
+  description: string;
+  media_files: string[];
+  updated_at: string | null;
+  updated_by_user_id: number | null;
+  updated_by: UserBrief | null;
+}
+
+export interface EventCreate {
+  search_id: number;
+  event_datetime: string;
+  event_type: string;
+  description: string;
+  media_files?: string[];
+}
+
+export interface EventUpdate {
+  event_datetime?: string;
+  event_type?: string;
+  description?: string;
+  media_files?: string[];
+}
+
+export interface EventListResponse {
+  total: number;
+  events: Event[];
 }
 
 // API Error types

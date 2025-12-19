@@ -7,6 +7,7 @@ from app.schemas.search import SearchCreate, SearchUpdate, SearchResponse, Searc
 from app.models.search import Search, SearchStatus
 from app.models.case import Case
 from app.models.user import User
+from app.models.event import Event
 from app.routers.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -222,10 +223,12 @@ def get_search_full(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get search by ID with all related data (flyers, distributions, map grids)"""
+    """Get search by ID with all related data (flyers, distributions, map grids, events)"""
     db_search = db.query(Search).options(
         joinedload(Search.case),
-        joinedload(Search.initiator_inforg)
+        joinedload(Search.initiator_inforg),
+        joinedload(Search.events).joinedload(Event.created_by),
+        joinedload(Search.events).joinedload(Event.updated_by)
     ).filter(Search.id == search_id).first()
 
     if not db_search:

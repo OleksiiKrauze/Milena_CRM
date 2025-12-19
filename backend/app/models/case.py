@@ -61,6 +61,7 @@ class Case(Base):
     police_report_filed = Column(Boolean, default=False)
     search_terrain_type = Column(String(50))  # Місто, Ліс, Поле, Вода, Інше
     disappearance_circumstances = Column(Text)
+    initial_info = Column(Text)  # Первинна інформація - первичный ввод всех данных
     additional_info = Column(Text)
 
     case_status = Column(SQLEnum(CaseStatus), default=CaseStatus.new, nullable=False, index=True)
