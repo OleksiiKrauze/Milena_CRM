@@ -58,18 +58,15 @@ export function CreateCasePage() {
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState,
-  } = useForm({
+  const form: any = useForm({
     resolver: zodResolver(createCaseSchema) as any,
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
     },
   });
-  const errors = formState.errors as any;
+  const { register, handleSubmit, formState } = form;
+  const errors = formState.errors;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

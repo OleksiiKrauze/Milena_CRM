@@ -65,19 +65,15 @@ export function EditCasePage() {
     enabled: !!id,
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState,
-    reset,
-  } = useForm({
+  const form: any = useForm({
     resolver: zodResolver(editCaseSchema) as any,
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
     },
   });
-  const errors = formState.errors as any;
+  const { register, handleSubmit, formState, reset } = form;
+  const errors = formState.errors;
 
   // Populate form when data loads
   useEffect(() => {
