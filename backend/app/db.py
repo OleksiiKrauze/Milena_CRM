@@ -21,6 +21,10 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 Base = declarative_base()
 
+def get_database_url() -> str:
+    """Get database URL for Alembic migrations"""
+    return DATABASE_URL
+
 def get_db():
     """Dependency for FastAPI to get database session"""
     db = SessionLocal()
