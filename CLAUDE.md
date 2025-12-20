@@ -92,6 +92,84 @@ The primary development workflow uses `docker-compose.yml` from the backend subd
 - Database URL format: `postgresql+psycopg2://user:pass@host:port/dbname`
 - SessionLocal factory is configured with `autocommit=False, autoflush=False`
 
+## Database Migrations
+
+The project uses **Alembic** for database schema management. All database changes must be tracked through migrations to prevent schema mismatch between code and production database.
+
+### Important Alembic Files
+
+- `backend/alembic.ini` - Alembic configuration file
+- `backend/alembic/env.py` - Migration environment setup (imports all models)
+- `backend/alembic/versions/` - Migration scripts directory
+
+### Creating a New Migration
+
+When you modify SQLAlchemy models (add/remove columns, tables, etc.), create a migration:
+
+```bash
+# Generate migration automatically from model changes
+cd backend
+docker-compose exec backend alembic revision --autogenerate -m "Description of changes"
+
+# Or create empty migration for manual edits
+docker-compose exec backend alembic revision -m "Description of changes"
+```
+
+**CRITICAL**: Always review auto-generated migrations before applying! Alembic may not detect all changes correctly.
+
+### Applying Migrations
+
+**Local Development:**
+```bash
+# Apply all pending migrations
+docker-compose exec backend alembic upgrade head
+
+# Rollback one migration
+docker-compose exec backend alembic downgrade -1
+
+# Check current migration version
+docker-compose exec backend alembic current
+```
+
+**Production:**
+```bash
+# ALWAYS apply migrations after deploying code changes that modify models
+cd ~/MilenaCRM
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec backend alembic upgrade head
+
+# Check migration status
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec backend alembic current
+```
+
+### Migration Workflow
+
+1. **Modify models** in `backend/app/models/`
+2. **Generate migration**: `docker-compose exec backend alembic revision --autogenerate -m "Add field X to table Y"`
+3. **Review migration** in `backend/alembic/versions/`
+4. **Test locally**: `docker-compose exec backend alembic upgrade head`
+5. **Commit migration**: `git add backend/alembic/versions/` and commit
+6. **Deploy to production**:
+   ```bash
+   git pull origin main
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production build backend
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+   sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec backend alembic upgrade head
+   ```
+
+### Common Migration Issues
+
+**Issue: Column already exists error**
+- **Cause**: Migration trying to add column that exists in database
+- **Fix**: Edit migration to check if column exists before adding, or manually apply the needed changes to database
+
+**Issue: Alembic can't detect model changes**
+- **Cause**: Model not imported in `alembic/env.py`
+- **Fix**: Add import for new model in `backend/alembic/env.py`
+
+**Issue: Production migration fails**
+- **Cause**: Database schema was manually modified without migration
+- **Fix**: Create migration that syncs schema, or stamp database with current version if schemas match
+
 ## Production Deployment
 
 The application is deployed on AWS EC2 (eu-central-1) at **https://crm.przmilena.click**
