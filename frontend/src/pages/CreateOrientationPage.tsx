@@ -1300,7 +1300,7 @@ export function CreateOrientationPage() {
               ))}
 
               {/* Dates - draggable only, above logos */}
-              {dates.map((dateItem, idx) => (
+              {dates.map((dateItem, idx): React.ReactElement => (
                 <Rnd
                   key={`date-${idx}`}
                   size={{ width: dateItem.width, height: dateItem.height }}
