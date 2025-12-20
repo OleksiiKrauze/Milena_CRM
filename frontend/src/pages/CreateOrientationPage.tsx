@@ -9,7 +9,7 @@ import { orientationsApi } from '@/api/orientations';
 import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Loading } from '@/components/ui';
-import { FileImage, Upload, Download, Check } from 'lucide-react';
+import { FileImage, Upload, Download, Check, Move, Maximize2, ArrowUpDown } from 'lucide-react';
 import type { FlyerTemplate } from '@/types/api';
 
 interface PhotoPosition {
@@ -1237,13 +1237,46 @@ export function CreateOrientationPage() {
                     }}
                     bounds="parent"
                     className="border-2 border-primary-500"
+                    resizeHandleStyles={{
+                      top: { height: '20px', cursor: 'ns-resize' },
+                      right: { width: '20px', cursor: 'ew-resize' },
+                      bottom: { height: '20px', cursor: 'ns-resize' },
+                      left: { width: '20px', cursor: 'ew-resize' },
+                      topRight: { width: '30px', height: '30px', cursor: 'nesw-resize' },
+                      bottomRight: { width: '30px', height: '30px', cursor: 'nwse-resize' },
+                      bottomLeft: { width: '30px', height: '30px', cursor: 'nesw-resize' },
+                      topLeft: { width: '30px', height: '30px', cursor: 'nwse-resize' },
+                    }}
+                    dragHandleClassName="photo-drag-handle"
                   >
-                    <img
-                      src={`${import.meta.env.VITE_API_URL || '/api'}${photo}`}
-                      alt={`Selected ${idx + 1}`}
-                      className="w-full h-full object-cover pointer-events-none"
-                      style={blurEnabled ? { filter: `blur(${blurAmount}px)` } : {}}
-                    />
+                    <div className="relative w-full h-full">
+                      <img
+                        src={`${import.meta.env.VITE_API_URL || '/api'}${photo}`}
+                        alt={`Selected ${idx + 1}`}
+                        className="w-full h-full object-cover pointer-events-none"
+                        style={blurEnabled ? { filter: `blur(${blurAmount}px)` } : {}}
+                      />
+                      {/* Move handle - center (dragHandleClassName applied) */}
+                      <div
+                        className="photo-drag-handle absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-primary-500 bg-opacity-70 rounded-full flex items-center justify-center cursor-move pointer-events-auto touch-none"
+                        style={{ zIndex: 100 }}
+                      >
+                        <Move className="w-6 h-6 text-white" />
+                      </div>
+                      {/* Corner resize indicators */}
+                      <div className="absolute top-0 right-0 w-8 h-8 bg-primary-500 bg-opacity-70 rounded-bl-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary-500 bg-opacity-70 rounded-tl-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 w-8 h-8 bg-primary-500 bg-opacity-70 rounded-tr-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="absolute top-0 left-0 w-8 h-8 bg-primary-500 bg-opacity-70 rounded-br-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
                   </Rnd>
                 );
               })}
@@ -1273,6 +1306,17 @@ export function CreateOrientationPage() {
                   bounds="parent"
                   className="border-2 border-blue-500"
                   style={{ zIndex: 10 }}
+                  resizeHandleStyles={{
+                    top: { height: '20px', cursor: 'ns-resize' },
+                    right: { width: '20px', cursor: 'ew-resize' },
+                    bottom: { height: '20px', cursor: 'ns-resize' },
+                    left: { width: '20px', cursor: 'ew-resize' },
+                    topRight: { width: '30px', height: '30px', cursor: 'nesw-resize' },
+                    bottomRight: { width: '30px', height: '30px', cursor: 'nwse-resize' },
+                    bottomLeft: { width: '30px', height: '30px', cursor: 'nesw-resize' },
+                    topLeft: { width: '30px', height: '30px', cursor: 'nwse-resize' },
+                  }}
+                  dragHandleClassName="logo-drag-handle"
                 >
                   <div className="relative w-full h-full">
                     <img
@@ -1281,6 +1325,27 @@ export function CreateOrientationPage() {
                       className="w-full h-full object-contain pointer-events-none"
                       style={blurEnabled ? { opacity: 0.2, filter: `blur(${blurAmount}px)` } : { opacity: 0.2 }}
                     />
+                    {/* Move handle - center (dragHandleClassName applied) */}
+                    <div
+                      className="logo-drag-handle absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-blue-500 bg-opacity-70 rounded-full flex items-center justify-center cursor-move pointer-events-auto touch-none"
+                      style={{ zIndex: 100 }}
+                    >
+                      <Move className="w-6 h-6 text-white" />
+                    </div>
+                    {/* Corner resize indicators */}
+                    <div className="absolute top-0 right-0 w-8 h-8 bg-blue-500 bg-opacity-70 rounded-bl-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-blue-500 bg-opacity-70 rounded-tl-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 w-8 h-8 bg-blue-500 bg-opacity-70 rounded-tr-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="absolute top-0 left-0 w-8 h-8 bg-blue-500 bg-opacity-70 rounded-br-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                    {/* Delete button */}
                     <button
                       onMouseDown={(e) => {
                         e.stopPropagation();
@@ -1291,7 +1356,7 @@ export function CreateOrientationPage() {
                         handleLogoDelete(idx);
                       }}
                       className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 text-xs font-bold pointer-events-auto cursor-pointer"
-                      style={{ zIndex: 100, pointerEvents: 'auto' }}
+                      style={{ zIndex: 101, pointerEvents: 'auto' }}
                     >
                       ×
                     </button>
@@ -1326,6 +1391,14 @@ export function CreateOrientationPage() {
                     >
                       {dateItem.text}
                     </div>
+                    {/* Move handle - top left */}
+                    <div
+                      className="absolute top-0 left-0 w-8 h-8 bg-green-500 bg-opacity-70 rounded-br-full flex items-center justify-center cursor-move pointer-events-auto touch-none"
+                      style={{ zIndex: 100 }}
+                    >
+                      <Move className="w-4 h-4 text-white" />
+                    </div>
+                    {/* Delete button */}
                     <button
                       onMouseDown={(e) => {
                         e.stopPropagation();
@@ -1359,6 +1432,16 @@ export function CreateOrientationPage() {
                   bottomLeft: false,
                   bottomRight: false,
                 }}
+                resizeHandleStyles={{
+                  top: {
+                    height: '60px',
+                    cursor: 'ns-resize',
+                    zIndex: 20,
+                    width: '60px',
+                    right: '0',
+                    left: 'auto',
+                  },
+                }}
                 onResizeStop={(_e, _direction, ref, _delta, _position) => {
                   const newHeight = parseInt(ref.style.height);
                   const newY = 1280 - newHeight;
@@ -1374,6 +1457,15 @@ export function CreateOrientationPage() {
               >
                 {/* Formatting toolbar - at top */}
                 <div className="absolute top-0 left-0 right-0 border-b border-gray-300 p-2 flex gap-2 items-center flex-wrap z-10" style={{ backgroundColor: 'rgba(249, 250, 251, 0.9)' }}>
+                  {/* Resize indicator - far right (shows where to drag) */}
+                  <div
+                    className="ml-auto w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center pointer-events-none"
+                    title="Потягніть тут для зміни висоти"
+                    style={{ order: 999 }}
+                  >
+                    <ArrowUpDown className="w-5 h-5 text-white" />
+                  </div>
+
                   <select
                     onChange={(e) => {
                       document.execCommand('fontSize', false, '7');
