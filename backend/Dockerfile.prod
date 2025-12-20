@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copy application code
 COPY app /app/app
 
+# Copy Alembic migration files
+COPY alembic.ini /app/alembic.ini
+COPY alembic /app/alembic
+
 # Create uploads and logs directories
 RUN mkdir -p /app/uploads /app/logs
 
