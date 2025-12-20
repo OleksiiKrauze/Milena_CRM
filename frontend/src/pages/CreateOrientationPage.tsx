@@ -138,8 +138,11 @@ export function CreateOrientationPage() {
 
   // Upload photo mutation
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadApi.uploadCasePhoto(Number(search?.case_id), file),
-    onSuccess: (photoUrl) => {
+    mutationFn: async (file: File) => {
+      const urls = await uploadApi.uploadImages([file]);
+      return urls[0];
+    },
+    onSuccess: (photoUrl: string) => {
       setSelectedPhotos([...selectedPhotos, photoUrl]);
       // Invalidate case query to refresh photos
       queryClient.invalidateQueries({ queryKey: ['case', search?.case_id] });
@@ -760,7 +763,7 @@ export function CreateOrientationPage() {
         logging: false,
         width: 720,
         height: 1280,
-        ignoreElements: (element) => {
+        ignoreElements: (_element) => {
           // Ignore elements that shouldn't be captured
           return false;
         },
@@ -1108,7 +1111,7 @@ export function CreateOrientationPage() {
               <div className="flex items-center gap-3">
                 <Button
                   onClick={() => setBlurEnabled(!blurEnabled)}
-                  variant={blurEnabled ? "default" : "outline"}
+                  variant={blurEnabled ? "primary" : "outline"}
                   className="flex-1"
                 >
                   {blurEnabled ? 'Вимкнути розмиття' : 'Увімкнути розмиття'}
@@ -1172,10 +1175,10 @@ export function CreateOrientationPage() {
                 <Rnd
                   size={{ width: 720, height: templatePosition.height }}
                   position={{ x: 0, y: templatePosition.y }}
-                  onDragStop={(e, d) => {
+                  onDragStop={(_e, d) => {
                     setTemplatePosition(prev => ({ ...prev, x: 0, y: d.y }));
                   }}
-                  onResizeStop={(e, direction, ref, delta, position) => {
+                  onResizeStop={(_e, _direction, ref, _delta, position) => {
                     setTemplatePosition({
                       x: 0,
                       y: position.y,
@@ -1215,13 +1218,13 @@ export function CreateOrientationPage() {
                     key={idx}
                     size={{ width: position.width, height: position.height }}
                     position={{ x: position.x, y: position.y }}
-                    onDragStop={(e, d) => {
+                    onDragStop={(_e, d) => {
                       setPhotoPositions(prev => ({
                         ...prev,
                         [idx]: { ...prev[idx], x: d.x, y: d.y }
                       }));
                     }}
-                    onResizeStop={(e, direction, ref, delta, pos) => {
+                    onResizeStop={(_e, _direction, ref, _delta, pos) => {
                       setPhotoPositions(prev => ({
                         ...prev,
                         [idx]: {
@@ -1251,12 +1254,12 @@ export function CreateOrientationPage() {
                   key={`logo-${idx}`}
                   size={{ width: logo.width, height: logo.height }}
                   position={{ x: logo.x, y: logo.y }}
-                  onDragStop={(e, d) => {
+                  onDragStop={(_e, d) => {
                     setLogos(prev => prev.map((item, i) =>
                       i === idx ? { ...item, x: d.x, y: d.y } : item
                     ));
                   }}
-                  onResizeStop={(e, direction, ref, delta, pos) => {
+                  onResizeStop={(_e, _direction, ref, _delta, pos) => {
                     setLogos(prev => prev.map((item, i) =>
                       i === idx ? {
                         ...item,
@@ -1302,7 +1305,7 @@ export function CreateOrientationPage() {
                   key={`date-${idx}`}
                   size={{ width: dateItem.width, height: dateItem.height }}
                   position={{ x: dateItem.x, y: dateItem.y }}
-                  onDragStop={(e, d) => {
+                  onDragStop={(_e, d) => {
                     setDates(prev => prev.map((item, i) =>
                       i === idx ? { ...item, x: d.x, y: d.y } : item
                     ));
@@ -1355,7 +1358,7 @@ export function CreateOrientationPage() {
                   bottomLeft: false,
                   bottomRight: false,
                 }}
-                onResizeStop={(e, direction, ref, delta, position) => {
+                onResizeStop={(_e, _direction, ref, _delta, _position) => {
                   const newHeight = parseInt(ref.style.height);
                   const newY = 1280 - newHeight;
                   setTextFieldPosition({
@@ -1475,7 +1478,7 @@ export function CreateOrientationPage() {
               {/* Vertical text field - City (red) */}
               <Rnd
                 position={{ x: cityPosition.x, y: cityPosition.y }}
-                onDragStop={(e, d) => {
+                onDragStop={(_e, d) => {
                   setCityPosition({ x: d.x, y: d.y });
                 }}
                 enableResizing={false}
