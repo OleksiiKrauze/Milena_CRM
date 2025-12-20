@@ -2,6 +2,8 @@ from app.models.user import User, Role, Direction, UserStatus, user_roles, user_
 from app.models.case import Case
 from app.models.search import Search, SearchStatus
 from app.models.flyer import Flyer
+from app.models.flyer_template import FlyerTemplate, TemplateType
+from app.models.orientation import Orientation
 from app.models.distribution import Distribution, DistributionStatus
 from app.models.field_search import FieldSearch, FieldSearchStatus, field_search_participants
 from app.models.map_grid import MapGrid, GridCell, GridCellStatus
@@ -13,6 +15,8 @@ __all__ = [
     'Case',
     'Search', 'SearchStatus',
     'Flyer',
+    'FlyerTemplate', 'TemplateType',
+    'Orientation',
     'Distribution', 'DistributionStatus',
     'FieldSearch', 'FieldSearchStatus', 'field_search_participants',
     'MapGrid', 'GridCell', 'GridCellStatus',

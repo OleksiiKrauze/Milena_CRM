@@ -104,14 +104,16 @@ export function CreateCasePage() {
         }
       }
 
-      return casesApi.create({
+      const finalData = {
         ...cleanedData,
         missing_photos: uploadedPhotos,
         tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
           ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
-      });
+      };
+
+      return casesApi.create(finalData);
     },
     onSuccess: (data) => {
       // Invalidate cases list cache to refresh data

@@ -27,6 +27,8 @@ import { EditFieldSearchPage } from '@/pages/EditFieldSearchPage';
 import { CreateEventPage } from '@/pages/CreateEventPage';
 import { EventDetailsPage } from '@/pages/EventDetailsPage';
 import { EditEventPage } from '@/pages/EditEventPage';
+import { FlyerTemplatesPage } from '@/pages/FlyerTemplatesPage';
+import { CreateOrientationPage } from '@/pages/CreateOrientationPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -188,6 +190,22 @@ export function App() {
             }
           />
           <Route
+            path="/searches/:searchId/create-orientation"
+            element={
+              <ProtectedRoute>
+                <CreateOrientationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/searches/:searchId/orientations/:orientationId"
+            element={
+              <ProtectedRoute>
+                <CreateOrientationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/searches/:searchId/create-event"
             element={
               <ProtectedRoute>
@@ -256,6 +274,14 @@ export function App() {
             element={
               <ProtectedRoute>
                 <DirectionsManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/flyer-templates"
+            element={
+              <ProtectedRoute>
+                <FlyerTemplatesPage />
               </ProtectedRoute>
             }
           />

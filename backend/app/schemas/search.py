@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from app.schemas.map_grid import MapGridResponse
     from app.schemas.field_search import FieldSearchResponse
     from app.schemas.event import EventResponse
+    from app.schemas.orientation import OrientationResponse
+    from app.schemas.case import CaseResponse
 
 from app.schemas.auth import UserBrief, CaseBrief
 
@@ -63,7 +65,9 @@ class SearchListResponse(BaseModel):
 
 class SearchFullResponse(SearchResponse):
     """Schema for search with all related data"""
+    case: Optional["CaseResponse"] = None  # Override to include full case data for orientations
     flyers: List["FlyerResponse"] = []
+    orientations: List["OrientationResponse"] = []
     distributions: List["DistributionResponse"] = []
     map_grids: List["MapGridResponse"] = []
     field_searches: List["FieldSearchResponse"] = []
@@ -73,7 +77,9 @@ class SearchFullResponse(SearchResponse):
 
 
 # Rebuild models to resolve forward references
+from app.schemas.case import CaseResponse
 from app.schemas.flyer import FlyerResponse
+from app.schemas.orientation import OrientationResponse
 from app.schemas.distribution import DistributionResponse
 from app.schemas.map_grid import MapGridResponse
 from app.schemas.field_search import FieldSearchResponse

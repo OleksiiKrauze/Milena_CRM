@@ -23,6 +23,8 @@ from app.routers import directions
 from app.routers import users
 from app.routers import searches
 from app.routers import flyers
+from app.routers import flyer_templates
+from app.routers import orientations
 from app.routers import distributions
 from app.routers import field_searches
 from app.routers import map_grids
@@ -122,6 +124,8 @@ app.include_router(directions.router)
 app.include_router(users.router)
 app.include_router(searches.router)
 app.include_router(flyers.router)
+app.include_router(flyer_templates.router)
+app.include_router(orientations.router)
 app.include_router(distributions.router)
 app.include_router(field_searches.router)
 app.include_router(map_grids.router)

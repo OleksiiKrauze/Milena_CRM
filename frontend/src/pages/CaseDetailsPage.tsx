@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
@@ -8,12 +9,28 @@ import { formatDate, formatDateTime } from '@/utils/formatters';
 export function CaseDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data: caseData, isLoading, error } = useQuery({
     queryKey: ['case-full', id],
     queryFn: () => casesApi.getFull(Number(id)),
     enabled: !!id,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => casesApi.delete(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      navigate('/cases');
+    },
+  });
+
+  const handleDeleteConfirm = () => {
+    deleteMutation.mutate();
+    setShowDeleteModal(false);
+  };
 
   if (isLoading) {
     return (
@@ -45,14 +62,23 @@ export function CaseDetailsPage() {
 
       <Container className="py-6">
         <div className="space-y-4">
-          {/* Edit Button */}
-          <Button
-            onClick={() => navigate(`/cases/${caseData.id}/edit`)}
-            fullWidth
-            variant="outline"
-          >
-            Редагувати заявку
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button
+              onClick={() => navigate(`/cases/${caseData.id}/edit`)}
+              fullWidth
+              variant="outline"
+            >
+              Редагувати заявку
+            </Button>
+            <Button
+              onClick={() => setShowDeleteModal(true)}
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              Видалити
+            </Button>
+          </div>
           {/* Main Info */}
           <Card>
             <CardHeader>
@@ -347,6 +373,47 @@ export function CaseDetailsPage() {
 
         </div>
       </Container>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Видалити заявку?</h3>
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                Ця дія незворотна. Буде видалено:
+              </p>
+              <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
+                <li>Заявку #{caseData.id}</li>
+                <li>Усі пов'язані пошуки</li>
+                <li>Орієнтування та експортовані файли</li>
+                <li>Роздачі листівок</li>
+                <li>Сітки карт</li>
+                <li>Виходи в поле</li>
+                <li>Події та медіа-файли</li>
+              </ul>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => setShowDeleteModal(false)}
+                variant="outline"
+                fullWidth
+                disabled={deleteMutation.isPending}
+              >
+                Скасувати
+              </Button>
+              <Button
+                onClick={handleDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                fullWidth
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

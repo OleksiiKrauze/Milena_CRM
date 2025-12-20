@@ -41,6 +41,17 @@ def create_case(
         missing_description=case_data.missing_description,
         missing_special_signs=case_data.missing_special_signs,
         missing_diseases=case_data.missing_diseases,
+        missing_phone=case_data.missing_phone,
+        missing_clothing=case_data.missing_clothing,
+        missing_belongings=case_data.missing_belongings,
+        # Additional case information
+        additional_search_regions=case_data.additional_search_regions or [],
+        police_report_filed=case_data.police_report_filed,
+        search_terrain_type=case_data.search_terrain_type,
+        disappearance_circumstances=case_data.disappearance_circumstances,
+        initial_info=case_data.initial_info,
+        additional_info=case_data.additional_info,
+        # Case metadata
         decision_type=case_data.decision_type,
         decision_comment=case_data.decision_comment,
         tags=case_data.tags or []

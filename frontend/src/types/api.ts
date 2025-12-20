@@ -181,7 +181,9 @@ export interface SearchListResponse {
 }
 
 export interface SearchFull extends Search {
+  case: Case | null;  // Override to include full case data for orientations
   flyers?: any[];
+  orientations?: Orientation[];
   distributions?: any[];
   map_grids?: any[];
   field_searches?: FieldSearch[];
@@ -376,6 +378,41 @@ export interface EventUpdate {
 export interface EventListResponse {
   total: number;
   events: Event[];
+}
+
+// Flyer Template types
+export interface FlyerTemplate {
+  id: number;
+  created_at: string;
+  template_type: string;
+  file_name: string;
+  file_path: string;
+  description: string | null;
+  is_active: number;
+}
+
+export interface FlyerTemplateListResponse {
+  total: number;
+  templates: FlyerTemplate[];
+}
+
+// Orientation types
+export interface Orientation {
+  id: number;
+  search_id: number;
+  created_at: string;
+  updated_at: string | null;
+  template_id: number | null;
+  selected_photos: string[];
+  canvas_data: Record<string, unknown>;
+  text_content: string | null;
+  is_approved: boolean;
+  exported_files: string[];
+}
+
+export interface OrientationListResponse {
+  total: number;
+  orientations: Orientation[];
 }
 
 // API Error types

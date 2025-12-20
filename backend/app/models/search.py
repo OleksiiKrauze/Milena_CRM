@@ -47,6 +47,7 @@ class Search(Base):
     initiator_inforg = relationship('User', foreign_keys=[initiator_inforg_id])
     current_flyer = relationship('Flyer', foreign_keys=[current_flyer_id], post_update=True)
     flyers = relationship('Flyer', back_populates='search', foreign_keys='Flyer.search_id', cascade='all, delete-orphan')
+    orientations = relationship('Orientation', back_populates='search', cascade='all, delete-orphan')
     distributions = relationship('Distribution', back_populates='search', cascade='all, delete-orphan')
     map_grids = relationship('MapGrid', back_populates='search', cascade='all, delete-orphan')
     field_searches = relationship('FieldSearch', back_populates='search', cascade='all, delete-orphan')

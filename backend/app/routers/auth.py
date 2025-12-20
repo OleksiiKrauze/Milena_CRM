@@ -55,6 +55,18 @@ def require_role(required_role: str):
     return role_checker
 
 
+# Dependency: Require admin role
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Check if user has admin role"""
+    user_roles = [role.name for role in current_user.roles]
+    if "admin" not in user_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required"
+        )
+    return current_user
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""

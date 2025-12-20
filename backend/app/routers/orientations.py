@@ -1,0 +1,158 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session, joinedload
+from typing import Optional
+from app.db import get_db
+from app.schemas.orientation import (
+    OrientationCreate,
+    OrientationUpdate,
+    OrientationResponse,
+    OrientationListResponse
+)
+from app.models.orientation import Orientation
+from app.models.search import Search
+from app.models.user import User
+from app.routers.auth import get_current_user
+
+router = APIRouter(prefix="/orientations", tags=["Orientations"])
+
+
+@router.post("/", response_model=OrientationResponse, status_code=status.HTTP_201_CREATED)
+def create_orientation(
+    orientation_data: OrientationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new orientation for a search"""
+
+    # Verify search exists
+    search = db.query(Search).filter(Search.id == orientation_data.search_id).first()
+    if not search:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Search with id {orientation_data.search_id} not found"
+        )
+
+    # Create orientation
+    db_orientation = Orientation(
+        search_id=orientation_data.search_id,
+        template_id=orientation_data.template_id,
+        selected_photos=orientation_data.selected_photos,
+        canvas_data=orientation_data.canvas_data,
+        text_content=orientation_data.text_content,
+        is_approved=orientation_data.is_approved,
+        exported_files=orientation_data.exported_files
+    )
+
+    db.add(db_orientation)
+    db.commit()
+    db.refresh(db_orientation)
+
+    return db_orientation
+
+
+@router.get("/", response_model=OrientationListResponse)
+def list_orientations(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(50, ge=1, le=100, description="Max number of records to return"),
+    search_id: Optional[int] = Query(None, description="Filter by search ID"),
+    is_approved: Optional[bool] = Query(None, description="Filter by approval status"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get list of orientations with pagination and filters"""
+
+    query = db.query(Orientation).options(
+        joinedload(Orientation.search),
+        joinedload(Orientation.template)
+    )
+
+    # Apply filters
+    if search_id is not None:
+        query = query.filter(Orientation.search_id == search_id)
+
+    if is_approved is not None:
+        query = query.filter(Orientation.is_approved == is_approved)
+
+    # Get total count before pagination
+    total = query.count()
+
+    # Apply pagination
+    orientations = query.order_by(Orientation.created_at.desc()).offset(skip).limit(limit).all()
+
+    return OrientationListResponse(
+        total=total,
+        orientations=orientations
+    )
+
+
+@router.get("/{orientation_id}", response_model=OrientationResponse)
+def get_orientation(
+    orientation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific orientation by ID"""
+
+    orientation = db.query(Orientation).options(
+        joinedload(Orientation.search),
+        joinedload(Orientation.template)
+    ).filter(Orientation.id == orientation_id).first()
+
+    if not orientation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Orientation with id {orientation_id} not found"
+        )
+
+    return orientation
+
+
+@router.patch("/{orientation_id}", response_model=OrientationResponse)
+def update_orientation(
+    orientation_id: int,
+    orientation_data: OrientationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update an orientation"""
+
+    db_orientation = db.query(Orientation).filter(Orientation.id == orientation_id).first()
+
+    if not db_orientation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Orientation with id {orientation_id} not found"
+        )
+
+    # Update fields
+    update_data = orientation_data.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        setattr(db_orientation, field, value)
+
+    db.commit()
+    db.refresh(db_orientation)
+
+    return db_orientation
+
+
+@router.delete("/{orientation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_orientation(
+    orientation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete an orientation"""
+
+    db_orientation = db.query(Orientation).filter(Orientation.id == orientation_id).first()
+
+    if not db_orientation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Orientation with id {orientation_id} not found"
+        )
+
+    db.delete(db_orientation)
+    db.commit()
+
+    return None

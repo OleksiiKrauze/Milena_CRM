@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { searchesApi } from '@/api/searches';
+import { orientationsApi } from '@/api/orientations';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
@@ -8,12 +10,27 @@ import { formatDate, formatDateTime } from '@/utils/formatters';
 export function SearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const { data: searchData, isLoading, error } = useQuery({
     queryKey: ['search-full', id],
     queryFn: () => searchesApi.getFull(Number(id)),
     enabled: !!id,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (orientationId: number) => orientationsApi.delete(orientationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['search-full', id] });
+      setDeleteConfirmId(null);
+    },
+  });
+
+  const handleDeleteOrientation = (orientationId: number) => {
+    deleteMutation.mutate(orientationId);
+  };
 
   if (isLoading) {
     return (
@@ -145,6 +162,95 @@ export function SearchDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Примітки</p>
                   <p className="font-medium whitespace-pre-wrap">{searchData.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Orientations */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Орієнтування ({searchData.orientations?.length || 0})</CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(`/searches/${searchData.id}/create-orientation`)}
+                >
+                  + Створити орієнтування
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!searchData.orientations || searchData.orientations.length === 0 ? (
+                <p className="text-sm text-gray-600">Орієнтування не створено</p>
+              ) : (
+                <div className="space-y-3">
+                  {searchData.orientations.map((orientation) => (
+                    <div
+                      key={orientation.id}
+                      className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="font-medium">Орієнтування #{orientation.id}</p>
+                        {orientation.is_approved && (
+                          <Badge variant="success">Узгоджено</Badge>
+                        )}
+                      </div>
+
+                      {/* Image Preview */}
+                      {orientation.exported_files && orientation.exported_files.length > 0 && (
+                        <div
+                          className="mb-3 cursor-pointer"
+                          onClick={() => setSelectedImage(orientation.exported_files[orientation.exported_files.length - 1])}
+                        >
+                          <img
+                            src={`${import.meta.env.VITE_API_URL || '/api'}${orientation.exported_files[orientation.exported_files.length - 1]}`}
+                            alt="Орієнтування"
+                            className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors"
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-1 text-sm text-gray-600 mb-3">
+                        <p>Створено: {formatDateTime(orientation.created_at)}</p>
+                        {orientation.selected_photos && orientation.selected_photos.length > 0 && (
+                          <p>Фото: {orientation.selected_photos.length}</p>
+                        )}
+                        {orientation.exported_files && orientation.exported_files.length > 0 && (
+                          <p>Експортовано файлів: {orientation.exported_files.length}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/searches/${searchData.id}/orientations/${orientation.id}`)}
+                            fullWidth
+                          >
+                            Редагувати
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/searches/${searchData.id}/create-orientation?duplicate=${orientation.id}`)}
+                            fullWidth
+                          >
+                            Редагувати як нове
+                          </Button>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeleteConfirmId(orientation.id)}
+                          fullWidth
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                        >
+                          Видалити
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -339,6 +445,80 @@ export function SearchDetailsPage() {
           </Card>
         </div>
       </Container>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-10 right-0 text-white text-2xl font-bold hover:text-gray-300"
+            >
+              ×
+            </button>
+            <img
+              src={`${import.meta.env.VITE_API_URL || '/api'}${selectedImage}`}
+              alt="Орієнтування"
+              className="w-full rounded-lg"
+            />
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = `${import.meta.env.VITE_API_URL || '/api'}${selectedImage}`;
+                  link.download = selectedImage.split('/').pop() || 'orientation.jpg';
+                  link.click();
+                }}
+                fullWidth
+              >
+                Завантажити
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedImage(null)}
+                fullWidth
+              >
+                Закрити
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+          onClick={() => setDeleteConfirmId(null)}
+        >
+          <div className="relative bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Видалити орієнтування?</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Ця дія незворотна. Орієнтування буде видалено разом зі всіма пов'язаними файлами та даними.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmId(null)}
+                fullWidth
+              >
+                Скасувати
+              </Button>
+              <Button
+                onClick={() => handleDeleteOrientation(deleteConfirmId)}
+                fullWidth
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

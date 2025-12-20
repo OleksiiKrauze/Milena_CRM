@@ -81,7 +81,7 @@ searches (поисковые операции)
 ├── case_id → cases
 ├── initiator_inforg → users
 ├── current_flyer → flyers
-├── flyers (one-to-many) → flyers
+├── orientations (one-to-many) → orientations
 ├── distributions (one-to-many) → distributions
 ├── map_grids (one-to-many) → map_grids
 └── field_searches (one-to-many) → field_searches
@@ -332,13 +332,63 @@ role_on_field: String(50) - роль (coordinator, navigator, searcher, driver)
 group_name: String(50) - название группы (Group A, Group B, etc.)
 ```
 
-#### 8-12. Остальные таблицы (НЕ РЕАЛИЗОВАНЫ)
+#### 8. orientations (Орієнтування) ✅
 
-- **flyers** (ориентировки) - НЕ РЕАЛИЗОВАНО
+```sql
+id: Integer (PK)
+search_id: Integer FK(searches.id) CASCADE - привязка к поиску
+template_id: Integer FK(flyer_templates.id) SET NULL - основной шаблон
+selected_photos: ARRAY(String) - массив URL выбранных фото
+canvas_data: JSON - полные данные канваса (позиции, размеры, настройки)
+text_content: Text - HTML содержимое текстового поля
+is_approved: Boolean - утверждено ли ориентування
+exported_files: ARRAY(String) - массив URL экспортированных JPEG файлов
+created_at: DateTime(TZ) - дата создания
+```
+
+**Структура canvas_data (JSON):**
+```json
+{
+  "photoPositions": {"0": {"x": 50, "y": 50, "width": 200, "height": 200}},
+  "templatePosition": {"x": 0, "y": 200, "width": 720, "height": 400},
+  "textFieldPosition": {"x": 0, "y": 427, "width": 720, "height": 853},
+  "textFormatting": {"fontSize": 28, "textAlign": "left", "textColor": "#000000"},
+  "verticalTexts": {
+    "city": {"text": "Київ", "position": {"x": 40, "y": 300}},
+    "date": {"text": "20.12.2024", "position": {"x": 680, "y": 300}}
+  },
+  "additionalTemplate": {"url": "/uploads/...", "id": 123},
+  "logos": [{"url": "/uploads/...", "x": 100, "y": 100, "width": 150, "height": 150}],
+  "dates": [{"text": "20.12.2024р.", "x": 300, "y": 200, "width": 200, "height": 50, "color": "#FF0000"}],
+  "blur": {"enabled": true, "amount": 5}
+}
+```
+
+**Индексы:** search_id, is_approved
+
+#### 9. flyer_templates (Шаблони орієнтувань) ✅
+
+```sql
+id: Integer (PK)
+file_name: String(255) - оригинальное имя файла
+file_path: String(500) UNIQUE - путь к файлу в uploads
+file_type: String(50) - тип шаблона ('main', 'additional', 'logo')
+uploaded_at: DateTime(TZ) - дата загрузки
+```
+
+**Типы шаблонов:**
+- `main` - основной шаблон (фоновое изображение, позиционируется вертикально)
+- `additional` - дополнительный шаблон (всегда внизу канваса)
+- `logo` - логотип (добавляется с opacity 20%, можно добавить несколько экземпляров)
+
+**Индексы:** file_path, file_type
+
+#### 10-13. Остальные таблицы (НЕ РЕАЛИЗОВАНЫ)
+
 - **distributions** (рассылки) - НЕ РЕАЛИЗОВАНО
-- **map_grids** (карты местности) - НЕ РЕАЛИЗОВАНО
-- **grid_cells** (квадраты сетки) - НЕ РЕАЛИЗОВАНО
-- **institutions_calls** (прозвоны учреждений) - НЕ РЕАЛИЗОВАНО
+- **map_grids** (карты местності) - НЕ РЕАЛИЗОВАНО
+- **grid_cells** (квадраты сітки) - НЕ РЕАЛИЗОВАНО
+- **institutions_calls** (прозвони закладів) - НЕ РЕАЛИЗОВАНО
 
 ---
 
@@ -375,7 +425,8 @@ backend/
 │   │   ├── directions.py          # Управление направлениями ✅
 │   │   ├── dashboard.py           # GET /dashboard/stats ✅
 │   │   ├── upload.py              # POST /upload/images, DELETE /upload/images/{filename} ✅
-│   │   ├── flyers.py              # CRUD для ориентировок (НЕ РЕАЛИЗОВАНО)
+│   │   ├── orientations.py        # CRUD для орієнтувань ✅
+│   │   ├── flyer_templates.py     # CRUD для шаблонів орієнтувань ✅
 │   │   ├── distributions.py       # CRUD для рассылок (НЕ РЕАЛИЗОВАНО)
 │   │   ├── map_grids.py           # CRUD для карт (НЕ РЕАЛИЗОВАНО)
 │   │   └── institutions_calls.py  # CRUD для прозвонов (НЕ РЕАЛИЗОВАНО)
@@ -443,6 +494,32 @@ backend/
   - Возвращает массив URL: `["/uploads/uuid1.jpg", ...]`
 - `DELETE /upload/images/{filename}` - удалить изображение
 - `GET /uploads/{filename}` - получить загруженный файл (StaticFiles middleware)
+
+#### Орієнтування (Orientations) ✅
+
+- `POST /orientations/` - создать орієнтування для поиска
+- `GET /orientations/` - список орієнтувань (пагинация, фильтр по search_id, is_approved)
+- `GET /orientations/{id}` - получить орієнтування
+- `PATCH /orientations/{id}` - обновить орієнтування (частичное обновление)
+- `DELETE /orientations/{id}` - удалить орієнтування (каскадное удаление файлов)
+
+**Особенности:**
+- `canvas_data` хранится как JSON и содержит все данные о канвасе
+- `exported_files` автоматически пополняется при сохранении (auto-save JPEG)
+- При удалении орієнтування удаляются все связанные файлы из exported_files
+
+#### Шаблони орієнтувань (Flyer Templates) ✅
+
+- `POST /flyer-templates/` - загрузить шаблон (multipart/form-data)
+  - Параметры: file (изображение), file_type ('main' | 'additional' | 'logo')
+- `GET /flyer-templates/` - список шаблонов (фильтр по file_type)
+- `GET /flyer-templates/{id}` - получить шаблон
+- `DELETE /flyer-templates/{id}` - удалить шаблон (удаляет файл из uploads)
+
+**Типы шаблонов:**
+- `main` - основной шаблон (фон, позиционируется вертикально)
+- `additional` - дополнительный (всегда внизу канваса)
+- `logo` - логотип (с opacity 20%, можно добавить несколько)
 
 #### Пользователи, роли, направления ✅
 
@@ -884,26 +961,61 @@ function PublicRoute({ children }) {
 - ✅ Нижняя навигация для мобильных
 - ✅ Touch-friendly интерфейс
 
+#### 9. Система Орієнтувань (Orientations) ✅
+
+**Редактор орієнтувань - канвас 720x1280px:**
+- ✅ Основний шаблон (фоновое изображение) с вертикальным позиционированием
+- ✅ Выбор и позиционирование фотографий зниклого (до 10 штук, draggable & resizable)
+- ✅ Текстовое поле с rich-text редактором (форматирование, размер, цвет, выравнивание)
+- ✅ Вертикальные текстовые поля (місто и дата) с ротацией -90°
+- ✅ Додатковий шаблон (дополнительное изображение внизу канваса)
+- ✅ Логотипы (множественные экземпляры, draggable & resizable, opacity 20%)
+- ✅ Даты (добавление текущей даты с выбором цвета, только draggable)
+- ✅ Размытие (Gaussian blur с регулировкой степени 1-20px, применяется ко всему кроме основного шаблона и дат)
+
+**Функции редактора:**
+- ✅ Auto-fill текста из заявки (ФИО, описание, особые приметы, заболевания)
+- ✅ Изменение размера текстового поля только сверху (нижний край привязан к низу канваса)
+- ✅ Сохранение всех позиций и настроек в JSON (canvas_data)
+- ✅ Редактирование существующих орієнтувань с восстановлением всех элементов
+- ✅ Дублирование орієнтувань ("Редагувати як нове")
+- ✅ Auto-save JPEG при сохранении (экспорт в uploads, путь сохраняется в exported_files)
+- ✅ Отдельная кнопка "Експорт" для скачивания JPEG на устройство
+
+**Экспорт в JPEG:**
+- ✅ html2canvas для рендеринга канваса в изображение
+- ✅ Качество JPEG 95%
+- ✅ Размытие применяется через Canvas API (ctx.filter) для корректного отображения
+- ✅ Повторная перерисовка основного шаблона и дат поверх размытия (без размытия)
+- ✅ Коррекция координат Y для дат (-29px) для точного позиционирования
+
+**Управление шаблонами:**
+- ✅ Загрузка шаблонов трех типов (main, additional, logo)
+- ✅ Список шаблонов на странице настроек (Settings → Flyer Templates)
+- ✅ Удаление шаблонов с каскадным удалением файлов
+- ✅ Превью шаблонов в редакторе
+
+**Отображение орієнтувань:**
+- ✅ Раздел "Орієнтування" на странице поиска (SearchDetailsPage)
+- ✅ Превью последнего экспортированного JPEG в карточке
+- ✅ Модальное окно с полным изображением и кнопкой скачивания
+- ✅ Кнопки "Редагувати" и "Редагувати як нове" для каждого орієнтування
+- ✅ Кнопка "Видалити" с подтверждением и каскадным удалением файлов
+
+**Технические особенности:**
+- ✅ react-rnd для draggable/resizable элементов
+- ✅ html2canvas для конвертации DOM в изображение
+- ✅ Хранение всех данных канваса в JSON (позиции, размеры, цвета, тексты)
+- ✅ Система координат с учетом масштаба (canvasScale) для корректного экспорта
+- ✅ Получение реальных координат из DOM для точного позиционирования при экспорте
+
 ---
 
 ## Планируемый функционал
 
 ### ❌ НЕ реализовано (требуется разработка)
 
-#### 1. Ориентировки (Flyers)
-- Создание ориентировок для поиска
-- Загрузка фото и PDF файлов
-- Версионирование ориентировок
-- Установка текущей (актуальной) ориентировки для поиска
-- Связь с выездами (какую ориентировку раздавать)
-
-**Требуется:**
-- Backend: `backend/app/routers/flyers.py`
-- Backend: `backend/app/schemas/flyer.py`
-- Frontend: `FlyersListPage.tsx`, `FlyerDetailsPage.tsx`, `CreateFlyerPage.tsx`, `EditFlyerPage.tsx`
-- Frontend: `frontend/src/api/flyers.ts`
-
-#### 2. Рассылки ориентировок (Distributions)
+#### 1. Рассылки ориентировок (Distributions)
 - Создание рассылки для поиска
 - Выбор ориентировки для рассылки
 - Указание населенных пунктов (текст)
@@ -917,7 +1029,7 @@ function PublicRoute({ children }) {
 - Frontend: `DistributionsListPage.tsx`, `DistributionDetailsPage.tsx`, `CreateDistributionPage.tsx`, `EditDistributionPage.tsx`
 - Frontend: `frontend/src/api/distributions.ts`
 
-#### 3. Карты местности с сеткой (Map Grids)
+#### 2. Карты местності з сіткою (Map Grids)
 - Создание карты местности для поиска
 - Загрузка файла карты
 - Указание координат штаба и центра
@@ -934,7 +1046,7 @@ function PublicRoute({ children }) {
 - Frontend: `frontend/src/api/map-grids.ts`
 - Frontend: Компонент визуализации карты (возможно с Leaflet/OpenLayers)
 
-#### 4. Прозвоны учреждений (Institutions Calls)
+#### 3. Прозвони закладів (Institutions Calls)
 - Создание записи о звонке в учреждение для заявки
 - Указание названия организации и типа
 - Указание телефона
@@ -948,51 +1060,46 @@ function PublicRoute({ children }) {
 - Frontend: `frontend/src/api/institutions-calls.ts`
 - Frontend: Раздел в CaseDetailsPage для отображения прозвонов
 
-#### 5. Дополнительные функции
+#### 4. Додаткові функції
 
-##### 5.1. Система уведомлений
+##### 4.1. Система уведомлений
 - Push-уведомления для важных событий
 - Email-уведомления
 - Telegram-уведомления
 - Настройка предпочтений уведомлений
 
-##### 5.2. Экспорт данных
+##### 4.2. Экспорт данных
 - Экспорт заявок в Excel/PDF
 - Экспорт отчетов по поискам
 - Статистика за период
 
-##### 5.3. Расширенная статистика
+##### 4.3. Расширенная статистика
 - Графики по результатам поисков
 - Карта с геолокацией заявок
 - Аналитика по эффективности поисков
 - Отчеты по волонтерам
 
-##### 5.4. Комментарии и чат
+##### 4.4. Комментарии и чат
 - Комментарии к заявкам
 - Комментарии к поискам и выездам
 - Внутренний чат для координации
 
-##### 5.5. Календарь событий
+##### 4.5. Календарь событий
 - Календарь выездов на местность
 - Напоминания о предстоящих выездах
 - Синхронизация с Google Calendar
 
-##### 5.6. Продвинутый поиск
+##### 4.6. Продвинутый поиск
 - Полнотекстовый поиск по заявкам
 - Поиск по множественным критериям
 - Сохраненные фильтры
 
-##### 5.7. Аудит и история изменений
+##### 4.7. Аудит и история изменений
 - Логирование всех изменений в БД
 - История редактирования записей
 - Просмотр кто и когда изменил данные
 
-##### 5.8. Шаблоны ориентировок
-- Конструктор ориентировок
-- Сохраненные шаблоны
-- Автозаполнение данными из заявки
-
-##### 5.9. Интеграции
+##### 4.8. Интеграции
 - Интеграция с Telegram Bot API
 - Интеграция с email сервисами
 - Интеграция с картографическими сервисами
@@ -1228,7 +1335,191 @@ if (fieldSearch.result === 'alive') {
 }
 ```
 
-### 13. База данных без миграций
+### 13. Система орієнтувань: технические нюансы
+
+#### Проблема 1: 403 Forbidden при сохранении
+
+**Проблема:** POST на `/orientations` возвращал 403 "Not authenticated"
+
+**Причина:**
+- Frontend вызывал `POST /orientations` (без trailing slash)
+- FastAPI редиректил на `/orientations/` с HTTP 307
+- Браузер следовал редиректу, но **терял Authorization header**
+- Backend не получал токен → 403
+
+**Решение:** Добавить trailing slash в API клиенте:
+```typescript
+// frontend/src/api/orientations.ts
+api.post<Orientation>('/orientations/', data) // ← trailing slash обязателен
+```
+
+#### Проблема 2: Размытие не работало при экспорте
+
+**Проблема:** CSS filter: blur() не применялся в html2canvas
+
+**Причина:** html2canvas не всегда корректно обрабатывает CSS filters
+
+**Решение:** Применить размытие через Canvas API после рендеринга:
+```typescript
+// Создаем размытый canvas
+const blurCanvas = document.createElement('canvas');
+const ctx = blurCanvas.getContext('2d');
+ctx.filter = `blur(${blurAmount}px)`;
+ctx.drawImage(originalCanvas, 0, 0);
+
+// Перерисовываем элементы без размытия
+ctx.filter = 'none';
+ctx.drawImage(templateImage, x, y, width, height); // шаблон
+ctx.fillText(dateText, x, y); // даты
+```
+
+#### Проблема 3: Даты "уезжали" при экспорте с размытием
+
+**Проблема:** Даты отображались на 20-30px ниже при экспорте с включенным размытием
+
+**Причина:**
+- При перерисовке дат использовались координаты из state
+- Нужны были **реальные координаты из DOM** (как для фото и логотипов)
+- Плюс требовалась коррекция из-за разницы в рендеринге html2canvas vs Canvas API
+
+**Решение:**
+```typescript
+// 1. Сохранить реальные позиции из DOM перед экспортом
+const datesRealPositions: Array<{x, y, width, height, text, color}> = [];
+dates.forEach((dateItem, idx) => {
+  const rect = dateElements[idx].getBoundingClientRect();
+  const canvasRect = canvasRef.current.getBoundingClientRect();
+  const realX = (rect.left - canvasRect.left) / canvasScale;
+  const realY = (rect.top - canvasRect.top) / canvasScale;
+  datesRealPositions.push({x: realX, y: realY, ...});
+});
+
+// 2. Использовать реальные координаты + коррекция при перерисовке
+const DATE_Y_CORRECTION = -29;
+ctx.fillText(
+  datePos.text,
+  datePos.x + datePos.width / 2,
+  datePos.y + datePos.height / 2 + DATE_Y_CORRECTION
+);
+```
+
+#### Проблема 4: Нижний край текстового поля не фиксирован
+
+**Проблема:** При изменении высоты текстового поля оно "плыло" вверх/вниз
+
+**Требование:** Нижний край должен всегда быть на позиции 1280px (нижний край канваса)
+
+**Решение:**
+```typescript
+// 1. Отключить resize снизу
+enableResizing={{
+  top: true,
+  bottom: false, // ← только сверху
+}}
+
+// 2. При resize пересчитать Y координату
+onResizeStop={(e, direction, ref) => {
+  const newHeight = parseInt(ref.style.height);
+  const newY = 1280 - newHeight; // ← привязка к низу
+  setTextFieldPosition({
+    width: parseInt(ref.style.width),
+    height: newHeight,
+    x: textFieldPosition.x,
+    y: newY,
+  });
+}}
+
+// 3. При загрузке существующего орієнтування корректировать Y
+const adjustedY = 1280 - savedTextFieldPosition.height;
+setTextFieldPosition({...savedTextFieldPosition, y: adjustedY});
+```
+
+#### Проблема 5: Удаленные логотипы появлялись снова
+
+**Проблема:** После удаления логотипов, сохранения и повторного открытия логотипы восстанавливались
+
+**Причина:** Неправильный порядок spread operator в canvas_data:
+```typescript
+// НЕПРАВИЛЬНО - canvasData перезаписывает logos
+canvas_data: {
+  logos, // ← текущее состояние
+  ...canvasData, // ← старые данные перезаписывают logos
+}
+
+// ПРАВИЛЬНО - logos перезаписывает canvasData
+canvas_data: {
+  ...canvasData, // ← сначала старые данные
+  logos, // ← потом текущее состояние
+}
+```
+
+#### Ключевые технические решения
+
+**1. Система координат и масштабирование:**
+- Канвас имеет фиксированный размер 720x1280px
+- При отображении в UI применяется масштаб (canvasScale)
+- При экспорте нужно получать **реальные координаты из DOM**:
+```typescript
+const rect = element.getBoundingClientRect();
+const canvasRect = canvasRef.current.getBoundingClientRect();
+const realX = (rect.left - canvasRect.left) / canvasScale;
+const realY = (rect.top - canvasRect.top) / canvasScale;
+```
+
+**2. Коррекции координат для разных элементов:**
+```typescript
+// Шаблон: Y + 100px (из-за header и отступов)
+const Y_CORRECTION = 100;
+ctx.drawImage(template, x, y + Y_CORRECTION, width, height);
+
+// Текстовое поле: Y + 150px
+const TEXT_Y_CORRECTION = 150;
+textDiv.style.top = `${y + TEXT_Y_CORRECTION}px`;
+
+// Вертикальные тексты: Y + 200px, X - 10px
+const VERTICAL_TEXT_Y_CORRECTION = 200;
+const VERTICAL_TEXT_X_CORRECTION = -10;
+
+// Даты при перерисовке: Y - 29px
+const DATE_Y_CORRECTION = -29;
+```
+
+**3. Разделение функций Export и Save:**
+- **Export** (`handleExport`): только скачивает JPEG на устройство
+- **Save** (`handleSave`): генерирует JPEG, загружает на сервер, сохраняет orientation с путем в exported_files
+
+**4. Duplicate mode через URL параметр:**
+```typescript
+const searchParams = new URLSearchParams(window.location.search);
+const duplicateId = searchParams.get('duplicate');
+const isDuplicateMode = !!duplicateId;
+
+// Загружаем данные существующего, но сохраняем как новое
+if (isDuplicateMode) {
+  // Загрузить все данные
+  // При save создать новую запись (НЕ update)
+}
+```
+
+**5. JSON структура canvas_data:**
+```typescript
+interface CanvasData {
+  photoPositions: Record<number, {x, y, width, height}>;
+  templatePosition: {x, y, width, height};
+  textFieldPosition: {x, y, width, height};
+  textFormatting: {fontSize, textAlign, textColor};
+  verticalTexts: {
+    city: {text, position: {x, y}},
+    date: {text, position: {x, y}}
+  };
+  additionalTemplate?: {url, id};
+  logos: Array<{url, x, y, width, height}>;
+  dates: Array<{text, x, y, width, height, color}>;
+  blur: {enabled: boolean, amount: number};
+}
+```
+
+### 14. База данных без миграций
 
 **Важно:** Проект НЕ использует Alembic или другие инструменты миграций.
 

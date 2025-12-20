@@ -73,7 +73,8 @@ export function CasesListPage() {
                   <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
                     <Card className={`active:opacity-90 transition-colors ${bgColor}`}>
                       <CardContent className="p-4">
-                      <div className="mb-2">
+                      <div className="mb-2 flex items-baseline gap-2">
+                        <span className="text-sm font-medium text-gray-500">#{caseItem.id}</span>
                         <h3 className="font-semibold text-gray-900">
                           {caseItem.missing_full_name}
                         </h3>

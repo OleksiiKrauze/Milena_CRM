@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent } from '@/components/ui';
-import { Users, Shield, MapPin, ChevronRight } from 'lucide-react';
+import { Users, Shield, MapPin, FileText, ChevronRight } from 'lucide-react';
 
 export function SettingsPage() {
   const settingsOptions = [
@@ -28,6 +28,14 @@ export function SettingsPage() {
       path: '/settings/directions',
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+    },
+    {
+      title: 'Шаблони орієнтувань',
+      description: 'Завантаження шаблонів для створення орієнтувань',
+      icon: FileText,
+      path: '/settings/flyer-templates',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
     },
   ];
 
