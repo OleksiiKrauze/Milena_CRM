@@ -36,7 +36,10 @@ def upgrade() -> None:
     flyer_templates_columns = [col['name'] for col in inspector.get_columns('flyer_templates')]
 
     # Create enum type if it doesn't exist
-    conn.execute(sa.text("CREATE TYPE IF NOT EXISTS templatetype AS ENUM ('main', 'additional', 'logo')"))
+    # PostgreSQL doesn't support IF NOT EXISTS for CREATE TYPE, so check first
+    result = conn.execute(sa.text("SELECT 1 FROM pg_type WHERE typname = 'templatetype'"))
+    if not result.fetchone():
+        conn.execute(sa.text("CREATE TYPE templatetype AS ENUM ('main', 'additional', 'logo')"))
 
     if 'created_at' not in flyer_templates_columns:
         op.add_column('flyer_templates',
