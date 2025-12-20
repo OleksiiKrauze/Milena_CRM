@@ -1300,7 +1300,8 @@ export function CreateOrientationPage() {
               ))}
 
               {/* Dates - draggable only, above logos */}
-              {dates.map((dateItem, idx): React.ReactElement => (
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {dates.map((dateItem, idx) => (
                 <Rnd
                   key={`date-${idx}`}
                   size={{ width: dateItem.width, height: dateItem.height }}
@@ -1341,7 +1342,7 @@ export function CreateOrientationPage() {
                     </button>
                   </div>
                 </Rnd>
-              ))}
+              )) as any}
 
               {/* Text field - resizable */}
               <Rnd
