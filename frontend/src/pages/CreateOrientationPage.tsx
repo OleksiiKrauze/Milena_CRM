@@ -728,8 +728,8 @@ export function CreateOrientationPage() {
             }
           }
 
-          // Apply mobile offset for dates - move up 30px on mobile
-          const dateYOffset = isMobile ? -30 : 0;
+          // Apply mobile offset for dates - move down 10px on mobile
+          const dateYOffset = isMobile ? 10 : 0;
           const adjustedRealY = realY + dateYOffset;
 
           // Store real position for blur redraw
