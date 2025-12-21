@@ -619,7 +619,11 @@ export function CreateOrientationPage() {
       }
 
       // Add text field (z-index: 4)
-      const TEXT_Y_CORRECTION = 150;
+      // Detect mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                       || ('ontouchstart' in window)
+                       || (navigator.maxTouchPoints > 0);
+      const TEXT_Y_CORRECTION = isMobile ? 300 : 150; // Additional 150px for mobile
 
       const textDiv = document.createElement('div');
       textDiv.style.position = 'absolute';
@@ -638,7 +642,7 @@ export function CreateOrientationPage() {
       }
       textDiv.innerHTML = textContent;
       tempCanvas.appendChild(textDiv);
-      console.log(`Text field - State Y: ${textFieldPosition.y}, With correction: ${textFieldPosition.y + TEXT_Y_CORRECTION}`);
+      console.log(`Text field - State Y: ${textFieldPosition.y}, With correction: ${textFieldPosition.y + TEXT_Y_CORRECTION}, isMobile: ${isMobile}`);
 
       // Add vertical city text (red, z-index: 5)
       const VERTICAL_TEXT_Y_CORRECTION = 200;
