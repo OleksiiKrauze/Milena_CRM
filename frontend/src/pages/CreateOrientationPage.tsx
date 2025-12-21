@@ -728,10 +728,14 @@ export function CreateOrientationPage() {
             }
           }
 
+          // Apply mobile offset for dates - move up 30px on mobile
+          const dateYOffset = isMobile ? -30 : 0;
+          const adjustedRealY = realY + dateYOffset;
+
           // Store real position for blur redraw
           datesRealPositions.push({
             x: realX,
-            y: realY,
+            y: adjustedRealY,
             width: dateItem.width,
             height: dateItem.height,
             text: dateItem.text,
@@ -741,7 +745,7 @@ export function CreateOrientationPage() {
           const dateDiv = document.createElement('div');
           dateDiv.style.position = 'absolute';
           dateDiv.style.left = `${realX}px`;
-          dateDiv.style.top = `${realY}px`;
+          dateDiv.style.top = `${adjustedRealY}px`;
           dateDiv.style.width = `${dateItem.width}px`;
           dateDiv.style.height = `${dateItem.height}px`;
           dateDiv.style.display = 'flex';
