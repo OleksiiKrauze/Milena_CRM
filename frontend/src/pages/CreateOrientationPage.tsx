@@ -1,15 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Rnd } from 'react-rnd';
 import html2canvas from 'html2canvas';
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { searchesApi } from '@/api/searches';
 import { flyerTemplatesApi } from '@/api/flyerTemplates';
 import { orientationsApi } from '@/api/orientations';
 import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Loading } from '@/components/ui';
-import { FileImage, Upload, Download, Check, Move, Maximize2, ArrowUpDown } from 'lucide-react';
+import { FileImage, Upload, Download, Check, Move, Maximize2, ArrowUpDown, X } from 'lucide-react';
 import type { FlyerTemplate } from '@/types/api';
 
 interface PhotoPosition {
@@ -102,6 +104,13 @@ export function CreateOrientationPage() {
   const [selectedDateColor, setSelectedDateColor] = useState('#000000');
   const [blurEnabled, setBlurEnabled] = useState(false);
   const [blurAmount, setBlurAmount] = useState(5);
+
+  // Image crop states
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>({ unit: '%', width: 50, height: 50, x: 25, y: 25 });
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // Fetch search with case data
   const { data: search, isLoading: searchLoading } = useQuery({
@@ -392,11 +401,75 @@ export function CreateOrientationPage() {
   };
 
   const handlePhotoSelect = (photoUrl: string) => {
-    if (selectedPhotos.includes(photoUrl)) {
-      setSelectedPhotos(selectedPhotos.filter((p) => p !== photoUrl));
-    } else {
-      setSelectedPhotos([...selectedPhotos, photoUrl]);
+    // Open crop modal instead of directly adding photo
+    setImageToCrop(photoUrl);
+    setShowCropModal(true);
+    setCrop({ unit: '%', width: 50, height: 50, x: 25, y: 25 });
+    setCompletedCrop(null);
+  };
+
+  const createCroppedImage = async (image: HTMLImageElement, pixelCrop: PixelCrop): Promise<string> => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('No 2d context');
     }
+
+    // Calculate scale between displayed image and natural image
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+
+    // Set canvas size to the crop size in natural pixels
+    canvas.width = pixelCrop.width * scaleX;
+    canvas.height = pixelCrop.height * scaleY;
+
+    console.log('Image natural size:', image.naturalWidth, image.naturalHeight);
+    console.log('Image display size:', image.width, image.height);
+    console.log('Scale:', scaleX, scaleY);
+    console.log('Crop pixels:', pixelCrop);
+    console.log('Canvas size:', canvas.width, canvas.height);
+
+    // Draw the cropped portion of the image
+    ctx.drawImage(
+      image,
+      pixelCrop.x * scaleX,
+      pixelCrop.y * scaleY,
+      pixelCrop.width * scaleX,
+      pixelCrop.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Canvas is empty');
+        }
+        const url = URL.createObjectURL(blob);
+        resolve(url);
+      }, 'image/jpeg', 0.95);
+    });
+  };
+
+  const handleCropConfirm = async () => {
+    if (!completedCrop || !imgRef.current) return;
+
+    try {
+      const croppedImageUrl = await createCroppedImage(imgRef.current, completedCrop);
+      setSelectedPhotos([...selectedPhotos, croppedImageUrl]);
+      setShowCropModal(false);
+      setImageToCrop(null);
+    } catch (error) {
+      console.error('Error cropping image:', error);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setImageToCrop(null);
   };
 
   const handleTemplateSelect = (template: FlyerTemplate) => {
@@ -570,7 +643,7 @@ export function CreateOrientationPage() {
           }
 
           const photoImg = document.createElement('img');
-          photoImg.src = `${import.meta.env.VITE_API_URL || '/api'}${photo}`;
+          photoImg.src = photo.startsWith('blob:') ? photo : `${import.meta.env.VITE_API_URL || '/api'}${photo}`;
           photoImg.style.position = 'absolute';
           photoImg.style.left = `${realX}px`;
           photoImg.style.top = `${realY}px`;
@@ -1288,7 +1361,7 @@ export function CreateOrientationPage() {
                   >
                     <div className="relative w-full h-full">
                       <img
-                        src={`${import.meta.env.VITE_API_URL || '/api'}${photo}`}
+                        src={photo.startsWith('blob:') ? photo : `${import.meta.env.VITE_API_URL || '/api'}${photo}`}
                         alt={`Selected ${idx + 1}`}
                         className="w-full h-full object-cover pointer-events-none"
                         style={blurEnabled ? { filter: `blur(${blurAmount}px)` } : {}}
@@ -1313,6 +1386,27 @@ export function CreateOrientationPage() {
                       <div className="absolute top-0 left-0 w-8 h-8 bg-primary-500 bg-opacity-70 rounded-br-lg flex items-center justify-center pointer-events-none" style={{ zIndex: 99 }}>
                         <Maximize2 className="w-4 h-4 text-white" />
                       </div>
+                      {/* Delete button - top right */}
+                      <button
+                        onClick={() => {
+                          setSelectedPhotos(selectedPhotos.filter((_, i) => i !== idx));
+                          const newPositions = { ...photoPositions };
+                          delete newPositions[idx];
+                          // Reindex positions
+                          const reindexed: Record<number, PhotoPosition> = {};
+                          Object.entries(newPositions).forEach(([key, value]) => {
+                            const oldIdx = parseInt(key);
+                            const newIdx = oldIdx > idx ? oldIdx - 1 : oldIdx;
+                            reindexed[newIdx] = value;
+                          });
+                          setPhotoPositions(reindexed);
+                        }}
+                        className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center pointer-events-auto"
+                        style={{ zIndex: 101 }}
+                        title="Видалити фото"
+                      >
+                        <X className="w-5 h-5 text-white" />
+                      </button>
                     </div>
                   </Rnd>
                 );
@@ -1799,6 +1893,54 @@ export function CreateOrientationPage() {
               <Button variant="outline" onClick={() => setShowTemplateModal(false)}>
                 Закрити
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Crop Modal */}
+      {showCropModal && imageToCrop && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="p-4 border-b flex items-center justify-between shrink-0">
+              <h2 className="text-xl font-bold">Обрізати фото</h2>
+              <button
+                onClick={handleCropCancel}
+                className="p-2 hover:bg-gray-100 rounded-full"
+                aria-label="Close"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Cropper Area */}
+            <div className="flex-1 flex items-center justify-center p-4 overflow-auto bg-gray-100" style={{ minHeight: 0 }}>
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+              >
+                <img
+                  ref={imgRef}
+                  src={`${import.meta.env.VITE_API_URL || '/api'}${imageToCrop}`}
+                  alt="Crop preview"
+                  style={{ maxHeight: '60vh', maxWidth: '100%' }}
+                />
+              </ReactCrop>
+            </div>
+
+            {/* Controls */}
+            <div className="p-4 border-t space-y-3 shrink-0">
+              <p className="text-sm text-gray-600">Перетягніть рамку або змініть її розмір для обрізки фото</p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={handleCropCancel}>
+                  Скасувати
+                </Button>
+                <Button onClick={handleCropConfirm}>
+                  Підтвердити
+                </Button>
+              </div>
             </div>
           </div>
         </div>
