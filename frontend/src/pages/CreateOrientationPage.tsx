@@ -462,6 +462,9 @@ export function CreateOrientationPage() {
     }
 
     try {
+      // Store template real Y position for blur redraw
+      let templateRealY = 0;
+
       // Create a temporary static canvas for export
       const tempCanvas = document.createElement('div');
       tempCanvas.style.position = 'absolute';
@@ -491,6 +494,9 @@ export function CreateOrientationPage() {
 
         // Apply correction
         realY += Y_CORRECTION;
+
+        // Save real Y position for blur redraw
+        templateRealY = realY;
 
         const templateUrl = `${import.meta.env.VITE_API_URL || '/api'}${
           mainTemplates.templates.find((t) => t.id === selectedTemplateId)?.file_path
@@ -619,16 +625,31 @@ export function CreateOrientationPage() {
       }
 
       // Add text field (z-index: 4)
+      // Get real position from DOM
+      let textFieldRealY = textFieldPosition.y;
+      if (canvasRef.current) {
+        const textFieldElement = canvasRef.current.querySelector('[style*="border: 2px dashed rgb(107, 114, 128)"]');
+        const textFieldRndContainer = textFieldElement?.closest('.react-draggable');
+
+        if (textFieldRndContainer) {
+          const rect = textFieldRndContainer.getBoundingClientRect();
+          const canvasRect = canvasRef.current.getBoundingClientRect();
+          textFieldRealY = (rect.top - canvasRect.top) / canvasScale;
+          console.log(`Text field - Real Y from DOM: ${textFieldRealY}, State Y: ${textFieldPosition.y}`);
+        }
+      }
+
       // Detect mobile device
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
                        || ('ontouchstart' in window)
                        || (navigator.maxTouchPoints > 0);
-      const TEXT_Y_CORRECTION = isMobile ? 300 : 150; // Additional 150px for mobile
+      // Use same correction for all devices since we now get real position from DOM
+      const TEXT_Y_CORRECTION = 150;
 
       const textDiv = document.createElement('div');
       textDiv.style.position = 'absolute';
       textDiv.style.left = `${textFieldPosition.x}px`;
-      textDiv.style.top = `${textFieldPosition.y + TEXT_Y_CORRECTION}px`;
+      textDiv.style.top = `${textFieldRealY + TEXT_Y_CORRECTION}px`;
       textDiv.style.width = `${textFieldPosition.width}px`;
       textDiv.style.height = `${textFieldPosition.height}px`;
       textDiv.style.padding = '16px';
@@ -642,7 +663,7 @@ export function CreateOrientationPage() {
       }
       textDiv.innerHTML = textContent;
       tempCanvas.appendChild(textDiv);
-      console.log(`Text field - State Y: ${textFieldPosition.y}, With correction: ${textFieldPosition.y + TEXT_Y_CORRECTION}, isMobile: ${isMobile}`);
+      console.log(`Text field - State Y: ${textFieldPosition.y}, Real Y: ${textFieldRealY}, With correction: ${textFieldRealY + TEXT_Y_CORRECTION}, isMobile: ${isMobile}`);
 
       // Add vertical city text (red, z-index: 5)
       const VERTICAL_TEXT_Y_CORRECTION = 200;
@@ -835,8 +856,7 @@ export function CreateOrientationPage() {
                 templateImg.onload = resolve;
               });
 
-              // Mobile needs additional 75px down for template position when blur is enabled
-              const Y_CORRECTION = isMobile ? 175 : 100;
+              // Use the same real Y position that was calculated during initial render
               let imgWidth = templateImg.naturalWidth;
               let imgHeight = templateImg.naturalHeight;
 
@@ -846,14 +866,14 @@ export function CreateOrientationPage() {
                 imgHeight = imgHeight * scale;
               }
 
-              ctx.drawImage(templateImg, templatePosition.x, templatePosition.y + Y_CORRECTION, imgWidth, imgHeight);
+              // Use saved real Y position (already includes Y_CORRECTION from initial render)
+              ctx.drawImage(templateImg, templatePosition.x, templateRealY, imgWidth, imgHeight);
             }
           }
 
-          // Redraw dates without blur using real positions
-          // Apply Y correction to match html2canvas rendering
-          // Mobile needs additional -35px correction when blur is enabled
-          const DATE_Y_CORRECTION = isMobile ? -64 : -29;
+          // Redraw dates without blur using saved real positions
+          // Need correction because canvas.fillText positioning differs from how html2canvas renders DOM text
+          const DATE_Y_CORRECTION = isMobile ? 18 : 29;
           datesRealPositions.forEach((datePos) => {
             ctx.font = `bold 38px sans-serif`;
             ctx.fillStyle = datePos.color;
