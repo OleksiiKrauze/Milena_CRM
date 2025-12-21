@@ -851,7 +851,8 @@ export function CreateOrientationPage() {
 
           // Redraw dates without blur using real positions
           // Apply Y correction to match html2canvas rendering
-          const DATE_Y_CORRECTION = -29;
+          // Mobile needs additional -20px correction when blur is enabled
+          const DATE_Y_CORRECTION = isMobile ? -49 : -29;
           datesRealPositions.forEach((datePos) => {
             ctx.font = `bold 38px sans-serif`;
             ctx.fillStyle = datePos.color;
