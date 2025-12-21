@@ -835,8 +835,8 @@ export function CreateOrientationPage() {
                 templateImg.onload = resolve;
               });
 
-              // Mobile needs additional 50px down for template position when blur is enabled
-              const Y_CORRECTION = isMobile ? 150 : 100;
+              // Mobile needs additional 70px down for template position when blur is enabled
+              const Y_CORRECTION = isMobile ? 170 : 100;
               let imgWidth = templateImg.naturalWidth;
               let imgHeight = templateImg.naturalHeight;
 
