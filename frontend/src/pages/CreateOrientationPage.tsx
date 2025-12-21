@@ -625,31 +625,38 @@ export function CreateOrientationPage() {
       }
 
       // Add text field (z-index: 4)
-      // Get real position from DOM
+      // Use same logic as photos - get real position from DOM, no corrections
+      let textFieldRealX = textFieldPosition.x;
       let textFieldRealY = textFieldPosition.y;
-      if (canvasRef.current) {
-        const textFieldElement = canvasRef.current.querySelector('[style*="border: 2px dashed rgb(107, 114, 128)"]');
-        const textFieldRndContainer = textFieldElement?.closest('.react-draggable');
 
-        if (textFieldRndContainer) {
-          const rect = textFieldRndContainer.getBoundingClientRect();
-          const canvasRect = canvasRef.current.getBoundingClientRect();
-          textFieldRealY = (rect.top - canvasRect.top) / canvasScale;
-          console.log(`Text field - Real Y from DOM: ${textFieldRealY}, State Y: ${textFieldPosition.y}`);
-        }
+      if (canvasRef.current) {
+        const textFieldElements = canvasRef.current.querySelectorAll('.react-draggable');
+
+        // Find text field by looking for the one with white background and border
+        textFieldElements.forEach((element) => {
+          const hasWhiteBg = element.classList.contains('bg-white');
+          const hasBorder = element.classList.contains('border-gray-300');
+
+          if (hasWhiteBg && hasBorder) {
+            const rect = element.getBoundingClientRect();
+            const canvasRect = canvasRef.current!.getBoundingClientRect();
+            textFieldRealX = (rect.left - canvasRect.left) / canvasScale;
+            textFieldRealY = (rect.top - canvasRect.top) / canvasScale;
+            console.log(`Text field real position from DOM: (${textFieldRealX}, ${textFieldRealY})`);
+            console.log(`Text field state position: (${textFieldPosition.x}, ${textFieldPosition.y})`);
+          }
+        });
       }
 
       // Detect mobile device
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
                        || ('ontouchstart' in window)
                        || (navigator.maxTouchPoints > 0);
-      // Use same correction for all devices since we now get real position from DOM
-      const TEXT_Y_CORRECTION = 150;
 
       const textDiv = document.createElement('div');
       textDiv.style.position = 'absolute';
-      textDiv.style.left = `${textFieldPosition.x}px`;
-      textDiv.style.top = `${textFieldRealY + TEXT_Y_CORRECTION}px`;
+      textDiv.style.left = `${textFieldRealX}px`;
+      textDiv.style.top = `${textFieldRealY}px`;
       textDiv.style.width = `${textFieldPosition.width}px`;
       textDiv.style.height = `${textFieldPosition.height}px`;
       textDiv.style.padding = '16px';
@@ -663,7 +670,7 @@ export function CreateOrientationPage() {
       }
       textDiv.innerHTML = textContent;
       tempCanvas.appendChild(textDiv);
-      console.log(`Text field - State Y: ${textFieldPosition.y}, Real Y: ${textFieldRealY}, With correction: ${textFieldRealY + TEXT_Y_CORRECTION}, isMobile: ${isMobile}`);
+      console.log(`Text field export position: X=${textFieldRealX}, Y=${textFieldRealY}`);
 
       // Add vertical city text (red, z-index: 5)
       const VERTICAL_TEXT_Y_CORRECTION = 200;
@@ -1447,39 +1454,18 @@ export function CreateOrientationPage() {
                 </Rnd>
               )) as any}
 
-              {/* Text field - resizable */}
+              {/* Text field - fixed size, vertical drag only */}
               <Rnd
                 size={{ width: textFieldPosition.width, height: textFieldPosition.height }}
                 position={{ x: textFieldPosition.x, y: textFieldPosition.y }}
-                disableDragging={true}
-                enableResizing={{
-                  top: true,
-                  bottom: false,
-                  left: false,
-                  right: false,
-                  topLeft: false,
-                  topRight: false,
-                  bottomLeft: false,
-                  bottomRight: false,
-                }}
-                resizeHandleStyles={{
-                  top: {
-                    height: '60px',
-                    cursor: 'ns-resize',
-                    zIndex: 20,
-                    width: '60px',
-                    right: '0',
-                    left: 'auto',
-                  },
-                }}
-                onResizeStop={(_e, _direction, ref, _delta, _position) => {
-                  const newHeight = parseInt(ref.style.height);
-                  const newY = 1280 - newHeight;
+                disableDragging={false}
+                dragAxis="y"
+                dragHandleClassName="text-field-drag-handle"
+                enableResizing={false}
+                onDragStop={(_e, d) => {
                   setTextFieldPosition({
-                    width: parseInt(ref.style.width),
-                    height: newHeight,
-                    x: textFieldPosition.x,
-                    y: newY,
+                    ...textFieldPosition,
+                    y: d.y,
                   });
                 }}
                 bounds="parent"
@@ -1487,10 +1473,10 @@ export function CreateOrientationPage() {
               >
                 {/* Formatting toolbar - at top */}
                 <div className="absolute top-0 left-0 right-0 border-b border-gray-300 p-2 flex gap-2 items-center flex-wrap z-10" style={{ backgroundColor: 'rgba(249, 250, 251, 0.9)' }}>
-                  {/* Resize indicator - far right (shows where to drag) */}
+                  {/* Drag handle - far right (shows where to drag for vertical movement) */}
                   <div
-                    className="ml-auto w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center pointer-events-none"
-                    title="Потягніть тут для зміни висоти"
+                    className="text-field-drag-handle ml-auto w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center cursor-move pointer-events-auto"
+                    title="Потягніть тут для переміщення вгору/вниз"
                     style={{ order: 999 }}
                   >
                     <ArrowUpDown className="w-5 h-5 text-white" />
