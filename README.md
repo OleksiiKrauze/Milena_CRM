@@ -71,6 +71,10 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 # Logging
 LOG_LEVEL=INFO
+
+# OpenAI API Key for case autofill functionality (optional)
+# Get your key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your-openai-api-key-here
 ```
 
 ### Локальная разработка
@@ -165,6 +169,7 @@ backend/
 | GET | `/cases/{id}/full` | Получить заявку со всеми связанными данными |
 | PUT | `/cases/{id}` | Обновить заявку |
 | DELETE | `/cases/{id}` | Удалить заявку |
+| POST | `/cases/autofill` | Автозаполнение полей заявки через ChatGPT |
 
 ### Searches (Поиски)
 

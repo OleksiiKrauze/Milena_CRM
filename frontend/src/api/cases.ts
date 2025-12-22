@@ -46,4 +46,12 @@ export const casesApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/cases/${id}`);
   },
+
+  // Autofill case fields using ChatGPT
+  autofill: async (initialInfo: string): Promise<{ fields: Record<string, any> }> => {
+    const response = await api.post<{ fields: Record<string, any> }>('/cases/autofill', {
+      initial_info: initialInfo,
+    });
+    return response.data;
+  },
 };

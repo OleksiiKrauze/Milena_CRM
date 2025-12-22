@@ -174,6 +174,10 @@ CORS_ORIGINS=https://crm.przmilena.click
 
 # Logging
 LOG_LEVEL=INFO
+
+# OpenAI API Key for case autofill functionality
+# Get your key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 ```
 
 Установить права:

@@ -2,10 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.db import get_db
-from app.schemas.case import CaseCreate, CaseUpdate, CaseResponse, CaseListResponse, CaseFullResponse
+from app.schemas.case import (
+    CaseCreate, CaseUpdate, CaseResponse, CaseListResponse,
+    CaseFullResponse, CaseAutofillRequest, CaseAutofillResponse
+)
 from app.models.case import Case
 from app.models.user import User
 from app.routers.auth import get_current_user
+from app.services.openai_service import get_openai_service
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
 
@@ -172,3 +176,33 @@ def get_case_full(
         )
 
     return db_case
+
+
+@router.post("/autofill", response_model=CaseAutofillResponse)
+def autofill_case_fields(
+    request: CaseAutofillRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Autofill case fields using ChatGPT based on initial_info text.
+
+    This endpoint analyzes the provided initial information and returns
+    structured data that can be used to populate case fields.
+    """
+    try:
+        openai_service = get_openai_service()
+        extracted_fields = openai_service.parse_case_info(request.initial_info)
+
+        return CaseAutofillResponse(fields=extracted_fields)
+
+    except ValueError as e:
+        # API key not configured
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OpenAI service not properly configured: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing autofill request: {str(e)}"
+        )

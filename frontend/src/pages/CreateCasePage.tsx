@@ -8,7 +8,7 @@ import { casesApi } from '@/api/cases';
 import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Button, Input, Card, CardContent } from '@/components/ui';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Sparkles } from 'lucide-react';
 
 const createCaseSchema = z.object({
   // Applicant - split name fields
@@ -55,6 +55,7 @@ export function CreateCasePage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAutofilling, setIsAutofilling] = useState(false);
 
   const form: any = useForm({
     resolver: zodResolver(createCaseSchema) as any,
@@ -63,8 +64,11 @@ export function CreateCasePage() {
       decision_type: 'На розгляді',
     },
   });
-  const { register, handleSubmit, formState } = form;
+  const { register, handleSubmit, formState, setValue, getValues, watch } = form;
   const errors = formState.errors;
+
+  // Watch initial_info field for autofill button
+  const initialInfo = watch('initial_info');
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -88,6 +92,53 @@ export function CreateCasePage() {
 
   const handleRemovePhoto = (photoUrl: string) => {
     setUploadedPhotos((prev) => prev.filter((url) => url !== photoUrl));
+  };
+
+  const handleAutofill = async () => {
+    const currentInitialInfo = getValues('initial_info');
+
+    if (!currentInitialInfo || currentInitialInfo.trim().length === 0) {
+      setApiError('Спочатку введіть первинну інформацію для автозаповнення');
+      return;
+    }
+
+    setIsAutofilling(true);
+    setApiError(null);
+
+    try {
+      const result = await casesApi.autofill(currentInitialInfo);
+      const fields = result.fields;
+
+      // Fill all extracted fields into the form
+      Object.entries(fields).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          // Handle array fields (tags, additional_search_regions)
+          if (Array.isArray(value)) {
+            setValue(key, value.join(', '));
+          }
+          // Handle date fields - extract date part for date input
+          else if (key === 'missing_birthdate' && value) {
+            setValue(key, String(value).split('T')[0]);
+          }
+          // Handle datetime fields - format for datetime-local input
+          else if (key === 'missing_last_seen_datetime' && value) {
+            setValue(key, String(value).substring(0, 16));
+          }
+          // Handle all other fields
+          else {
+            setValue(key, value);
+          }
+        }
+      });
+
+      // Show success message
+      setApiError(null);
+
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка автозаповнення. Перевірте налаштування OpenAI API');
+    } finally {
+      setIsAutofilling(false);
+    }
   };
 
   const createMutation = useMutation({
@@ -454,18 +505,34 @@ export function CreateCasePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Первинна інформація
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Первинна інформація
+                  </label>
+                  <Button
+                    type="button"
+                    onClick={handleAutofill}
+                    disabled={!initialInfo || initialInfo.trim().length === 0 || isAutofilling}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    {isAutofilling ? 'Обробка...' : 'Автозаповнення'}
+                  </Button>
+                </div>
                 <textarea
                   {...register('initial_info')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   rows={6}
-                  placeholder="Введіть всю відому інформацію про зниклого та обставини зникнення. Пізніше ці дані можна буде розподілити по відповідних полях..."
+                  placeholder="Введіть всю відому інформацію про зниклого та обставини зникнення. Після введення натисніть 'Автозаповнення' для розподілу даних по полях..."
                 />
                 {errors.initial_info && (
                   <p className="text-sm text-red-600 mt-1">{errors.initial_info.message}</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Введіть будь-яку інформацію про зниклого і натисніть "Автозаповнення" - система автоматично розподілить дані по всіх полях форми
+                </p>
               </div>
 
               <div>

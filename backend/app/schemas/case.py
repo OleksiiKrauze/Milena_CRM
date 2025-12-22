@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING, Dict, Any
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -165,6 +165,16 @@ class CaseFullResponse(CaseResponse):
     searches: List["SearchResponse"] = []
 
     model_config = {"from_attributes": True}
+
+
+class CaseAutofillRequest(BaseModel):
+    """Schema for autofill request"""
+    initial_info: str = Field(..., min_length=1, description="Initial case information text")
+
+
+class CaseAutofillResponse(BaseModel):
+    """Schema for autofill response with extracted fields"""
+    fields: Dict[str, Any] = Field(..., description="Extracted case fields")
 
 
 # Rebuild models to resolve forward references

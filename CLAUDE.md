@@ -72,8 +72,11 @@ All environment variables are defined in `.env`:
 - `POSTGRES_HOST`: Database host (default: "db")
 - `POSTGRES_PORT`: Database port (default: "5432")
 - `APP_PORT`: Application port (default: 8000)
+- `OPENAI_API_KEY`: OpenAI API key for case autofill functionality (get from https://platform.openai.com/api-keys)
 
 The `db.py` module will raise `RuntimeError` if required environment variables are missing.
+
+**For production**, make sure to also set `OPENAI_API_KEY` in `.env.production` on the server.
 
 ## Docker Setup Notes
 
