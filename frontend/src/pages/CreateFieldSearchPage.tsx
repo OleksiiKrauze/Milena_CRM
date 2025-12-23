@@ -10,6 +10,7 @@ import { Container, Card, CardHeader, CardTitle, CardContent, Input, Button, Loa
 import type { FieldSearchCreate } from '@/api/field-searches';
 import { useState } from 'react';
 import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
+import { getOriginalFilename } from '@/utils/formatters';
 
 interface CreateFieldSearchForm {
   initiator_inforg_id: string;
@@ -328,11 +329,10 @@ export function CreateFieldSearchPage() {
                     <FileText className="w-5 h-5 text-gray-600" />
                     <a
                       href={preparationGridFile}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      download={getOriginalFilename(preparationGridFile)}
                       className="text-sm text-primary-600 hover:underline flex-1"
                     >
-                      {preparationGridFile.split('/').pop()}
+                      {getOriginalFilename(preparationGridFile)}
                     </a>
                     <button
                       type="button"
@@ -412,11 +412,10 @@ export function CreateFieldSearchPage() {
                       <FileText className="w-5 h-5 text-gray-600" />
                       <a
                         href={track}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        download={getOriginalFilename(track)}
                         className="text-sm text-primary-600 hover:underline flex-1"
                       >
-                        {track.split('/').pop()}
+                        {getOriginalFilename(track)}
                       </a>
                       <button
                         type="button"

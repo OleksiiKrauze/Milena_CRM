@@ -77,9 +77,13 @@ async def upload_images(files: List[UploadFile] = File(...)):
                 detail=f"File {file.filename} is too large. Maximum size: 10 MB"
             )
 
-        # Generate unique filename
+        # Generate unique filename while preserving original name
         file_ext = Path(file.filename).suffix.lower()
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        original_name = Path(file.filename).stem
+        # Sanitize filename - remove special characters
+        safe_name = "".join(c for c in original_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_name = safe_name[:50]  # Limit length
+        unique_filename = f"{uuid.uuid4()}_{safe_name}{file_ext}"
         file_path = UPLOAD_DIR / unique_filename
 
         # Save file
@@ -124,9 +128,13 @@ async def upload_media(files: List[UploadFile] = File(...)):
                 detail=f"File {file.filename} is too large. Maximum size: 50 MB"
             )
 
-        # Generate unique filename
+        # Generate unique filename while preserving original name
         file_ext = Path(file.filename).suffix.lower()
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        original_name = Path(file.filename).stem
+        # Sanitize filename - remove special characters
+        safe_name = "".join(c for c in original_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_name = safe_name[:50]  # Limit length
+        unique_filename = f"{uuid.uuid4()}_{safe_name}{file_ext}"
         file_path = UPLOAD_DIR / unique_filename
 
         # Save file

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fieldSearchesApi } from '@/api/field-searches';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
-import { formatDate, formatDateTime } from '@/utils/formatters';
+import { formatDate, formatDateTime, getOriginalFilename } from '@/utils/formatters';
 import { FileText } from 'lucide-react';
 
 export function FieldSearchDetailsPage() {
@@ -185,11 +185,10 @@ export function FieldSearchDetailsPage() {
                       <FileText className="w-5 h-5 text-gray-600" />
                       <a
                         href={fieldSearchData.preparation_grid_file}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        download={getOriginalFilename(fieldSearchData.preparation_grid_file)}
                         className="text-sm text-primary-600 hover:underline flex-1"
                       >
-                        {fieldSearchData.preparation_grid_file.split('/').pop()}
+                        {getOriginalFilename(fieldSearchData.preparation_grid_file)}
                       </a>
                     </div>
                   </div>
@@ -224,11 +223,10 @@ export function FieldSearchDetailsPage() {
                           <FileText className="w-5 h-5 text-gray-600" />
                           <a
                             href={track}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            download={getOriginalFilename(track)}
                             className="text-sm text-primary-600 hover:underline flex-1"
                           >
-                            {track.split('/').pop()}
+                            {getOriginalFilename(track)}
                           </a>
                         </div>
                       ))}

@@ -35,3 +35,18 @@ export function formatPhone(phone: string): string {
   }
   return phone;
 }
+
+/**
+ * Extract original filename from uploaded file URL
+ * /uploads/uuid_originalname.ext -> originalname.ext
+ */
+export function getOriginalFilename(url: string): string {
+  const filename = url.split('/').pop() || '';
+  // Format: uuid_originalname.ext
+  const parts = filename.split('_');
+  if (parts.length > 1) {
+    // Return everything after first underscore (original name + extension)
+    return parts.slice(1).join('_');
+  }
+  return filename;
+}
