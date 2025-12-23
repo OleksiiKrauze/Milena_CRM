@@ -12,11 +12,12 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Allowed image extensions
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-# Allowed media extensions (images, video, audio)
+# Allowed media extensions (images, video, audio, GPS tracks)
 ALLOWED_MEDIA_EXTENSIONS = {
     ".jpg", ".jpeg", ".png", ".gif", ".webp",  # Images
     ".mp4", ".mov", ".avi", ".mkv", ".webm",   # Video
-    ".mp3", ".wav", ".ogg", ".m4a", ".aac"     # Audio
+    ".mp3", ".wav", ".ogg", ".m4a", ".aac",    # Audio
+    ".gpx", ".kml"                              # GPS tracks
 }
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_MEDIA_FILE_SIZE = 50 * 1024 * 1024  # 50 MB for video/audio
