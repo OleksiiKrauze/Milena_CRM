@@ -3,10 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fieldSearchesApi } from '@/api/field-searches';
 import { usersApi } from '@/api/users';
+import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Input, Button, Loading } from '@/components/ui';
 import type { FieldSearchUpdate } from '@/api/field-searches';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
 
 interface EditFieldSearchForm {
   initiator_inforg_id: string;
@@ -25,6 +27,13 @@ export function EditFieldSearchPage() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const [apiError, setApiError] = useState<string>('');
+
+  // File upload states
+  const [preparationGridFile, setPreparationGridFile] = useState<string | null>(null);
+  const [preparationMapImage, setPreparationMapImage] = useState<string | null>(null);
+  const [searchTracks, setSearchTracks] = useState<string[]>([]);
+  const [searchPhotos, setSearchPhotos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Get field search details
   const { data: fieldSearchData, isLoading: fieldSearchLoading } = useQuery({
@@ -53,6 +62,85 @@ export function EditFieldSearchPage() {
     queryFn: () => usersApi.list(),
   });
 
+  // Initialize file states from existing data
+  useEffect(() => {
+    if (fieldSearchData) {
+      setPreparationGridFile(fieldSearchData.preparation_grid_file);
+      setPreparationMapImage(fieldSearchData.preparation_map_image);
+      setSearchTracks(fieldSearchData.search_tracks || []);
+      setSearchPhotos(fieldSearchData.search_photos || []);
+    }
+  }, [fieldSearchData]);
+
+  // File upload handlers
+  const handleGridFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const urls = await uploadApi.uploadMedia([file]);
+      setPreparationGridFile(urls[0]);
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка завантаження файлу сітки');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleMapImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const urls = await uploadApi.uploadImages([file]);
+      setPreparationMapImage(urls[0]);
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка завантаження карти');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleTracksUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const urls = await uploadApi.uploadMedia(files);
+      setSearchTracks([...searchTracks, ...urls]);
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка завантаження треків');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePhotosUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const urls = await uploadApi.uploadImages(files);
+      setSearchPhotos([...searchPhotos, ...urls]);
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка завантаження фото');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeTrack = (index: number) => {
+    setSearchTracks(searchTracks.filter((_, i) => i !== index));
+  };
+
+  const removePhoto = (index: number) => {
+    setSearchPhotos(searchPhotos.filter((_, i) => i !== index));
+  };
+
   const updateMutation = useMutation({
     mutationFn: (data: EditFieldSearchForm) => {
       const cleanedData: any = {};
@@ -73,6 +161,12 @@ export function EditFieldSearchPage() {
       if (cleanedData.coordinator_id) {
         cleanedData.coordinator_id = Number(cleanedData.coordinator_id);
       }
+
+      // Add file upload fields
+      cleanedData.preparation_grid_file = preparationGridFile;
+      cleanedData.preparation_map_image = preparationMapImage;
+      cleanedData.search_tracks = searchTracks;
+      cleanedData.search_photos = searchPhotos;
 
       const fieldSearchUpdateData: FieldSearchUpdate = cleanedData;
 
@@ -273,6 +367,177 @@ export function EditFieldSearchPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Додаткова інформація про виїзд"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preparation Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Підготовка</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Grid File Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Файл сітки квадратів (GPX/KML)
+                </label>
+                {preparationGridFile ? (
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                    <FileText className="w-5 h-5 text-gray-600" />
+                    <a
+                      href={preparationGridFile}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary-600 hover:underline flex-1"
+                    >
+                      {preparationGridFile.split('/').pop()}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setPreparationGridFile(null)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Завантажити файл сітки</span>
+                    <input
+                      type="file"
+                      accept=".gpx,.kml"
+                      onChange={handleGridFileUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Map Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Карта (зображення)
+                </label>
+                {preparationMapImage ? (
+                  <div className="space-y-2">
+                    <img
+                      src={preparationMapImage}
+                      alt="Карта"
+                      className="w-full max-h-64 object-contain rounded-lg border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPreparationMapImage(null)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                      Видалити
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50">
+                    <ImageIcon className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Завантажити карту</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMapImageUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Search Progress Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Хід пошуку</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Tracks Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Треки (GPX/KML)
+                </label>
+                <div className="space-y-2">
+                  {searchTracks.map((track, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="w-5 h-5 text-gray-600" />
+                      <a
+                        href={track}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary-600 hover:underline flex-1"
+                      >
+                        {track.split('/').pop()}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => removeTrack(index)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Додати треки</span>
+                    <input
+                      type="file"
+                      accept=".gpx,.kml"
+                      multiple
+                      onChange={handleTracksUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Photos Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Фотографії
+                </label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {searchPhotos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={photo}
+                          alt={`Фото ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary-500 hover:bg-primary-50">
+                    <ImageIcon className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm text-gray-600">Додати фото</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotosUpload}
+                      disabled={isUploading}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </CardContent>
           </Card>

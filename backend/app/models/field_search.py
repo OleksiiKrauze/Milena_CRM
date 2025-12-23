@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum as SQLEnum, Table
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum as SQLEnum, Table, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base
@@ -47,6 +47,14 @@ class FieldSearch(Base):
     end_date = Column(Date)
     result = Column(Text)
     notes = Column(Text)
+
+    # Preparation section
+    preparation_grid_file = Column(String(500))  # URL to grid file (gpx/kml)
+    preparation_map_image = Column(String(500))  # URL to map image
+
+    # Search progress section
+    search_tracks = Column(ARRAY(String), default=list)  # URLs to track files (gpx/kml)
+    search_photos = Column(ARRAY(String), default=list)  # URLs to photos
 
     # Relationships
     search = relationship('Search', back_populates='field_searches')

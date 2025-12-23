@@ -4,6 +4,7 @@ import { fieldSearchesApi } from '@/api/field-searches';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
+import { FileText } from 'lucide-react';
 
 export function FieldSearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -169,6 +170,96 @@ export function FieldSearchDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Preparation Section */}
+          {(fieldSearchData.preparation_grid_file || fieldSearchData.preparation_map_image) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Підготовка</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fieldSearchData.preparation_grid_file && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Файл сітки квадратів</p>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="w-5 h-5 text-gray-600" />
+                      <a
+                        href={fieldSearchData.preparation_grid_file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary-600 hover:underline flex-1"
+                      >
+                        {fieldSearchData.preparation_grid_file.split('/').pop()}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {fieldSearchData.preparation_map_image && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Карта</p>
+                    <img
+                      src={fieldSearchData.preparation_map_image}
+                      alt="Карта"
+                      className="w-full max-h-96 object-contain rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Search Progress Section */}
+          {(fieldSearchData.search_tracks?.length > 0 || fieldSearchData.search_photos?.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Хід пошуку</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fieldSearchData.search_tracks && fieldSearchData.search_tracks.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Треки ({fieldSearchData.search_tracks.length})</p>
+                    <div className="space-y-2">
+                      {fieldSearchData.search_tracks.map((track, index) => (
+                        <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                          <FileText className="w-5 h-5 text-gray-600" />
+                          <a
+                            href={track}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 hover:underline flex-1"
+                          >
+                            {track.split('/').pop()}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {fieldSearchData.search_photos && fieldSearchData.search_photos.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Фотографії ({fieldSearchData.search_photos.length})</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {fieldSearchData.search_photos.map((photo, index) => (
+                        <a
+                          key={index}
+                          href={photo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={photo}
+                            alt={`Фото ${index + 1}`}
+                            className="w-full h-40 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </Container>
     </div>

@@ -130,6 +130,14 @@ export interface FieldSearch {
   end_date: string | null;
   result: string | null;
   notes: string | null;
+
+  // Preparation section
+  preparation_grid_file: string | null;
+  preparation_map_image: string | null;
+
+  // Search progress section
+  search_tracks: string[];
+  search_photos: string[];
 }
 
 // Search types

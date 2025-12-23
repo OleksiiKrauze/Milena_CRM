@@ -39,6 +39,14 @@ class FieldSearchCreate(BaseModel):
     result: Optional[str] = None
     notes: Optional[str] = None
 
+    # Preparation section
+    preparation_grid_file: Optional[str] = Field(None, max_length=500, description="URL to grid file (gpx/kml)")
+    preparation_map_image: Optional[str] = Field(None, max_length=500, description="URL to map image")
+
+    # Search progress section
+    search_tracks: Optional[List[str]] = Field(default=[], description="URLs to track files (gpx/kml)")
+    search_photos: Optional[List[str]] = Field(default=[], description="URLs to photos")
+
 
 class FieldSearchUpdate(BaseModel):
     """Schema for updating a field search"""
@@ -52,6 +60,14 @@ class FieldSearchUpdate(BaseModel):
     end_date: Optional[date] = None
     result: Optional[str] = None
     notes: Optional[str] = None
+
+    # Preparation section
+    preparation_grid_file: Optional[str] = Field(None, max_length=500)
+    preparation_map_image: Optional[str] = Field(None, max_length=500)
+
+    # Search progress section
+    search_tracks: Optional[List[str]] = None
+    search_photos: Optional[List[str]] = None
 
 
 class FieldSearchResponse(BaseModel):
@@ -73,6 +89,14 @@ class FieldSearchResponse(BaseModel):
     end_date: Optional[date]
     result: Optional[str]
     notes: Optional[str]
+
+    # Preparation section
+    preparation_grid_file: Optional[str]
+    preparation_map_image: Optional[str]
+
+    # Search progress section
+    search_tracks: List[str]
+    search_photos: List[str]
 
     model_config = {"from_attributes": True, "use_enum_values": True}
 
