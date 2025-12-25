@@ -14,6 +14,7 @@ class FlyerTemplateCreate(BaseModel):
 class FlyerTemplateUpdate(BaseModel):
     """Schema for updating a flyer template"""
     description: Optional[str] = None
+    gpt_prompt: Optional[str] = None
     is_active: Optional[int] = None
 
 
@@ -25,6 +26,7 @@ class FlyerTemplateResponse(BaseModel):
     file_name: str
     file_path: str
     description: Optional[str]
+    gpt_prompt: Optional[str]
     is_active: int
 
     model_config = {"from_attributes": True}

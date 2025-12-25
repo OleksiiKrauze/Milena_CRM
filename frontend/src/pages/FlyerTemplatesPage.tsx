@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { flyerTemplatesApi } from '@/api/flyerTemplates';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Loading } from '@/components/ui';
 import { formatDateTime } from '@/utils/formatters';
-import { Trash2, Upload } from 'lucide-react';
+import { Trash2, Upload, Save } from 'lucide-react';
 
 type TemplateType = 'main' | 'additional' | 'logo';
 
@@ -32,10 +32,79 @@ const templateSections: TemplateSection[] = [
   },
 ];
 
+const DEFAULT_GPT_PROMPT = `Ти — досвідчений інфорг пошуково-рятувальної організації.
+Твоя задача — зі всього наданого тексту СТВОРИТИ ГОТОВЕ ОРІЄНТУВАННЯ НА ПОШУК людини.
+
+❗ ВАЖЛИВО:
+- Не вигадуй жодної інформації.
+- Якщо якихось даних немає — просто пропусти відповідний пункт.
+- Текст має бути лаконічний, зрозумілий, придатний для публікації в соцмережах.
+- Формулювання мають відповідати стандартам пошукових орієнтувань.
+- Дотримуйся наведеної структури і правил без відхилень.
+
+ВИХІДНИЙ JSON ФОРМАТ:
+Поверни відповідь СТРОГО у форматі JSON з такою структурою:
+{
+  "sections": [
+    {
+      "text": "текст розділу",
+      "fontSize": розмір_шрифту_число,
+      "color": "#hex_колір",
+      "bold": true/false,
+      "align": "center"
+    }
+  ]
+}
+
+СТРУКТУРА ОРІЄНТУВАННЯ:
+
+1. УВАГА! (якщо є критична інформація):
+   fontSize: 42, color: "#8B0000" (бордовий), bold: true, align: "center"
+
+2. ПІБ зниклого:
+   fontSize: 48, color: "#000000" (чорний), bold: true, align: "center"
+
+3. Вік та загальна інформація:
+   fontSize: 40, color: "#000000", bold: true, align: "center"
+
+4. Прикмети зовнішності:
+   fontSize: 36, color: "#000000", bold: true, align: "center"
+
+5. Одяг:
+   fontSize: 36, color: "#000000", bold: true, align: "center"
+
+6. Обставини зникнення:
+   fontSize: 34, color: "#000000", bold: true, align: "center"
+
+7. Місце зникнення:
+   fontSize: 34, color: "#000000", bold: true, align: "center"
+
+8. Доповнення (критична медична інформація):
+   fontSize: 40, color: "#8B0000" (бордовий), bold: true, align: "center"
+
+9. Заклик до дії:
+   fontSize: 38, color: "#000000", bold: true, align: "center"
+
+10. Контактна інформація:
+    fontSize: 36, color: "#000000", bold: true, align: "center"
+
+11. Підпис:
+    fontSize: 28, color: "#666666" (сірий), bold: false, align: "center"
+
+Додай порожні рядки між розділами для читабельності (окремий об'єкт з text: "", fontSize: 20).
+
+ІНСТРУКЦІЯ:
+1. Проаналізуй наданий текст з інформацією про заявку
+2. Сформуй орієнтування згідно структури вище
+3. Поверни ТІЛЬКИ JSON без жодних пояснень
+4. Кожний розділ має бути окремим об'єктом в масиві sections`;
+
 export function FlyerTemplatesPage() {
   const queryClient = useQueryClient();
   const [uploadingType, setUploadingType] = useState<TemplateType | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<{ [key in TemplateType]?: File }>({});
+  const [gptPrompt, setGptPrompt] = useState<string>('');
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   // Fetch templates for all types
   const { data: mainTemplates, isLoading: mainLoading } = useQuery({

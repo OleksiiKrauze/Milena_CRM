@@ -45,6 +45,7 @@ export const flyerTemplatesApi = {
   // Update template
   update: async (id: number, data: {
     description?: string;
+    gpt_prompt?: string;
     is_active?: number;
   }): Promise<FlyerTemplate> => {
     const response = await api.patch<FlyerTemplate>(`/flyer-templates/${id}`, data);

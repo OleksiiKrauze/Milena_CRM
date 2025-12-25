@@ -396,6 +396,7 @@ export interface FlyerTemplate {
   file_name: string;
   file_path: string;
   description: string | null;
+  gpt_prompt: string | null;
   is_active: number;
 }
 

@@ -22,5 +22,6 @@ class FlyerTemplate(Base):
     file_name = Column(String(255), nullable=False)  # Original file name
     file_path = Column(String(500), nullable=False)  # Path to uploaded file
     description = Column(Text)  # Optional description
+    gpt_prompt = Column(Text)  # GPT prompt for orientation text generation
 
     is_active = Column(Integer, default=1)  # 1 = active, 0 = inactive
