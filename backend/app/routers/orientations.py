@@ -6,12 +6,17 @@ from app.schemas.orientation import (
     OrientationCreate,
     OrientationUpdate,
     OrientationResponse,
-    OrientationListResponse
+    OrientationListResponse,
+    GenerateOrientationTextRequest,
+    GenerateOrientationTextResponse
 )
 from app.models.orientation import Orientation
 from app.models.search import Search
+from app.models.case import Case
+from app.models.flyer_template import FlyerTemplate, TemplateType
 from app.models.user import User
 from app.routers.auth import get_current_user
+from app.services.openai_service import get_openai_service
 
 router = APIRouter(prefix="/orientations", tags=["Orientations"])
 
@@ -156,3 +161,84 @@ def delete_orientation(
     db.commit()
 
     return None
+
+
+@router.post("/generate-text", response_model=GenerateOrientationTextResponse)
+def generate_orientation_text(
+    request_data: GenerateOrientationTextRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Generate orientation text using ChatGPT based on case data and template prompt"""
+
+    # Get case data
+    case = db.query(Case).filter(Case.id == request_data.case_id).first()
+    if not case:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Case with id {request_data.case_id} not found"
+        )
+
+    # Get template and its GPT prompt
+    if request_data.template_id:
+        template = db.query(FlyerTemplate).filter(
+            FlyerTemplate.id == request_data.template_id,
+            FlyerTemplate.is_active == 1
+        ).first()
+    else:
+        # Get first active main template
+        template = db.query(FlyerTemplate).filter(
+            FlyerTemplate.template_type == TemplateType.main,
+            FlyerTemplate.is_active == 1
+        ).first()
+
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active template found"
+        )
+
+    if not template.gpt_prompt:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Template does not have a GPT prompt configured"
+        )
+
+    # Convert case object to dictionary
+    case_data = {
+        'applicant_last_name': case.applicant_last_name,
+        'applicant_first_name': case.applicant_first_name,
+        'applicant_middle_name': case.applicant_middle_name,
+        'applicant_phone': case.applicant_phone,
+        'applicant_relation': case.applicant_relation,
+        'missing_last_name': case.missing_last_name,
+        'missing_first_name': case.missing_first_name,
+        'missing_middle_name': case.missing_middle_name,
+        'missing_gender': case.missing_gender,
+        'missing_birthdate': str(case.missing_birthdate) if case.missing_birthdate else '',
+        'missing_phone': case.missing_phone,
+        'missing_settlement': case.missing_settlement,
+        'missing_region': case.missing_region,
+        'missing_address': case.missing_address,
+        'missing_last_seen_datetime': str(case.missing_last_seen_datetime) if case.missing_last_seen_datetime else '',
+        'missing_last_seen_place': case.missing_last_seen_place,
+        'missing_description': case.missing_description,
+        'missing_special_signs': case.missing_special_signs,
+        'missing_diseases': case.missing_diseases,
+        'missing_clothing': case.missing_clothing,
+        'missing_belongings': case.missing_belongings,
+        'disappearance_circumstances': case.disappearance_circumstances,
+        'additional_info': case.additional_info,
+        'initial_info': case.initial_info,
+    }
+
+    # Generate text using OpenAI
+    openai_service = get_openai_service()
+    try:
+        result = openai_service.generate_orientation_text(case_data, template.gpt_prompt)
+        return GenerateOrientationTextResponse(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating text: {str(e)}"
+        )

@@ -44,3 +44,14 @@ class OrientationListResponse(BaseModel):
     """Schema for orientation list"""
     total: int
     orientations: list[OrientationResponse]
+
+
+class GenerateOrientationTextRequest(BaseModel):
+    """Schema for generating orientation text"""
+    case_id: int = Field(..., description="ID of the case to generate orientation for")
+    template_id: Optional[int] = Field(None, description="ID of template (uses first main if not provided)")
+
+
+class GenerateOrientationTextResponse(BaseModel):
+    """Schema for generated orientation text response"""
+    sections: list[dict] = Field(..., description="Array of text sections with styling")
