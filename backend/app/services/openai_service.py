@@ -127,57 +127,23 @@ class OpenAIService:
         except Exception as e:
             raise Exception(f"Error parsing case info with OpenAI: {str(e)}")
 
-    def generate_orientation_text(self, case_data: Dict[str, Any], gpt_prompt: str) -> Dict[str, Any]:
+    def generate_orientation_text(self, initial_info: str, gpt_prompt: str) -> Dict[str, Any]:
         """
-        Generate orientation text using ChatGPT based on case data and custom prompt
+        Generate orientation text using ChatGPT based on initial_info and custom prompt
 
         Args:
-            case_data: Dictionary with case information
+            initial_info: Raw text from "Первинна інформація" field
             gpt_prompt: Custom GPT prompt from template
 
         Returns:
             Dictionary with sections array containing formatted text
         """
 
-        # Format case data into readable text for GPT
+        # Use initial_info as the primary source
         case_text = f"""
-ДАНІ ЗАЯВКИ:
+ПЕРВИННА ІНФОРМАЦІЯ ПРО ЗАЯВКУ:
 
-Заявник:
-- ПІБ: {case_data.get('applicant_last_name', '')} {case_data.get('applicant_first_name', '')} {case_data.get('applicant_middle_name', '')}
-- Телефон: {case_data.get('applicant_phone', '')}
-- Зв'язок: {case_data.get('applicant_relation', '')}
-
-Зниклий:
-- ПІБ: {case_data.get('missing_last_name', '')} {case_data.get('missing_first_name', '')} {case_data.get('missing_middle_name', '')}
-- Дата народження: {case_data.get('missing_birthdate', '')}
-- Стать: {case_data.get('missing_gender', '')}
-- Телефон: {case_data.get('missing_phone', '')}
-
-Місце зникнення:
-- Населений пункт: {case_data.get('missing_settlement', '')}
-- Область: {case_data.get('missing_region', '')}
-- Адреса: {case_data.get('missing_address', '')}
-
-Обставини:
-- Коли бачили останній раз: {case_data.get('missing_last_seen_datetime', '')}
-- Де бачили останній раз: {case_data.get('missing_last_seen_place', '')}
-- Обставини зникнення: {case_data.get('disappearance_circumstances', '')}
-
-Зовнішність:
-- Опис: {case_data.get('missing_description', '')}
-- Особливі прикмети: {case_data.get('missing_special_signs', '')}
-
-Одяг та речі:
-- Одяг: {case_data.get('missing_clothing', '')}
-- Особисті речі: {case_data.get('missing_belongings', '')}
-
-Медична інформація:
-- Захворювання: {case_data.get('missing_diseases', '')}
-
-Додаткова інформація:
-- {case_data.get('additional_info', '')}
-- {case_data.get('initial_info', '')}
+{initial_info}
 """
 
         try:

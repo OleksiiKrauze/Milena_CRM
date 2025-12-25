@@ -204,38 +204,19 @@ def generate_orientation_text(
             detail="Template does not have a GPT prompt configured"
         )
 
-    # Convert case object to dictionary
-    case_data = {
-        'applicant_last_name': case.applicant_last_name,
-        'applicant_first_name': case.applicant_first_name,
-        'applicant_middle_name': case.applicant_middle_name,
-        'applicant_phone': case.applicant_phone,
-        'applicant_relation': case.applicant_relation,
-        'missing_last_name': case.missing_last_name,
-        'missing_first_name': case.missing_first_name,
-        'missing_middle_name': case.missing_middle_name,
-        'missing_gender': case.missing_gender,
-        'missing_birthdate': str(case.missing_birthdate) if case.missing_birthdate else '',
-        'missing_phone': case.missing_phone,
-        'missing_settlement': case.missing_settlement,
-        'missing_region': case.missing_region,
-        'missing_address': case.missing_address,
-        'missing_last_seen_datetime': str(case.missing_last_seen_datetime) if case.missing_last_seen_datetime else '',
-        'missing_last_seen_place': case.missing_last_seen_place,
-        'missing_description': case.missing_description,
-        'missing_special_signs': case.missing_special_signs,
-        'missing_diseases': case.missing_diseases,
-        'missing_clothing': case.missing_clothing,
-        'missing_belongings': case.missing_belongings,
-        'disappearance_circumstances': case.disappearance_circumstances,
-        'additional_info': case.additional_info,
-        'initial_info': case.initial_info,
-    }
+    # Get initial_info from case
+    initial_info = case.initial_info or ""
+
+    if not initial_info:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Case does not have initial_info (первинна інформація) filled in"
+        )
 
     # Generate text using OpenAI
     openai_service = get_openai_service()
     try:
-        result = openai_service.generate_orientation_text(case_data, template.gpt_prompt)
+        result = openai_service.generate_orientation_text(initial_info, template.gpt_prompt)
         return GenerateOrientationTextResponse(**result)
     except Exception as e:
         raise HTTPException(

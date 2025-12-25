@@ -104,7 +104,6 @@ export function FlyerTemplatesPage() {
   const [uploadingType, setUploadingType] = useState<TemplateType | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<{ [key in TemplateType]?: File }>({});
   const [gptPrompt, setGptPrompt] = useState<string>('');
-  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
   // Fetch templates for all types
   const { data: mainTemplates, isLoading: mainLoading } = useQuery({
@@ -148,6 +147,25 @@ export function FlyerTemplatesPage() {
     },
   });
 
+  // Update GPT prompt mutation
+  const updatePromptMutation = useMutation({
+    mutationFn: (data: { id: number; gpt_prompt: string }) =>
+      flyerTemplatesApi.update(data.id, { gpt_prompt: data.gpt_prompt }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flyer-templates', 'main'] });
+    },
+  });
+
+  // Load GPT prompt from first main template
+  useEffect(() => {
+    if (mainTemplates?.templates && mainTemplates.templates.length > 0) {
+      const firstTemplate = mainTemplates.templates[0];
+      setGptPrompt(firstTemplate.gpt_prompt || DEFAULT_GPT_PROMPT);
+    } else {
+      setGptPrompt(DEFAULT_GPT_PROMPT);
+    }
+  }, [mainTemplates]);
+
   const handleFileSelect = (type: TemplateType, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -166,6 +184,16 @@ export function FlyerTemplatesPage() {
   const handleDelete = async (id: number) => {
     if (confirm('Ви впевнені, що хочете видалити цей шаблон?')) {
       await deleteMutation.mutateAsync(id);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    if (mainTemplates?.templates && mainTemplates.templates.length > 0) {
+      const firstTemplate = mainTemplates.templates[0];
+      await updatePromptMutation.mutateAsync({
+        id: firstTemplate.id,
+        gpt_prompt: gptPrompt,
+      });
     }
   };
 
@@ -197,6 +225,74 @@ export function FlyerTemplatesPage() {
 
       <Container className="py-6">
         <div className="space-y-6">
+          {/* GPT Prompt Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Промт для ChatGPT</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Промт, який використовується для автоматичної генерації тексту орієнтування
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {mainLoading ? (
+                <Loading text="Завантаження..." />
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Текст промта
+                    </label>
+                    <textarea
+                      value={gptPrompt}
+                      onChange={(e) => setGptPrompt(e.target.value)}
+                      rows={20}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                      placeholder="Введіть промт для ChatGPT..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Цей промт буде використовуватись для генерації тексту орієнтування на основі даних із заявки
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSavePrompt}
+                      disabled={updatePromptMutation.isPending || !mainTemplates?.templates?.length}
+                      size="sm"
+                    >
+                      {updatePromptMutation.isPending ? (
+                        <span className="flex items-center gap-2">
+                          <Loading text="" />
+                          Збереження...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Save className="h-4 w-4" />
+                          Зберегти промт
+                        </span>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setGptPrompt(DEFAULT_GPT_PROMPT)}
+                      size="sm"
+                    >
+                      Скинути до базового
+                    </Button>
+                  </div>
+
+                  {!mainTemplates?.templates?.length && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        Спочатку завантажте хоча б один основний шаблон, щоб зберегти промт
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {templateSections.map((section) => (
             <Card key={section.type}>
               <CardHeader>
