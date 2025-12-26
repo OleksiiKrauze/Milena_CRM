@@ -137,6 +137,7 @@ class OpenAIService:
 
         Returns:
             Dictionary with sections array containing formatted text
+            Each section has: text, fontSize, color, bold, uppercase, align
         """
 
         # Use initial_info as the primary source

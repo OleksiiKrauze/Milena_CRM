@@ -51,6 +51,7 @@ const DEFAULT_GPT_PROMPT = `Ти — досвідчений інфорг пош�
       "fontSize": розмір_шрифту_число,
       "color": "#hex_колір",
       "bold": true/false,
+      "uppercase": true/false,
       "align": "center"
     }
   ]
@@ -59,37 +60,37 @@ const DEFAULT_GPT_PROMPT = `Ти — досвідчений інфорг пош�
 СТРУКТУРА ОРІЄНТУВАННЯ:
 
 1. УВАГА! (якщо є критична інформація):
-   fontSize: 42, color: "#8B0000" (бордовий), bold: true, align: "center"
+   fontSize: 42, color: "#8B0000" (бордовий), bold: true, uppercase: true, align: "center"
 
 2. ПІБ зниклого:
-   fontSize: 48, color: "#000000" (чорний), bold: true, align: "center"
+   fontSize: 48, color: "#000000" (чорний), bold: true, uppercase: true, align: "center"
 
 3. Вік та загальна інформація:
-   fontSize: 40, color: "#000000", bold: true, align: "center"
+   fontSize: 40, color: "#000000", bold: true, uppercase: false, align: "center"
 
 4. Прикмети зовнішності:
-   fontSize: 36, color: "#000000", bold: true, align: "center"
+   fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
 
 5. Одяг:
-   fontSize: 36, color: "#000000", bold: true, align: "center"
+   fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
 
 6. Обставини зникнення:
-   fontSize: 34, color: "#000000", bold: true, align: "center"
+   fontSize: 34, color: "#000000", bold: true, uppercase: false, align: "center"
 
 7. Місце зникнення:
-   fontSize: 34, color: "#000000", bold: true, align: "center"
+   fontSize: 34, color: "#000000", bold: true, uppercase: false, align: "center"
 
 8. Доповнення (критична медична інформація):
-   fontSize: 40, color: "#8B0000" (бордовий), bold: true, align: "center"
+   fontSize: 40, color: "#8B0000" (бордовий), bold: true, uppercase: true, align: "center"
 
 9. Заклик до дії:
-   fontSize: 38, color: "#000000", bold: true, align: "center"
+   fontSize: 38, color: "#000000", bold: true, uppercase: false, align: "center"
 
 10. Контактна інформація:
-    fontSize: 36, color: "#000000", bold: true, align: "center"
+    fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
 
 11. Підпис:
-    fontSize: 28, color: "#666666" (сірий), bold: false, align: "center"
+    fontSize: 28, color: "#666666" (сірий), bold: false, uppercase: false, align: "center"
 
 Додай порожні рядки між розділами для читабельності (окремий об'єкт з text: "", fontSize: 20).
 

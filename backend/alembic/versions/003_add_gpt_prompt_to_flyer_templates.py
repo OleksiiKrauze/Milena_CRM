@@ -36,6 +36,7 @@ DEFAULT_GPT_PROMPT = """Ти — досвідчений інфорг пошук�
       "fontSize": розмір_шрифту_число,
       "color": "#hex_колір",
       "bold": true/false,
+      "uppercase": true/false,
       "align": "center"
     }
   ]
@@ -46,47 +47,47 @@ DEFAULT_GPT_PROMPT = """Ти — досвідчений інфорг пошук�
 --------------------------------
 
 1. УВАГА! (якщо є критична інформація):
-   - fontSize: 42, color: "#8B0000" (бордовий), bold: true, align: "center"
+   - fontSize: 42, color: "#8B0000" (бордовий), bold: true, uppercase: true, align: "center"
    - Приклади: "УВАГА! ЗНИК НЕПОВНОЛІТНІЙ!", "УВАГА! ЛІТНЯ ЛЮДИНА!"
 
 2. ПІБ зниклого:
-   - fontSize: 48, color: "#000000" (чорний), bold: true, align: "center"
+   - fontSize: 48, color: "#000000" (чорний), bold: true, uppercase: true, align: "center"
    - Великими літерами
 
 3. Вік та загальна інформація:
-   - fontSize: 40, color: "#000000", bold: true, align: "center"
+   - fontSize: 40, color: "#000000", bold: true, uppercase: false, align: "center"
    - Формат: "ВАГА/ЗРІСТ: ХХ років, XXX см, XX кг"
 
 4. Прикмети зовнішності:
-   - fontSize: 36, color: "#000000", bold: true, align: "center"
+   - fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
    - Колір волосся, очей, особливі прикмети
 
 5. Одяг:
-   - fontSize: 36, color: "#000000", bold: true, align: "center"
+   - fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
    - "ОДЯГ: опис одягу"
 
 6. Обставини зникнення:
-   - fontSize: 34, color: "#000000", bold: true, align: "center"
+   - fontSize: 34, color: "#000000", bold: true, uppercase: false, align: "center"
    - "ОБСТАВИНИ: коли, де, за яких обставин"
 
 7. Місце зникнення:
-   - fontSize: 34, color: "#000000", bold: true, align: "center"
+   - fontSize: 34, color: "#000000", bold: true, uppercase: false, align: "center"
    - "МІСЦЕ ЗНИКНЕННЯ: адреса/район"
 
 8. Доповнення (критична медична інформація):
-   - fontSize: 40, color: "#8B0000" (бордовий), bold: true, align: "center"
+   - fontSize: 40, color: "#8B0000" (бордовий), bold: true, uppercase: true, align: "center"
    - "Має проблеми з пам'яттю!", "Потребує медичної допомоги!" тощо
 
 9. Заклик до дії:
-   - fontSize: 38, color: "#000000", bold: true, align: "center"
+   - fontSize: 38, color: "#000000", bold: true, uppercase: false, align: "center"
    - "ЯКЩО БАЧИЛИ ЧИ МАЄТЕ БУДЬ-ЯКУ ІНФОРМАЦІЮ - ТЕЛЕФОНУЙТЕ!"
 
 10. Контактна інформація:
-    - fontSize: 36, color: "#000000", bold: true, align: "center"
+    - fontSize: 36, color: "#000000", bold: true, uppercase: false, align: "center"
     - Номери телефонів (з даних заявки)
 
 11. Підпис:
-    - fontSize: 28, color: "#666666" (сірий), bold: false, align: "center"
+    - fontSize: 28, color: "#666666" (сірий), bold: false, uppercase: false, align: "center"
     - "ПОШУКОВО-РЯТУВАЛЬНИЙ ЗАГІН MILENA"
 
 --------------------------------
@@ -94,15 +95,15 @@ DEFAULT_GPT_PROMPT = """Ти — досвідчений інфорг пошук�
 --------------------------------
 {
   "sections": [
-    {"text": "УВАГА! ЗНИК НЕПОВНОЛІТНІЙ!", "fontSize": 42, "color": "#8B0000", "bold": true, "align": "center"},
-    {"text": "ІВАНОВ ІВАН ІВАНОВИЧ", "fontSize": 48, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "15 років, 170 см, 60 кг", "fontSize": 40, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "Світле волосся, зелені очі", "fontSize": 36, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "ОДЯГ: чорна куртка, сині джинси", "fontSize": 36, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "Потребує медичної допомоги!", "fontSize": 40, "color": "#8B0000", "bold": true, "align": "center"},
-    {"text": "ЯКЩО БАЧИЛИ ЧИ МАЄТЕ БУДЬ-ЯКУ ІНФОРМАЦІЮ - ТЕЛЕФОНУЙТЕ!", "fontSize": 38, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "102, 0800 123 456", "fontSize": 36, "color": "#000000", "bold": true, "align": "center"},
-    {"text": "ПОШУКОВО-РЯТУВАЛЬНИЙ ЗАГІН MILENA", "fontSize": 28, "color": "#666666", "bold": false, "align": "center"}
+    {"text": "УВАГА! ЗНИК НЕПОВНОЛІТНІЙ!", "fontSize": 42, "color": "#8B0000", "bold": true, "uppercase": true, "align": "center"},
+    {"text": "ІВАНОВ ІВАН ІВАНОВИЧ", "fontSize": 48, "color": "#000000", "bold": true, "uppercase": true, "align": "center"},
+    {"text": "15 років, 170 см, 60 кг", "fontSize": 40, "color": "#000000", "bold": true, "uppercase": false, "align": "center"},
+    {"text": "Світле волосся, зелені очі", "fontSize": 36, "color": "#000000", "bold": true, "uppercase": false, "align": "center"},
+    {"text": "ОДЯГ: чорна куртка, сині джинси", "fontSize": 36, "color": "#000000", "bold": true, "uppercase": false, "align": "center"},
+    {"text": "Потребує медичної допомоги!", "fontSize": 40, "color": "#8B0000", "bold": true, "uppercase": true, "align": "center"},
+    {"text": "ЯКЩО БАЧИЛИ ЧИ МАЄТЕ БУДЬ-ЯКУ ІНФОРМАЦІЮ - ТЕЛЕФОНУЙТЕ!", "fontSize": 38, "color": "#000000", "bold": true, "uppercase": false, "align": "center"},
+    {"text": "102, 0800 123 456", "fontSize": 36, "color": "#000000", "bold": true, "uppercase": false, "align": "center"},
+    {"text": "ПОШУКОВО-РЯТУВАЛЬНИЙ ЗАГІН MILENA", "fontSize": 28, "color": "#666666", "bold": false, "uppercase": false, "align": "center"}
   ]
 }
 
