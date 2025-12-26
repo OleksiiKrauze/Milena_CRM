@@ -234,11 +234,16 @@ export interface Case {
   missing_belongings: string | null;
   // Additional case information
   additional_search_regions: string[];
-  police_report_filed: boolean;
   search_terrain_type: string | null;
   disappearance_circumstances: string | null;
   initial_info: string | null;
   additional_info: string | null;
+  // Police information
+  police_report_filed: boolean;
+  police_report_date: string | null;
+  police_department: string | null;
+  police_contact_user_id: number | null;
+  police_contact: UserBrief | null;
   // Computed full names
   applicant_full_name: string;
   missing_full_name: string;
@@ -275,11 +280,15 @@ export interface CaseCreate {
   missing_belongings?: string;
   // Additional case information
   additional_search_regions?: string[];
-  police_report_filed?: boolean;
   search_terrain_type?: string;
   disappearance_circumstances?: string;
   initial_info?: string;
   additional_info?: string;
+  // Police information
+  police_report_filed?: boolean;
+  police_report_date?: string;
+  police_department?: string;
+  police_contact_user_id?: number;
   decision_type?: string;
   decision_comment?: string;
   tags?: string[];

@@ -292,12 +292,6 @@ export function CaseDetailsPage() {
                 )}
               </div>
               <div>
-                <p className="text-sm text-gray-600">Заява до поліції</p>
-                <p className={`font-medium ${caseData.police_report_filed ? 'text-green-600' : 'text-red-600'}`}>
-                  {caseData.police_report_filed ? 'Подана ✓' : 'Не подана ✗'}
-                </p>
-              </div>
-              <div>
                 <p className="text-sm text-gray-600">Тип місцевості пошуку</p>
                 <p className="font-medium">{caseData.search_terrain_type || '-'}</p>
               </div>
@@ -313,6 +307,35 @@ export function CaseDetailsPage() {
                 <p className="text-sm text-gray-600">Додаткова інформація</p>
                 <p className="font-medium whitespace-pre-wrap">{caseData.additional_info || '-'}</p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Police Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Поліція</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Заява до поліції</p>
+                <p className="font-medium">{caseData.police_report_filed ? 'Так' : 'Ні'}</p>
+              </div>
+              {caseData.police_report_date && (
+                <div>
+                  <p className="text-sm text-gray-600">Дата заяви</p>
+                  <p className="font-medium">{formatDate(caseData.police_report_date)}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-600">Райвідділок</p>
+                <p className="font-medium">{caseData.police_department || '-'}</p>
+              </div>
+              {caseData.police_contact && (
+                <div>
+                  <p className="text-sm text-gray-600">Зв'язок з поліцією</p>
+                  <p className="font-medium">{caseData.police_contact.full_name}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

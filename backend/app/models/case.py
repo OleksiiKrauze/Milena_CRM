@@ -45,11 +45,16 @@ class Case(Base):
 
     # Additional case information
     additional_search_regions = Column(ARRAY(String), default=list)
-    police_report_filed = Column(Boolean, default=False)
     search_terrain_type = Column(String(50))  # Місто, Ліс, Поле, Вода, Інше
     disappearance_circumstances = Column(Text)
     initial_info = Column(Text)  # Первинна інформація - первичный ввод всех данных
     additional_info = Column(Text)
+
+    # Police information
+    police_report_filed = Column(Boolean, default=False)
+    police_report_date = Column(DateTime(timezone=True))
+    police_department = Column(String(200))  # Райвідділок
+    police_contact_user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
 
     decision_type = Column(String(50), default="На розгляді", nullable=False, index=True)
     decision_comment = Column(Text)
@@ -60,6 +65,7 @@ class Case(Base):
     # Relationships
     created_by = relationship('User', foreign_keys=[created_by_user_id])
     updated_by = relationship('User', foreign_keys=[updated_by_user_id])
+    police_contact = relationship('User', foreign_keys=[police_contact_user_id])
     searches = relationship('Search', back_populates='case', cascade='all, delete-orphan')
 
     @property

@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { casesApi } from '@/api/cases';
 import { uploadApi } from '@/api/upload';
+import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
 import { Container, Button, Input, Card, CardContent, Loading } from '@/components/ui';
 import { X, Upload, Sparkles } from 'lucide-react';
@@ -37,11 +38,15 @@ const editCaseSchema = z.object({
   missing_belongings: z.string().optional(),
   // Additional case information
   additional_search_regions: z.string().optional(),
-  police_report_filed: z.boolean().optional().default(false),
   search_terrain_type: z.string().optional(),
   initial_info: z.string().optional(),
   disappearance_circumstances: z.string().optional(),
   additional_info: z.string().optional(),
+  // Police information
+  police_report_filed: z.boolean().optional().default(false),
+  police_report_date: z.string().optional(),
+  police_department: z.string().optional(),
+  police_contact_user_id: z.string().optional(),
   // Case metadata
   decision_type: z.string().optional().default('На розгляді'),
   decision_comment: z.string().optional(),
@@ -73,6 +78,13 @@ export function EditCasePage() {
   const { register, handleSubmit, formState, reset, setValue, getValues, watch } = form;
   const errors = formState.errors;
 
+  // Fetch users for police contact dropdown
+  const { data: usersData } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.list({ limit: 1000 }),
+  });
+  const users = usersData?.users || [];
+
   // Watch initial_info field for autofill button
   const initialInfo = watch('initial_info');
 
@@ -100,11 +112,18 @@ export function EditCasePage() {
         missing_description: caseData.missing_description || '',
         missing_special_signs: caseData.missing_special_signs || '',
         missing_diseases: caseData.missing_diseases || '',
+        missing_phone: caseData.missing_phone || '',
         missing_clothing: caseData.missing_clothing || '',
         missing_belongings: caseData.missing_belongings || '',
+        additional_search_regions: caseData.additional_search_regions?.join(', ') || '',
+        search_terrain_type: caseData.search_terrain_type || '',
         disappearance_circumstances: caseData.disappearance_circumstances || '',
         initial_info: caseData.initial_info || '',
         additional_info: caseData.additional_info || '',
+        police_report_filed: caseData.police_report_filed || false,
+        police_report_date: caseData.police_report_date ? caseData.police_report_date.split('T')[0] : '',
+        police_department: caseData.police_department || '',
+        police_contact_user_id: caseData.police_contact_user_id ? String(caseData.police_contact_user_id) : '',
         decision_type: caseData.decision_type,
         decision_comment: caseData.decision_comment || '',
         tags: caseData.tags.join(', '),
@@ -221,6 +240,12 @@ export function EditCasePage() {
 
   const onSubmit = (data: any) => {
     setApiError(null);
+
+    // Convert police_contact_user_id from string to number
+    if (data.police_contact_user_id) {
+      data.police_contact_user_id = parseInt(data.police_contact_user_id, 10);
+    }
+
     updateMutation.mutate(data);
   };
 
@@ -532,25 +557,6 @@ export function EditCasePage() {
               />
 
               <div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register('police_report_filed')}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Заява до поліції подана <span className="text-red-500">*</span>
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500 mt-1 ml-6">
-                  Без заяви до поліції пошук не може бути розпочатий
-                </p>
-                {errors.police_report_filed && (
-                  <p className="text-sm text-red-600 mt-1">{errors.police_report_filed.message}</p>
-                )}
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Тип місцевості пошуку
                 </label>
@@ -628,6 +634,73 @@ export function EditCasePage() {
                 />
                 {errors.additional_info && (
                   <p className="text-sm text-red-600 mt-1">{errors.additional_info.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Police Information */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Поліція</h3>
+
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register('police_report_filed')}
+                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Заява до поліції подана <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">
+                  Без заяви до поліції пошук не може бути розпочатий
+                </p>
+                {errors.police_report_filed && (
+                  <p className="text-sm text-red-600 mt-1">{errors.police_report_filed.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Дата заяви до поліції
+                </label>
+                <input
+                  type="date"
+                  {...register('police_report_date')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                {errors.police_report_date && (
+                  <p className="text-sm text-red-600 mt-1">{errors.police_report_date.message}</p>
+                )}
+              </div>
+
+              <Input
+                label="Райвідділок"
+                placeholder="Назва райвідділку поліції"
+                error={errors.police_department?.message}
+                {...register('police_department')}
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Зв'язок з поліцією
+                </label>
+                <select
+                  {...register('police_contact_user_id')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Не вказано</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.full_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.police_contact_user_id && (
+                  <p className="text-sm text-red-600 mt-1">{errors.police_contact_user_id.message}</p>
                 )}
               </div>
             </CardContent>

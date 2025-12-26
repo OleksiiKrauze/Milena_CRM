@@ -61,10 +61,14 @@ class OpenAIService:
 
 4. Додаткова інформація (additional):
    - search_regions: додаткові області для пошуку (масив рядків)
-   - police_report_filed: чи подано заяву в поліцію (true/false)
    - search_terrain_type: тип місцевості ("Місто", "Ліс", "Поле", "Вода", або "Інше")
    - disappearance_circumstances: обставини зникнення
    - tags: теги для категоризації (масив рядків, наприклад ["літня людина", "хвороба Альцгеймера"])
+
+5. Інформація про поліцію (police):
+   - police_report_filed: чи подано заяву в поліцію (true/false)
+   - police_report_date: дата подання заяви в поліцію в форматі ISO (YYYY-MM-DD)
+   - police_department: назва райвідділку поліції
 
 Якщо якесь поле не можна визначити з тексту, залиш його як null або порожній масив для списків.
 """
@@ -112,8 +116,13 @@ class OpenAIService:
                 for key, value in result["additional"].items():
                     flat_result[key] = value
 
+            # Police data
+            if "police" in result and result["police"]:
+                for key, value in result["police"].items():
+                    flat_result[f"police_{key}"] = value
+
             # Convert date strings to datetime objects if needed
-            date_fields = ["missing_birthdate", "missing_last_seen_datetime"]
+            date_fields = ["missing_birthdate", "missing_last_seen_datetime", "police_report_date"]
             for field in date_fields:
                 if field in flat_result and flat_result[field]:
                     try:

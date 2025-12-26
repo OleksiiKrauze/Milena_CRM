@@ -40,11 +40,16 @@ class CaseCreate(BaseModel):
 
     # Additional case information
     additional_search_regions: Optional[List[str]] = []
-    police_report_filed: Optional[bool] = False
     search_terrain_type: Optional[str] = Field(None, max_length=50)
     disappearance_circumstances: Optional[str] = None
     initial_info: Optional[str] = None
     additional_info: Optional[str] = None
+
+    # Police information
+    police_report_filed: Optional[bool] = False
+    police_report_date: Optional[datetime] = None
+    police_department: Optional[str] = Field(None, max_length=200)
+    police_contact_user_id: Optional[int] = None
 
     # Case metadata
     decision_type: Optional[str] = "На розгляді"
@@ -84,11 +89,16 @@ class CaseUpdate(BaseModel):
 
     # Additional case information
     additional_search_regions: Optional[List[str]] = None
-    police_report_filed: Optional[bool] = None
     search_terrain_type: Optional[str] = Field(None, max_length=50)
     disappearance_circumstances: Optional[str] = None
     initial_info: Optional[str] = None
     additional_info: Optional[str] = None
+
+    # Police information
+    police_report_filed: Optional[bool] = None
+    police_report_date: Optional[datetime] = None
+    police_department: Optional[str] = Field(None, max_length=200)
+    police_contact_user_id: Optional[int] = None
 
     # Case metadata
     decision_type: Optional[str] = None
@@ -136,11 +146,17 @@ class CaseResponse(BaseModel):
 
     # Additional case information
     additional_search_regions: List[str]
-    police_report_filed: bool
     search_terrain_type: Optional[str]
     disappearance_circumstances: Optional[str]
     initial_info: Optional[str]
     additional_info: Optional[str]
+
+    # Police information
+    police_report_filed: bool
+    police_report_date: Optional[datetime]
+    police_department: Optional[str]
+    police_contact_user_id: Optional[int]
+    police_contact: Optional[UserBrief]
 
     # Computed full names
     applicant_full_name: str
