@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum as SQLEnum, Table, ARRAY
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, Enum as SQLEnum, Table, ARRAY, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base
@@ -51,6 +51,13 @@ class FieldSearch(Base):
     # Preparation section
     preparation_grid_file = Column(String(500))  # URL to grid file (gpx/kml)
     preparation_map_image = Column(String(500))  # URL to map image
+
+    # Grid generation parameters
+    grid_center_lat = Column(Float)  # Latitude of grid center point
+    grid_center_lon = Column(Float)  # Longitude of grid center point
+    grid_cols = Column(Integer)  # Number of grid columns (horizontal)
+    grid_rows = Column(Integer)  # Number of grid rows (vertical)
+    grid_cell_size = Column(Integer)  # Cell size in meters
 
     # Search progress section
     search_tracks = Column(ARRAY(String), default=list)  # URLs to track files (gpx/kml)

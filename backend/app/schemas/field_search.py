@@ -43,6 +43,13 @@ class FieldSearchCreate(BaseModel):
     preparation_grid_file: Optional[str] = Field(None, max_length=500, description="URL to grid file (gpx/kml)")
     preparation_map_image: Optional[str] = Field(None, max_length=500, description="URL to map image")
 
+    # Grid generation parameters
+    grid_center_lat: Optional[float] = Field(None, description="Latitude of grid center point")
+    grid_center_lon: Optional[float] = Field(None, description="Longitude of grid center point")
+    grid_cols: Optional[int] = Field(None, description="Number of grid columns (horizontal)")
+    grid_rows: Optional[int] = Field(None, description="Number of grid rows (vertical)")
+    grid_cell_size: Optional[int] = Field(None, description="Cell size in meters")
+
     # Search progress section
     search_tracks: Optional[List[str]] = Field(default=[], description="URLs to track files (gpx/kml)")
     search_photos: Optional[List[str]] = Field(default=[], description="URLs to photos")
@@ -64,6 +71,13 @@ class FieldSearchUpdate(BaseModel):
     # Preparation section
     preparation_grid_file: Optional[str] = Field(None, max_length=500)
     preparation_map_image: Optional[str] = Field(None, max_length=500)
+
+    # Grid generation parameters
+    grid_center_lat: Optional[float] = None
+    grid_center_lon: Optional[float] = None
+    grid_cols: Optional[int] = None
+    grid_rows: Optional[int] = None
+    grid_cell_size: Optional[int] = None
 
     # Search progress section
     search_tracks: Optional[List[str]] = None
@@ -93,6 +107,13 @@ class FieldSearchResponse(BaseModel):
     # Preparation section
     preparation_grid_file: Optional[str]
     preparation_map_image: Optional[str]
+
+    # Grid generation parameters
+    grid_center_lat: Optional[float]
+    grid_center_lon: Optional[float]
+    grid_cols: Optional[int]
+    grid_rows: Optional[int]
+    grid_cell_size: Optional[int]
 
     # Search progress section
     search_tracks: List[str]

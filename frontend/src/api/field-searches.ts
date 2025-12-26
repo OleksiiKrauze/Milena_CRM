@@ -57,4 +57,9 @@ export const fieldSearchesApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/field_searches/${id}`);
   },
+
+  generateGrid: async (fieldSearchId: number): Promise<{ file_url: string }> => {
+    const response = await api.post<{ file_url: string }>(`/field_searches/${fieldSearchId}/generate-grid`);
+    return response.data;
+  },
 };

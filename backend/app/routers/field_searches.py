@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete
 from typing import List, Optional
+from pathlib import Path
 from app.db import get_db
 from app.schemas.field_search import (
     FieldSearchCreate, FieldSearchUpdate, FieldSearchResponse,
@@ -13,6 +14,7 @@ from app.models.search import Search
 from app.models.flyer import Flyer
 from app.models.user import User
 from app.routers.auth import get_current_user
+from app.services.gpx_service import generate_gpx
 
 router = APIRouter(prefix="/field_searches", tags=["Field Searches"])
 
@@ -333,3 +335,103 @@ def remove_participant(
         )
 
     return None
+
+
+@router.post("/{field_search_id}/generate-grid")
+def generate_grid(
+    field_search_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate GPX grid file for field search based on grid parameters.
+
+    Requires the field search to have the following parameters set:
+    - grid_center_lat
+    - grid_center_lon
+    - grid_cols
+    - grid_rows
+    - grid_cell_size
+
+    Returns the URL to the generated GPX file.
+    """
+    # Get field search
+    db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
+    if not db_field_search:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Field search with id {field_search_id} not found"
+        )
+
+    # Validate grid parameters
+    if not all([
+        db_field_search.grid_center_lat is not None,
+        db_field_search.grid_center_lon is not None,
+        db_field_search.grid_cols is not None,
+        db_field_search.grid_rows is not None,
+        db_field_search.grid_cell_size is not None
+    ]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grid parameters are incomplete. Please set grid_center_lat, grid_center_lon, grid_cols, grid_rows, and grid_cell_size."
+        )
+
+    # Validate parameter values
+    if db_field_search.grid_cols < 1 or db_field_search.grid_rows < 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grid must have at least 1 row and 1 column"
+        )
+
+    if db_field_search.grid_cell_size <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cell size must be greater than 0 meters"
+        )
+
+    if not (-90 <= db_field_search.grid_center_lat <= 90):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Latitude must be between -90 and 90 degrees"
+        )
+
+    if not (-180 <= db_field_search.grid_center_lon <= 180):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Longitude must be between -180 and 180 degrees"
+        )
+
+    try:
+        # Generate GPX content
+        gpx_content = generate_gpx(
+            center_lat=db_field_search.grid_center_lat,
+            center_lon=db_field_search.grid_center_lon,
+            cols=db_field_search.grid_cols,
+            rows=db_field_search.grid_rows,
+            cell_size_meters=db_field_search.grid_cell_size
+        )
+
+        # Create uploads directory if it doesn't exist
+        upload_dir = Path("/app/uploads")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate filename
+        filename = f"field_search_{field_search_id}_grid.gpx"
+        file_path = upload_dir / filename
+
+        # Write GPX file
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(gpx_content)
+
+        # Update field search with grid file URL
+        grid_file_url = f"/uploads/{filename}"
+        db_field_search.preparation_grid_file = grid_file_url
+        db.commit()
+
+        return {"grid_file_url": grid_file_url}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate grid file: {str(e)}"
+        )

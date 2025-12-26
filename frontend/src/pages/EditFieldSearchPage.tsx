@@ -10,6 +10,7 @@ import type { FieldSearchUpdate } from '@/api/field-searches';
 import { useState, useEffect } from 'react';
 import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
 import { getOriginalFilename } from '@/utils/formatters';
+import { GridMapSelector } from '@/components/GridMapSelector';
 
 interface EditFieldSearchForm {
   initiator_inforg_id: string;
@@ -35,6 +36,15 @@ export function EditFieldSearchPage() {
   const [searchTracks, setSearchTracks] = useState<string[]>([]);
   const [searchPhotos, setSearchPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Grid parameters
+  const [gridCenterLat, setGridCenterLat] = useState<number | null>(null);
+  const [gridCenterLon, setGridCenterLon] = useState<number | null>(null);
+  const [gridCols, setGridCols] = useState<number | null>(null);
+  const [gridRows, setGridRows] = useState<number | null>(null);
+  const [gridCellSize, setGridCellSize] = useState<number | null>(null);
+  const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
+  const [generatedGridUrl, setGeneratedGridUrl] = useState<string | null>(null);
 
   // Get field search details
   const { data: fieldSearchData, isLoading: fieldSearchLoading } = useQuery({
@@ -63,13 +73,18 @@ export function EditFieldSearchPage() {
     queryFn: () => usersApi.list(),
   });
 
-  // Initialize file states from existing data
+  // Initialize file states and grid parameters from existing data
   useEffect(() => {
     if (fieldSearchData) {
       setPreparationGridFile(fieldSearchData.preparation_grid_file);
       setPreparationMapImage(fieldSearchData.preparation_map_image);
       setSearchTracks(fieldSearchData.search_tracks || []);
       setSearchPhotos(fieldSearchData.search_photos || []);
+      setGridCenterLat(fieldSearchData.grid_center_lat);
+      setGridCenterLon(fieldSearchData.grid_center_lon);
+      setGridCols(fieldSearchData.grid_cols);
+      setGridRows(fieldSearchData.grid_rows);
+      setGridCellSize(fieldSearchData.grid_cell_size);
     }
   }, [fieldSearchData]);
 
@@ -142,6 +157,27 @@ export function EditFieldSearchPage() {
     setSearchPhotos(searchPhotos.filter((_, i) => i !== index));
   };
 
+  const handleGenerateGrid = async () => {
+    if (!id) return;
+    if (!gridCenterLat || !gridCenterLon || !gridCols || !gridRows || !gridCellSize) {
+      setApiError('Будь ласка, заповніть всі параметри сітки та вкажіть центр на карті');
+      return;
+    }
+
+    setIsGeneratingGrid(true);
+    setApiError('');
+
+    try {
+      const result = await fieldSearchesApi.generateGrid(Number(id));
+      setGeneratedGridUrl(result.file_url);
+      setPreparationGridFile(result.file_url);
+    } catch (error: any) {
+      setApiError(error.response?.data?.error?.message || error.message || 'Помилка генерації сітки');
+    } finally {
+      setIsGeneratingGrid(false);
+    }
+  };
+
   const updateMutation = useMutation({
     mutationFn: (data: EditFieldSearchForm) => {
       const cleanedData: any = {};
@@ -168,6 +204,13 @@ export function EditFieldSearchPage() {
       cleanedData.preparation_map_image = preparationMapImage;
       cleanedData.search_tracks = searchTracks;
       cleanedData.search_photos = searchPhotos;
+
+      // Add grid parameters
+      cleanedData.grid_center_lat = gridCenterLat;
+      cleanedData.grid_center_lon = gridCenterLon;
+      cleanedData.grid_cols = gridCols;
+      cleanedData.grid_rows = gridRows;
+      cleanedData.grid_cell_size = gridCellSize;
 
       const fieldSearchUpdateData: FieldSearchUpdate = cleanedData;
 
@@ -378,6 +421,91 @@ export function EditFieldSearchPage() {
               <CardTitle>Підготовка</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Grid Parameters */}
+              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-700">Параметри сітки квадратів</h3>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Кількість квадратів по горизонталі
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={gridCols || ''}
+                      onChange={(e) => setGridCols(e.target.value ? Number(e.target.value) : null)}
+                      placeholder="10"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Кількість квадратів по вертикалі
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={gridRows || ''}
+                      onChange={(e) => setGridRows(e.target.value ? Number(e.target.value) : null)}
+                      placeholder="10"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Розмір квадрата м.
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={gridCellSize || ''}
+                      onChange={(e) => setGridCellSize(e.target.value ? Number(e.target.value) : null)}
+                      placeholder="100"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Grid Map Selector */}
+                <GridMapSelector
+                  centerLat={gridCenterLat}
+                  centerLon={gridCenterLon}
+                  onLocationSelect={(lat, lon) => {
+                    setGridCenterLat(lat);
+                    setGridCenterLon(lon);
+                  }}
+                  cols={gridCols}
+                  rows={gridRows}
+                  cellSize={gridCellSize}
+                />
+
+                {/* Generate Grid Button */}
+                <button
+                  type="button"
+                  onClick={handleGenerateGrid}
+                  disabled={isGeneratingGrid || !gridCenterLat || !gridCenterLon || !gridCols || !gridRows || !gridCellSize}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingGrid ? 'Генерація...' : 'Згенерувати GPX файл'}
+                </button>
+
+                {generatedGridUrl && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 mb-2">Сітка успішно згенерована!</p>
+                    <a
+                      href={generatedGridUrl}
+                      download
+                      className="text-sm text-green-600 hover:underline"
+                    >
+                      Завантажити GPX файл
+                    </a>
+                  </div>
+                )}
+              </div>
+
               {/* Grid File Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

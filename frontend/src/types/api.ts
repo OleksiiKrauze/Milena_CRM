@@ -134,6 +134,11 @@ export interface FieldSearch {
   // Preparation section
   preparation_grid_file: string | null;
   preparation_map_image: string | null;
+  grid_center_lat: number | null;
+  grid_center_lon: number | null;
+  grid_cols: number | null;
+  grid_rows: number | null;
+  grid_cell_size: number | null;
 
   // Search progress section
   search_tracks: string[];
