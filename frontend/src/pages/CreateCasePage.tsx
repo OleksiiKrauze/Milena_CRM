@@ -73,11 +73,10 @@ export function CreateCasePage() {
   const errors = formState.errors;
 
   // Fetch users for police contact dropdown
-  const { data: usersData } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => usersApi.list({ limit: 100 }),
+  const { data: users = [] } = useQuery({
+    queryKey: ['users-brief'],
+    queryFn: () => usersApi.listBrief(),
   });
-  const users = usersData?.users || [];
 
   // Watch initial_info field for autofill button
   const initialInfo = watch('initial_info');

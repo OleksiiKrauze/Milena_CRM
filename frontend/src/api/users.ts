@@ -9,6 +9,12 @@ import type {
 } from '@/types/api';
 
 export const usersApi = {
+  // Get brief list of active users (id and full_name only) - available to all authenticated users
+  listBrief: async (): Promise<User[]> => {
+    const response = await api.get<User[]>('/users/brief');
+    return response.data;
+  },
+
   // Get list of users (admin only)
   list: async (params?: {
     skip?: number;

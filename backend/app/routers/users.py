@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.db import get_db
-from app.schemas.auth import UserResponse
+from app.schemas.auth import UserResponse, UserBrief
 from app.schemas.user import (
     AssignRolesRequest,
     AssignDirectionsRequest,
@@ -36,6 +36,16 @@ def list_directions(
     """Get list of all directions (admin only)"""
     directions = db.query(Direction).all()
     return directions
+
+
+@router.get("/brief", response_model=List[UserBrief])
+def list_users_brief(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get brief list of active users (id and full_name only) - available to all authenticated users"""
+    users = db.query(User).filter(User.status == UserStatus.active).all()
+    return users
 
 
 @router.get("/", response_model=UsersListResponse)
