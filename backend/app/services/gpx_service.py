@@ -13,6 +13,55 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from xml.dom import minidom
 
 
+def transliterate_ukrainian(text: str) -> str:
+    """
+    Transliterate Ukrainian text to Latin characters.
+    Based on Ukrainian national transliteration standard (2010).
+    """
+    translit_map = {
+        'А': 'A', 'а': 'a',
+        'Б': 'B', 'б': 'b',
+        'В': 'V', 'в': 'v',
+        'Г': 'H', 'г': 'h',
+        'Ґ': 'G', 'ґ': 'g',
+        'Д': 'D', 'д': 'd',
+        'Е': 'E', 'е': 'e',
+        'Є': 'Ye', 'є': 'ie',
+        'Ж': 'Zh', 'ж': 'zh',
+        'З': 'Z', 'з': 'z',
+        'И': 'Y', 'и': 'y',
+        'І': 'I', 'і': 'i',
+        'Ї': 'Yi', 'ї': 'i',
+        'Й': 'Y', 'й': 'i',
+        'К': 'K', 'к': 'k',
+        'Л': 'L', 'л': 'l',
+        'М': 'M', 'м': 'm',
+        'Н': 'N', 'н': 'n',
+        'О': 'O', 'о': 'o',
+        'П': 'P', 'п': 'p',
+        'Р': 'R', 'р': 'r',
+        'С': 'S', 'с': 's',
+        'Т': 'T', 'т': 't',
+        'У': 'U', 'у': 'u',
+        'Ф': 'F', 'ф': 'f',
+        'Х': 'Kh', 'х': 'kh',
+        'Ц': 'Ts', 'ц': 'ts',
+        'Ч': 'Ch', 'ч': 'ch',
+        'Ш': 'Sh', 'ш': 'sh',
+        'Щ': 'Shch', 'щ': 'shch',
+        'Ь': '', 'ь': '',
+        'Ю': 'Yu', 'ю': 'iu',
+        'Я': 'Ya', 'я': 'ia',
+        "'": ''
+    }
+
+    result = []
+    for char in text:
+        result.append(translit_map.get(char, char))
+
+    return ''.join(result)
+
+
 def meters_to_degrees_lat(meters: float) -> float:
     """
     Convert meters to degrees of latitude.
@@ -49,7 +98,7 @@ def calculate_grid_points(
     cols: int,
     rows: int,
     cell_size_meters: float
-) -> Tuple[List[dict], List[Tuple[float, float]]]:
+) -> Tuple[List[dict], List[List[Tuple[float, float]]]]:
     """
     Calculate grid waypoints and track lines.
 
@@ -61,9 +110,9 @@ def calculate_grid_points(
         cell_size_meters: Size of each cell in meters
 
     Returns:
-        Tuple of (waypoints, track_points)
+        Tuple of (waypoints, track_segments)
         - waypoints: List of dicts with lat, lon, name
-        - track_points: List of (lat, lon) tuples forming grid lines
+        - track_segments: List of line segments, each segment is a list of (lat, lon) tuples
     """
     # Calculate grid dimensions in degrees
     grid_width_meters = cols * cell_size_meters
@@ -105,18 +154,11 @@ def calculate_grid_points(
                 "name": name
             })
 
-    # Generate track lines (grid perimeter and internal lines)
-    track_points = []
+    # Generate track segments (each line as a separate segment to avoid diagonals)
+    track_segments = []
 
-    # Calculate corner points of the grid
-    top_left_lat = top_lat
-    top_left_lon = left_lon
-    top_right_lat = top_lat
-    top_right_lon = left_lon + meters_to_degrees_lon(grid_width_meters, top_lat)
-    bottom_left_lat = top_lat - meters_to_degrees_lat(grid_height_meters)
-    bottom_left_lon = left_lon
-    bottom_right_lat = top_lat - meters_to_degrees_lat(grid_height_meters)
-    bottom_right_lon = left_lon + meters_to_degrees_lon(grid_width_meters, bottom_right_lat)
+    # Calculate grid boundaries
+    bottom_lat = top_lat - meters_to_degrees_lat(grid_height_meters)
 
     # Draw horizontal lines (including top and bottom edges)
     for row in range(rows + 1):
@@ -126,8 +168,11 @@ def calculate_grid_points(
         lon_left = left_lon
         lon_right = left_lon + meters_to_degrees_lon(grid_width_meters, lat)
 
-        track_points.append((lat, lon_left))
-        track_points.append((lat, lon_right))
+        # Each horizontal line is a separate segment
+        track_segments.append([
+            (lat, lon_left),
+            (lat, lon_right)
+        ])
 
     # Draw vertical lines (including left and right edges)
     for col in range(cols + 1):
@@ -135,25 +180,13 @@ def calculate_grid_points(
         middle_lat = center_lat
         lon = left_lon + (col * meters_to_degrees_lon(cell_size_meters, middle_lat))
 
-        # Draw from top to bottom
-        track_points.append((top_lat, lon))
-        track_points.append((bottom_left_lat, lon))
+        # Each vertical line is a separate segment
+        track_segments.append([
+            (top_lat, lon),
+            (bottom_lat, lon)
+        ])
 
-    # Add perimeter to close the grid (for better visualization)
-    # Top edge: left to right
-    track_points.append((top_left_lat, top_left_lon))
-    track_points.append((top_right_lat, top_right_lon))
-    # Right edge: top to bottom
-    track_points.append((top_right_lat, top_right_lon))
-    track_points.append((bottom_right_lat, bottom_right_lon))
-    # Bottom edge: right to left
-    track_points.append((bottom_right_lat, bottom_right_lon))
-    track_points.append((bottom_left_lat, bottom_left_lon))
-    # Left edge: bottom to top
-    track_points.append((bottom_left_lat, bottom_left_lon))
-    track_points.append((top_left_lat, top_left_lon))
-
-    return waypoints, track_points
+    return waypoints, track_segments
 
 
 def generate_gpx(
@@ -179,13 +212,14 @@ def generate_gpx(
         GPX XML content as a string
     """
     # Calculate grid points
-    waypoints, track_points = calculate_grid_points(
+    waypoints, track_segments = calculate_grid_points(
         center_lat, center_lon, cols, rows, cell_size_meters
     )
 
     # Calculate bounds
-    all_lats = [wp["lat"] for wp in waypoints] + [pt[0] for pt in track_points]
-    all_lons = [wp["lon"] for wp in waypoints] + [pt[1] for pt in track_points]
+    all_track_points = [pt for segment in track_segments for pt in segment]
+    all_lats = [wp["lat"] for wp in waypoints] + [pt[0] for pt in all_track_points]
+    all_lons = [wp["lon"] for wp in waypoints] + [pt[1] for pt in all_track_points]
     min_lat = min(all_lats)
     max_lat = max(all_lats)
     min_lon = min(all_lons)
@@ -224,21 +258,20 @@ def generate_gpx(
         name = SubElement(wpt, "name")
         name.text = wp["name"]
 
-    # Add track
-    trk = SubElement(gpx, "trk")
-    trk_name = SubElement(trk, "name")
-    trk_name.text = "Grid_Line"
-    trk_desc = SubElement(trk, "desc")
-    trk_desc.text = ""
+    # Add tracks (one track per line segment to avoid diagonal connections)
+    for segment_idx, segment in enumerate(track_segments):
+        trk = SubElement(gpx, "trk")
+        trk_name = SubElement(trk, "name")
+        trk_name.text = f"Grid_Line_{segment_idx + 1}"
 
-    trkseg = SubElement(trk, "trkseg")
-    for lat, lon in track_points:
-        trkpt = SubElement(trkseg, "trkpt")
-        trkpt.set("lat", f"{lat:.6f}")
-        trkpt.set("lon", f"{lon:.6f}")
+        trkseg = SubElement(trk, "trkseg")
+        for lat, lon in segment:
+            trkpt = SubElement(trkseg, "trkpt")
+            trkpt.set("lat", f"{lat:.6f}")
+            trkpt.set("lon", f"{lon:.6f}")
 
-        trkpt_time = SubElement(trkpt, "time")
-        trkpt_time.text = timestamp
+            trkpt_time = SubElement(trkpt, "time")
+            trkpt_time.text = timestamp
 
     # Convert to pretty-printed XML string
     xml_str = tostring(gpx, encoding="utf-8")

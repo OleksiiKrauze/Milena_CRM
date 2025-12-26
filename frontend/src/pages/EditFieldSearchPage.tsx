@@ -168,9 +168,11 @@ export function EditFieldSearchPage() {
     setApiError('');
 
     try {
-      const result = await fieldSearchesApi.generateGrid(Number(id));
-      setGeneratedGridUrl(result.file_url);
-      setPreparationGridFile(result.file_url);
+      // The API now triggers a direct download
+      await fieldSearchesApi.generateGrid(Number(id));
+      setGeneratedGridUrl('downloaded'); // Mark as generated for UI feedback
+      // Refresh field search data to get updated preparation_grid_file
+      await queryClient.invalidateQueries({ queryKey: ['field-search', id] });
     } catch (error: any) {
       setApiError(error.response?.data?.error?.message || error.message || 'Помилка генерації сітки');
     } finally {
@@ -494,14 +496,7 @@ export function EditFieldSearchPage() {
 
                 {generatedGridUrl && (
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800 mb-2">Сітка успішно згенерована!</p>
-                    <a
-                      href={generatedGridUrl}
-                      download
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Завантажити GPX файл
-                    </a>
+                    <p className="text-sm text-green-800">Сітка успішно згенерована та завантажена!</p>
                   </div>
                 )}
               </div>

@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete
 from typing import List, Optional
 from pathlib import Path
+from datetime import datetime
 from app.db import get_db
 from app.schemas.field_search import (
     FieldSearchCreate, FieldSearchUpdate, FieldSearchResponse,
@@ -14,7 +16,7 @@ from app.models.search import Search
 from app.models.flyer import Flyer
 from app.models.user import User
 from app.routers.auth import get_current_user
-from app.services.gpx_service import generate_gpx
+from app.services.gpx_service import generate_gpx, transliterate_ukrainian
 
 router = APIRouter(prefix="/field_searches", tags=["Field Searches"])
 
@@ -353,14 +355,24 @@ def generate_grid(
     - grid_rows
     - grid_cell_size
 
-    Returns the URL to the generated GPX file.
+    Downloads the generated GPX file with proper filename and content type.
     """
-    # Get field search
-    db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
+    # Get field search with eager loading of search and case
+    db_field_search = db.query(FieldSearch).options(
+        joinedload(FieldSearch.search).joinedload(Search.case)
+    ).filter(FieldSearch.id == field_search_id).first()
+
     if not db_field_search:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field search with id {field_search_id} not found"
+        )
+
+    # Get the case to retrieve missing person's last name
+    if not db_field_search.search or not db_field_search.search.case:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Field search must be associated with a search and case"
         )
 
     # Validate grid parameters
@@ -415,8 +427,13 @@ def generate_grid(
         upload_dir = Path("/app/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate filename
-        filename = f"field_search_{field_search_id}_grid.gpx"
+        # Generate filename based on missing person's last name and current date
+        case = db_field_search.search.case
+        missing_last_name = case.missing_last_name or "unknown"
+        transliterated_name = transliterate_ukrainian(missing_last_name)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        filename = f"{transliterated_name}_{current_date}.gpx"
+
         file_path = upload_dir / filename
 
         # Write GPX file
@@ -428,7 +445,15 @@ def generate_grid(
         db_field_search.preparation_grid_file = grid_file_url
         db.commit()
 
-        return {"grid_file_url": grid_file_url}
+        # Return file as download with proper content type
+        return FileResponse(
+            path=str(file_path),
+            media_type="application/gpx+xml",
+            filename=filename,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
 
     except Exception as e:
         raise HTTPException(
