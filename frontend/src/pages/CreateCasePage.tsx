@@ -75,7 +75,7 @@ export function CreateCasePage() {
   // Fetch users for police contact dropdown
   const { data: usersData } = useQuery({
     queryKey: ['users'],
-    queryFn: () => usersApi.list({ limit: 1000 }),
+    queryFn: () => usersApi.list({ limit: 100 }),
   });
   const users = usersData?.users || [];
 
