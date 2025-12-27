@@ -166,8 +166,8 @@ export function GridMapSelector({
         {/* Map */}
         <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
           <Map
+            key={`${centerLat}-${centerLon}`}
             defaultCenter={center}
-            center={center}
             defaultZoom={13}
             onClick={handleMapClick}
             mapId="field-search-grid-map"
