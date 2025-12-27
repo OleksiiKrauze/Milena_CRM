@@ -29,6 +29,7 @@ export function EditFieldSearchPage() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const [apiError, setApiError] = useState<string>('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // File upload states
   const [preparationGridFile, setPreparationGridFile] = useState<string | null>(null);
@@ -232,6 +233,30 @@ export function EditFieldSearchPage() {
       setApiError(error.response?.data?.error?.message || error.message || 'Помилка оновлення виїзду');
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => fieldSearchesApi.delete(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['field-searches'] });
+      if (fieldSearchData?.search_id) {
+        queryClient.invalidateQueries({ queryKey: ['search', fieldSearchData.search_id.toString()] });
+        queryClient.invalidateQueries({ queryKey: ['search-full', fieldSearchData.search_id.toString()] });
+        // Redirect to search page
+        navigate(`/searches/${fieldSearchData.search_id}`);
+      } else {
+        // Fallback to field searches list
+        navigate('/field-searches');
+      }
+    },
+    onError: (error: any) => {
+      setApiError(error.response?.data?.error?.message || error.message || 'Помилка видалення виїзду');
+      setShowDeleteConfirm(false);
+    },
+  });
+
+  const handleDelete = () => {
+    deleteMutation.mutate();
+  };
 
   const onSubmit = (data: EditFieldSearchForm) => {
     setApiError('');
@@ -671,15 +696,54 @@ export function EditFieldSearchPage() {
             </div>
           )}
 
-          {/* Submit button */}
-          <Button
-            type="submit"
-            fullWidth
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? 'Збереження...' : 'Зберегти зміни'}
-          </Button>
+          {/* Action buttons */}
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              fullWidth
+              disabled={updateMutation.isPending || deleteMutation.isPending}
+            >
+              {updateMutation.isPending ? 'Збереження...' : 'Зберегти зміни'}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={updateMutation.isPending || deleteMutation.isPending}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              Видалити
+            </button>
+          </div>
         </form>
+
+        {/* Delete confirmation dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-2">Підтвердження видалення</h3>
+              <p className="text-gray-600 mb-6">
+                Ви впевнені, що хочете видалити цей виїзд? Будуть видалені всі прикріплені файли (сітка, карта, треки, фото).
+                Цю дію неможливо скасувати.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Container>
     </div>
   );

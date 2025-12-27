@@ -219,7 +219,7 @@ def delete_field_search(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete field search by ID"""
+    """Delete field search by ID and all associated files"""
     db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
 
     if not db_field_search:
@@ -228,8 +228,40 @@ def delete_field_search(
             detail=f"Field search with id {field_search_id} not found"
         )
 
+    # Collect all file paths to delete
+    files_to_delete = []
+
+    if db_field_search.preparation_grid_file:
+        files_to_delete.append(db_field_search.preparation_grid_file)
+
+    if db_field_search.preparation_map_image:
+        files_to_delete.append(db_field_search.preparation_map_image)
+
+    if db_field_search.search_tracks:
+        files_to_delete.extend(db_field_search.search_tracks)
+
+    if db_field_search.search_photos:
+        files_to_delete.extend(db_field_search.search_photos)
+
+    # Delete field search from database first
     db.delete(db_field_search)
     db.commit()
+
+    # Delete files from disk
+    upload_dir = Path("/app/uploads")
+    for file_url in files_to_delete:
+        if file_url:
+            # Extract filename from URL (/uploads/filename.ext -> filename.ext)
+            filename = file_url.split('/')[-1]
+            file_path = upload_dir / filename
+
+            # Delete file if it exists
+            try:
+                if file_path.exists():
+                    file_path.unlink()
+            except Exception as e:
+                # Log error but don't fail the deletion
+                print(f"Warning: Could not delete file {file_path}: {str(e)}")
 
     return None
 
