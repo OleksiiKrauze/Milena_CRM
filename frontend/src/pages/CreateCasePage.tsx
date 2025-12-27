@@ -728,7 +728,7 @@ export function CreateCasePage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveNotesImage(imageUrl)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-lg"
                         >
                           <X className="h-4 w-4" />
                         </button>
