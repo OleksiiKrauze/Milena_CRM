@@ -19,6 +19,18 @@ interface GridMapSelectorProps {
 // In production, this should come from environment variables
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY';
 
+// Helper function to convert column index to letter label (0->A, 1->B, ..., 25->Z, 26->AA, etc.)
+function columnLabel(index: number): string {
+  let label = "";
+  let i = index + 1; // Make it 1-based for calculation
+  while (i > 0) {
+    i -= 1;
+    label = String.fromCharCode(65 + (i % 26)) + label;
+    i = Math.floor(i / 26);
+  }
+  return label;
+}
+
 // Component to draw grid overlay on the map
 function GridOverlay({
   centerLat,
@@ -39,6 +51,7 @@ function GridOverlay({
     if (!map) return;
 
     const polygons: google.maps.Polygon[] = [];
+    const labels: google.maps.Marker[] = [];
 
     // Approximate degrees per meter (at moderate latitudes)
     const metersPerDegree = 111320;
@@ -65,6 +78,16 @@ function GridOverlay({
         const west = startLon + (col * cellWidthDeg);
         const east = west + cellWidthDeg;
 
+        // Calculate cell center
+        const centerCellLat = (north + south) / 2;
+        const centerCellLon = (west + east) / 2;
+
+        // Create cell label (e.g., A1, B2, C3)
+        const colLabel = columnLabel(col);
+        const rowLabel = String(row + 1);
+        const cellName = `${colLabel}${rowLabel}`;
+
+        // Draw polygon
         const polygon = new google.maps.Polygon({
           paths: [
             { lat: north, lng: west },
@@ -81,12 +104,31 @@ function GridOverlay({
         });
 
         polygons.push(polygon);
+
+        // Add label at cell center
+        const label = new google.maps.Marker({
+          position: { lat: centerCellLat, lng: centerCellLon },
+          map: map,
+          label: {
+            text: cellName,
+            color: '#000000',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          },
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 0, // Invisible icon, only label visible
+          },
+        });
+
+        labels.push(label);
       }
     }
 
-    // Cleanup function to remove polygons when component unmounts or dependencies change
+    // Cleanup function to remove polygons and labels when component unmounts or dependencies change
     return () => {
       polygons.forEach(polygon => polygon.setMap(null));
+      labels.forEach(label => label.setMap(null));
     };
   }, [map, centerLat, centerLon, cols, rows, cellSize]);
 
