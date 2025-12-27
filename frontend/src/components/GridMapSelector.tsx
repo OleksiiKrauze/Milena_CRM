@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, MapMouseEvent } from '@vis.gl/react-google-maps';
 
 interface GridMapSelectorProps {
   centerLat: number | null;
@@ -38,10 +38,10 @@ export function GridMapSelector({
     }
   }, [centerLat, centerLon]);
 
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
+  const handleMapClick = (e: MapMouseEvent) => {
+    if (e.detail.latLng) {
+      const lat = e.detail.latLng.lat;
+      const lng = e.detail.latLng.lng;
       onLocationSelect(lat, lng);
     }
   };
