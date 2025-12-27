@@ -11,7 +11,6 @@ export function FieldSearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
-  const [apiError, setApiError] = useState<string>('');
 
   const { data: fieldSearchData, isLoading, error } = useQuery({
     queryKey: ['field-search', id],
@@ -39,7 +38,7 @@ export function FieldSearchDetailsPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error: any) {
-      setApiError(error.response?.data?.error?.message || error.message || 'Помилка завантаження файлу');
+      console.error('Failed to download grid file:', error);
     }
   };
 

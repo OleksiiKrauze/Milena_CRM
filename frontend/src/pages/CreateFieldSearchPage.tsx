@@ -43,7 +43,6 @@ export function CreateFieldSearchPage() {
   const [gridRows, setGridRows] = useState<number | null>(null);
   const [gridCellSize, setGridCellSize] = useState<number | null>(null);
   const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
-  const [generatedGridUrl, setGeneratedGridUrl] = useState<string | null>(null);
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<CreateFieldSearchForm>({
@@ -439,19 +438,6 @@ export function CreateFieldSearchPage() {
                 >
                   {isGeneratingGrid ? 'Генерація...' : 'Згенерувати GPX файл'}
                 </button>
-
-                {generatedGridUrl && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800 mb-2">Сітка успішно згенерована!</p>
-                    <a
-                      href={generatedGridUrl}
-                      download
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Завантажити GPX файл
-                    </a>
-                  </div>
-                )}
               </div>
 
               {/* Grid File Upload */}
