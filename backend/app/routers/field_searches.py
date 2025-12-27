@@ -84,7 +84,19 @@ def create_field_search(
         status=fs_status,
         end_date=field_search_data.end_date,
         result=field_search_data.result,
-        notes=field_search_data.notes
+        notes=field_search_data.notes,
+        # Preparation section
+        preparation_grid_file=field_search_data.preparation_grid_file,
+        preparation_map_image=field_search_data.preparation_map_image,
+        # Grid parameters
+        grid_center_lat=field_search_data.grid_center_lat,
+        grid_center_lon=field_search_data.grid_center_lon,
+        grid_cols=field_search_data.grid_cols,
+        grid_rows=field_search_data.grid_rows,
+        grid_cell_size=field_search_data.grid_cell_size,
+        # Search progress
+        search_tracks=field_search_data.search_tracks or [],
+        search_photos=field_search_data.search_photos or []
     )
 
     db.add(db_field_search)
