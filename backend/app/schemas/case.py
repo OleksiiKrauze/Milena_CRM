@@ -177,7 +177,7 @@ class CaseResponse(BaseModel):
 
     # Notes
     notes_text: Optional[str]
-    notes_images: List[str]
+    notes_images: Optional[List[str]] = []
 
     # Computed full names
     applicant_full_name: str
