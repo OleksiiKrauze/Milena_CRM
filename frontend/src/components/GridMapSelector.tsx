@@ -147,7 +147,7 @@ export function GridMapSelector({
   const [manualLat, setManualLat] = useState<string>('');
   const [manualLon, setManualLon] = useState<string>('');
   const [mapError, setMapError] = useState<string>('');
-  const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
+  const [mapType, setMapType] = useState<'roadmap' | 'hybrid'>('roadmap');
   const [isExporting, setIsExporting] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -367,14 +367,14 @@ export function GridMapSelector({
               </button>
               <button
                 type="button"
-                onClick={() => setMapType('satellite')}
+                onClick={() => setMapType('hybrid')}
                 className={`px-3 py-1 text-sm rounded transition-colors ${
-                  mapType === 'satellite'
+                  mapType === 'hybrid'
                     ? 'bg-primary-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                Супутник
+                Гібрид
               </button>
             </div>
           </div>
