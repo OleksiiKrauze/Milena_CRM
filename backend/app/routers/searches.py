@@ -129,7 +129,9 @@ def get_search(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get search by ID"""
+    """Get search by ID with latest orientation image"""
+    from app.models.orientation import Orientation
+
     db_search = db.query(Search).options(
         joinedload(Search.case),
         joinedload(Search.initiator_inforg)
@@ -140,6 +142,17 @@ def get_search(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Search with id {search_id} not found"
         )
+
+    # Get latest orientation image if available
+    latest_orientation = db.query(Orientation).filter(
+        Orientation.search_id == search_id,
+        Orientation.is_approved == True
+    ).order_by(Orientation.updated_at.desc()).first()
+
+    if latest_orientation and latest_orientation.exported_files:
+        db_search.latest_orientation_image = latest_orientation.exported_files[0]
+    else:
+        db_search.latest_orientation_image = None
 
     return db_search
 

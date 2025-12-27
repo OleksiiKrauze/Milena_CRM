@@ -53,6 +53,7 @@ class SearchResponse(BaseModel):
     current_flyer_id: Optional[int]
     status: str
     notes: Optional[str]
+    latest_orientation_image: Optional[str] = Field(None, description="URL to latest exported orientation image")
 
     model_config = {"from_attributes": True, "use_enum_values": True}
 

@@ -21,6 +21,7 @@ class SearchBrief(BaseModel):
     id: int
     case_id: int
     case: Optional[CaseBrief]
+    latest_orientation_image: Optional[str] = Field(None, description="URL to latest exported orientation image")
 
     model_config = {"from_attributes": True}
 

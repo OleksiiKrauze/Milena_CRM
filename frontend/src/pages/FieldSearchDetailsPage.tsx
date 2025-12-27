@@ -118,6 +118,16 @@ export function FieldSearchDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Зниклий</p>
                   <p className="font-medium">{fieldSearchData.search.case.missing_full_name}</p>
+                  {fieldSearchData.search.latest_orientation_image && (
+                    <div className="mt-3">
+                      <img
+                        src={fieldSearchData.search.latest_orientation_image}
+                        alt="Ориентировка"
+                        className="max-w-full h-auto rounded-lg border border-gray-200"
+                        style={{ maxHeight: '400px' }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
               {fieldSearchData.initiator_inforg && (

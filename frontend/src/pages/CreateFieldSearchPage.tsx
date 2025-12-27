@@ -247,6 +247,17 @@ export function CreateFieldSearchPage() {
                     </p>
                   )}
                 </div>
+                {searchData.latest_orientation_image && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600 mb-2">Ориентировка</p>
+                    <img
+                      src={searchData.latest_orientation_image}
+                      alt="Ориентировка"
+                      className="max-w-full h-auto rounded-lg border border-gray-200"
+                      style={{ maxHeight: '400px' }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

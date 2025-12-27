@@ -115,6 +115,7 @@ export interface FieldSearch {
       id: number;
       missing_full_name: string;
     } | null;
+    latest_orientation_image: string | null;
   } | null;
   case_id: number | null;
   created_at: string;
@@ -164,6 +165,7 @@ export interface Search {
   current_flyer_id: number | null;
   status: string;
   notes: string | null;
+  latest_orientation_image: string | null;
 }
 
 export interface SearchCreate {

@@ -137,14 +137,31 @@ def get_field_search(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get field search by ID"""
-    db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
+    """Get field search by ID with latest orientation image from search"""
+    from app.models.orientation import Orientation
+
+    db_field_search = db.query(FieldSearch).options(
+        joinedload(FieldSearch.search).joinedload(Search.case)
+    ).filter(FieldSearch.id == field_search_id).first()
 
     if not db_field_search:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field search with id {field_search_id} not found"
         )
+
+    # Get latest orientation image from search if available
+    if db_field_search.search:
+        latest_orientation = db.query(Orientation).filter(
+            Orientation.search_id == db_field_search.search_id,
+            Orientation.is_approved == True
+        ).order_by(Orientation.updated_at.desc()).first()
+
+        if latest_orientation and latest_orientation.exported_files:
+            # Set latest_orientation_image as a custom attribute
+            db_field_search.search.latest_orientation_image = latest_orientation.exported_files[0]
+        else:
+            db_field_search.search.latest_orientation_image = None
 
     return db_field_search
 
