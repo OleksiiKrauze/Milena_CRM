@@ -39,9 +39,9 @@ export function CreateFieldSearchPage() {
   // Grid parameters
   const [gridCenterLat, setGridCenterLat] = useState<number | null>(null);
   const [gridCenterLon, setGridCenterLon] = useState<number | null>(null);
-  const [gridCols, setGridCols] = useState<number | null>(null);
-  const [gridRows, setGridRows] = useState<number | null>(null);
-  const [gridCellSize, setGridCellSize] = useState<number | null>(null);
+  const [gridCols, setGridCols] = useState<number | null>(10);
+  const [gridRows, setGridRows] = useState<number | null>(10);
+  const [gridCellSize, setGridCellSize] = useState<number | null>(500);
   const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
 
