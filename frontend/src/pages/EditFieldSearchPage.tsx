@@ -536,8 +536,7 @@ export function EditFieldSearchPage() {
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm text-green-800 mb-2">Сітка успішно згенерована!</p>
                     <a
-                      href={generatedGridUrl}
-                      download
+                      href={`/api/field_searches/${id}/download-grid`}
                       className="text-sm text-green-600 hover:underline"
                     >
                       Завантажити GPX файл
@@ -555,8 +554,7 @@ export function EditFieldSearchPage() {
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <FileText className="w-5 h-5 text-gray-600" />
                     <a
-                      href={preparationGridFile}
-                      download={preparationGridFile.split('/').pop()}
+                      href={`/api/field_searches/${id}/download-grid`}
                       className="text-sm text-primary-600 hover:underline flex-1"
                     >
                       {preparationGridFile.split('/').pop()}

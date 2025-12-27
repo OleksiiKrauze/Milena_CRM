@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete
 from typing import List, Optional
@@ -513,3 +514,49 @@ def generate_grid(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate grid file: {str(e)}"
         )
+
+
+@router.get("/{field_search_id}/download-grid")
+def download_grid(
+    field_search_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Download the generated GPX grid file with proper headers for mobile browsers.
+    Returns FileResponse with correct Content-Type and Content-Disposition headers.
+    """
+    # Get field search
+    db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
+
+    if not db_field_search:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Field search with id {field_search_id} not found"
+        )
+
+    if not db_field_search.preparation_grid_file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Grid file has not been generated yet"
+        )
+
+    # Extract filename from URL
+    filename = db_field_search.preparation_grid_file.split('/')[-1]
+    file_path = Path("/app/uploads") / filename
+
+    if not file_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Grid file not found on disk"
+        )
+
+    # Return file with proper headers
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/gpx+xml",
+        filename=filename,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )

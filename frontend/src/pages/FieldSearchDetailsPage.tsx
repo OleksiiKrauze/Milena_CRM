@@ -197,8 +197,7 @@ export function FieldSearchDetailsPage() {
                     <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                       <FileText className="w-5 h-5 text-gray-600" />
                       <a
-                        href={fieldSearchData.preparation_grid_file}
-                        download={fieldSearchData.preparation_grid_file.split('/').pop()}
+                        href={`/api/field_searches/${fieldSearchData.id}/download-grid`}
                         className="text-sm text-primary-600 hover:underline flex-1"
                       >
                         {fieldSearchData.preparation_grid_file.split('/').pop()}
