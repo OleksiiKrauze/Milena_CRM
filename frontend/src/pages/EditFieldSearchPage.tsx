@@ -544,6 +544,7 @@ export function EditFieldSearchPage() {
                   cols={gridCols}
                   rows={gridRows}
                   cellSize={gridCellSize}
+                  onMapImageUpload={(imageUrl) => setPreparationMapImage(imageUrl)}
                 />
 
                 {/* Generate Grid Button */}

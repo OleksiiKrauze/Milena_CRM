@@ -1,6 +1,9 @@
 /// <reference types="@types/google.maps" />
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps';
+import html2canvas from 'html2canvas';
+import { uploadApi } from '@/api/upload';
+import { Download } from 'lucide-react';
 
 interface GridMapSelectorProps {
   centerLat: number | null;
@@ -9,6 +12,7 @@ interface GridMapSelectorProps {
   cols: number | null;
   rows: number | null;
   cellSize: number | null;
+  onMapImageUpload?: (imageUrl: string) => void;
 }
 
 // Use a placeholder API key for development
@@ -72,7 +76,7 @@ function GridOverlay({
           strokeOpacity: 0.8,
           strokeWeight: 2,
           fillColor: '#FF0000',
-          fillOpacity: 0.1,
+          fillOpacity: 0,
           map: map,
         });
 
@@ -96,10 +100,14 @@ export function GridMapSelector({
   cols,
   rows,
   cellSize,
+  onMapImageUpload,
 }: GridMapSelectorProps) {
   const [manualLat, setManualLat] = useState<string>('');
   const [manualLon, setManualLon] = useState<string>('');
   const [mapError, setMapError] = useState<string>('');
+  const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
+  const [isExporting, setIsExporting] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Default center (Kharkiv, Ukraine)
   const defaultCenter = { lat: 49.9935, lng: 36.2304 };
@@ -142,6 +150,76 @@ export function GridMapSelector({
 
     setMapError('');
     onLocationSelect(lat, lon);
+  };
+
+  const handleExportMap = async () => {
+    if (!mapContainerRef.current) return;
+
+    setIsExporting(true);
+    try {
+      // Capture the map container as canvas
+      const canvas = await html2canvas(mapContainerRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+      });
+
+      // Calculate dimensions to have 2000px on the longest side
+      const originalWidth = canvas.width;
+      const originalHeight = canvas.height;
+      const maxDimension = 2000;
+
+      let targetWidth, targetHeight;
+      if (originalWidth > originalHeight) {
+        targetWidth = maxDimension;
+        targetHeight = Math.round((originalHeight / originalWidth) * maxDimension);
+      } else {
+        targetHeight = maxDimension;
+        targetWidth = Math.round((originalWidth / originalHeight) * maxDimension);
+      }
+
+      // Create a new canvas with target dimensions
+      const resizedCanvas = document.createElement('canvas');
+      resizedCanvas.width = targetWidth;
+      resizedCanvas.height = targetHeight;
+      const ctx = resizedCanvas.getContext('2d');
+      if (!ctx) throw new Error('Failed to get canvas context');
+
+      ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        resizedCanvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to create blob'));
+        }, 'image/jpeg', 0.95);
+      });
+
+      // Create file from blob
+      const file = new File([blob], `map-export-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Download locally
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Upload to server
+      const uploadedUrls = await uploadApi.uploadImages([file]);
+      if (uploadedUrls.length > 0 && onMapImageUpload) {
+        onMapImageUpload(uploadedUrls[0]);
+      }
+    } catch (error) {
+      console.error('Error exporting map:', error);
+      setMapError('Помилка експорту карти');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Calculate grid bounds for visualization
@@ -240,8 +318,48 @@ export function GridMapSelector({
   return (
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
       <div className="space-y-4">
+        {/* Map controls */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Тип карти:</span>
+            <div className="flex gap-1 border border-gray-300 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setMapType('roadmap')}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  mapType === 'roadmap'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Карта
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapType('satellite')}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  mapType === 'satellite'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Супутник
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleExportMap}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            {isExporting ? 'Експорт...' : 'Експорт JPEG'}
+          </button>
+        </div>
+
         {/* Map */}
-        <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
+        <div ref={mapContainerRef} className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
           <Map
             key={`${centerLat}-${centerLon}`}
             defaultCenter={center}
@@ -255,6 +373,7 @@ export function GridMapSelector({
             streetViewControl={false}
             fullscreenControl={false}
             clickableIcons={false}
+            mapTypeId={mapType}
             style={{ width: '100%', height: '100%', touchAction: 'pan-x pan-y pinch-zoom' }}
           >
             {centerLat && centerLon && (
