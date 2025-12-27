@@ -12,6 +12,8 @@ import { Container, Button, Input, Card, CardContent, Loading } from '@/componen
 import { X, Upload, Sparkles } from 'lucide-react';
 
 const editCaseSchema = z.object({
+  // Basis
+  basis: z.string().optional(),
   // Applicant - split name fields
   applicant_last_name: z.string().min(2, 'Мінімум 2 символи'),
   applicant_first_name: z.string().min(2, 'Мінімум 2 символи'),
@@ -47,6 +49,8 @@ const editCaseSchema = z.object({
   police_report_date: z.string().optional(),
   police_department: z.string().optional(),
   police_contact_user_id: z.string().optional(),
+  // Notes
+  notes_text: z.string().optional(),
   // Case metadata
   decision_type: z.string().optional().default('На розгляді'),
   decision_comment: z.string().optional(),
@@ -59,6 +63,7 @@ export function EditCasePage() {
   const queryClient = useQueryClient();
   const [apiError, setApiError] = useState<string | null>(null);
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
 
@@ -91,6 +96,7 @@ export function EditCasePage() {
   useEffect(() => {
     if (caseData) {
       reset({
+        basis: caseData.basis || '',
         applicant_last_name: caseData.applicant_last_name,
         applicant_first_name: caseData.applicant_first_name,
         applicant_middle_name: caseData.applicant_middle_name || '',
@@ -123,11 +129,13 @@ export function EditCasePage() {
         police_report_date: caseData.police_report_date ? caseData.police_report_date.split('T')[0] : '',
         police_department: caseData.police_department || '',
         police_contact_user_id: caseData.police_contact_user_id ? String(caseData.police_contact_user_id) : '',
+        notes_text: caseData.notes_text || '',
         decision_type: caseData.decision_type,
         decision_comment: caseData.decision_comment || '',
         tags: caseData.tags.join(', '),
       });
       setUploadedPhotos(caseData.missing_photos || []);
+      setNotesImages(caseData.notes_images || []);
     }
   }, [caseData, reset]);
 
@@ -152,6 +160,29 @@ export function EditCasePage() {
 
   const handleRemovePhoto = (photoUrl: string) => {
     setUploadedPhotos((prev) => prev.filter((url) => url !== photoUrl));
+  };
+
+  const handleNotesImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setApiError(null);
+
+    try {
+      const filesArray = Array.from(files);
+      const uploadedUrls = await uploadApi.uploadImages(filesArray);
+      setNotesImages((prev) => [...prev, ...uploadedUrls]);
+    } catch (error: any) {
+      setApiError(error.message || 'Помилка завантаження зображень');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveNotesImage = (imageUrl: string) => {
+    setNotesImages((prev) => prev.filter((url) => url !== imageUrl));
   };
 
   const handleAutofill = async () => {
@@ -215,14 +246,17 @@ export function EditCasePage() {
         }
       }
 
-      return casesApi.update(Number(id), {
+      const finalData = {
         ...cleanedData,
         missing_photos: uploadedPhotos,
+        notes_images: notesImages,
         tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
           ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
-      });
+      };
+
+      return casesApi.update(Number(id), finalData);
     },
     onSuccess: (data) => {
       // Invalidate cache to refresh data
@@ -278,6 +312,18 @@ export function EditCasePage() {
 
       <Container className="py-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Basis */}
+          <Card>
+            <CardContent className="p-4">
+              <Input
+                label="Підстава"
+                placeholder="Звернення поліції, дзвінок на гарячу лінію, соцмережі і тд"
+                error={errors.basis?.message}
+                {...register('basis')}
+              />
+            </CardContent>
+          </Card>
+
           {/* Applicant Info */}
           <Card>
             <CardContent className="p-4 space-y-4">
@@ -700,6 +746,73 @@ export function EditCasePage() {
                 </select>
                 {errors.police_contact_user_id && (
                   <p className="text-sm text-red-600 mt-1">{errors.police_contact_user_id.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Примітки</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Текст
+                </label>
+                <textarea
+                  {...register('notes_text')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={4}
+                  placeholder="Додаткові примітки..."
+                />
+                {errors.notes_text && (
+                  <p className="text-sm text-red-600 mt-1">{errors.notes_text.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Зображення
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleNotesImageSelect}
+                  disabled={isUploading}
+                  className="hidden"
+                  id="notes-images-input"
+                />
+                <label
+                  htmlFor="notes-images-input"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="text-sm">
+                    {isUploading ? 'Завантаження...' : 'Завантажити зображення'}
+                  </span>
+                </label>
+
+                {notesImages.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    {notesImages.map((imageUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageUrl}
+                          alt={`Примітка ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveNotesImage(imageUrl)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </CardContent>

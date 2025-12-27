@@ -132,6 +132,12 @@ export function CaseDetailsPage() {
                   </div>
                 </div>
               )}
+              {caseData.basis && (
+                <div>
+                  <p className="text-sm text-gray-600">Підстава</p>
+                  <p className="font-medium">{caseData.basis}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -338,6 +344,45 @@ export function CaseDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Notes */}
+          {(caseData.notes_text || (caseData.notes_images && caseData.notes_images.length > 0)) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Примітки</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {caseData.notes_text && (
+                  <div>
+                    <p className="text-sm text-gray-600">Текст</p>
+                    <p className="font-medium whitespace-pre-wrap">{caseData.notes_text}</p>
+                  </div>
+                )}
+                {caseData.notes_images && caseData.notes_images.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Зображення ({caseData.notes_images.length})</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {caseData.notes_images.map((imageUrl, index) => (
+                        <a
+                          key={index}
+                          href={imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Примітка ${index + 1}`}
+                            className="w-full h-40 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Searches */}
           <Card>
