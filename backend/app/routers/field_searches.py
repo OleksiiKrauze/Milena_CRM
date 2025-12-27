@@ -449,10 +449,7 @@ def generate_grid(
         return FileResponse(
             path=str(file_path),
             media_type="application/gpx+xml",
-            filename=filename,
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
+            filename=filename
         )
 
     except Exception as e:

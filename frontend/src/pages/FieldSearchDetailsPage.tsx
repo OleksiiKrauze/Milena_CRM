@@ -185,10 +185,10 @@ export function FieldSearchDetailsPage() {
                       <FileText className="w-5 h-5 text-gray-600" />
                       <a
                         href={fieldSearchData.preparation_grid_file}
-                        download={getOriginalFilename(fieldSearchData.preparation_grid_file)}
+                        download={fieldSearchData.preparation_grid_file.split('/').pop()}
                         className="text-sm text-primary-600 hover:underline flex-1"
                       >
-                        {getOriginalFilename(fieldSearchData.preparation_grid_file)}
+                        {fieldSearchData.preparation_grid_file.split('/').pop()}
                       </a>
                     </div>
                   </div>

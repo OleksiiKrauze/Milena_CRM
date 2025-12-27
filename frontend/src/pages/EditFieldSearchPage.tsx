@@ -511,10 +511,10 @@ export function EditFieldSearchPage() {
                     <FileText className="w-5 h-5 text-gray-600" />
                     <a
                       href={preparationGridFile}
-                      download={getOriginalFilename(preparationGridFile)}
+                      download={preparationGridFile.split('/').pop()}
                       className="text-sm text-primary-600 hover:underline flex-1"
                     >
-                      {getOriginalFilename(preparationGridFile)}
+                      {preparationGridFile.split('/').pop()}
                     </a>
                     <button
                       type="button"
