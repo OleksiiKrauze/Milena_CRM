@@ -99,8 +99,8 @@ export function GridMapSelector({
   const [manualLon, setManualLon] = useState<string>('');
   const [mapError, setMapError] = useState<string>('');
 
-  // Default center (Kyiv, Ukraine)
-  const defaultCenter = { lat: 50.4501, lng: 30.5234 };
+  // Default center (Kharkiv, Ukraine)
+  const defaultCenter = { lat: 49.9935, lng: 36.2304 };
   const center = centerLat && centerLon ? { lat: centerLat, lng: centerLon } : defaultCenter;
 
   // Update manual input fields when center changes
