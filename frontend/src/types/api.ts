@@ -214,6 +214,8 @@ export interface Case {
   updated_at: string | null;
   updated_by_user_id: number | null;
   updated_by: UserBrief | null;
+  // Basis
+  basis: string | null;
   // Applicant - split name fields
   applicant_last_name: string;
   applicant_first_name: string;
@@ -251,6 +253,9 @@ export interface Case {
   police_department: string | null;
   police_contact_user_id: number | null;
   police_contact: UserBrief | null;
+  // Notes
+  notes_text: string | null;
+  notes_images: string[];
   // Computed full names
   applicant_full_name: string;
   missing_full_name: string;
@@ -260,6 +265,8 @@ export interface Case {
 }
 
 export interface CaseCreate {
+  // Basis
+  basis?: string;
   // Applicant - split name fields
   applicant_last_name: string;
   applicant_first_name: string;
@@ -296,6 +303,9 @@ export interface CaseCreate {
   police_report_date?: string;
   police_department?: string;
   police_contact_user_id?: number;
+  // Notes
+  notes_text?: string;
+  notes_images?: string[];
   decision_type?: string;
   decision_comment?: string;
   tags?: string[];

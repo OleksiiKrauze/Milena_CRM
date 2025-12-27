@@ -15,6 +15,9 @@ class Case(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     updated_by_user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), index=True)
 
+    # Basis for the case
+    basis = Column(String(200))  # Підстава (звернення поліції, дзвінок на гарячу лінію, соцмережі і тд)
+
     # Applicant data - split name fields
     applicant_last_name = Column(String(100), nullable=False)
     applicant_first_name = Column(String(100), nullable=False)
@@ -55,6 +58,10 @@ class Case(Base):
     police_report_date = Column(DateTime(timezone=True))
     police_department = Column(String(200))  # Райвідділок
     police_contact_user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
+
+    # Notes
+    notes_text = Column(Text)  # Текстові примітки
+    notes_images = Column(ARRAY(String), default=list)  # Зображення до приміток
 
     decision_type = Column(String(50), default="На розгляді", nullable=False, index=True)
     decision_comment = Column(Text)

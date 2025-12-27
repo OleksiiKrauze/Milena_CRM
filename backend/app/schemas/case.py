@@ -10,6 +10,9 @@ from app.schemas.auth import UserBrief
 
 class CaseCreate(BaseModel):
     """Schema for creating a case"""
+    # Basis for the case
+    basis: Optional[str] = Field(None, max_length=200)
+
     # Applicant info - split name fields
     applicant_last_name: str = Field(..., min_length=1, max_length=100)
     applicant_first_name: str = Field(..., min_length=1, max_length=100)
@@ -51,6 +54,10 @@ class CaseCreate(BaseModel):
     police_department: Optional[str] = Field(None, max_length=200)
     police_contact_user_id: Optional[int] = None
 
+    # Notes
+    notes_text: Optional[str] = None
+    notes_images: Optional[List[str]] = []
+
     # Case metadata
     decision_type: Optional[str] = "На розгляді"
     decision_comment: Optional[str] = None
@@ -59,6 +66,9 @@ class CaseCreate(BaseModel):
 
 class CaseUpdate(BaseModel):
     """Schema for updating a case"""
+    # Basis for the case
+    basis: Optional[str] = Field(None, max_length=200)
+
     # Applicant info - split name fields
     applicant_last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     applicant_first_name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -100,6 +110,10 @@ class CaseUpdate(BaseModel):
     police_department: Optional[str] = Field(None, max_length=200)
     police_contact_user_id: Optional[int] = None
 
+    # Notes
+    notes_text: Optional[str] = None
+    notes_images: Optional[List[str]] = None
+
     # Case metadata
     decision_type: Optional[str] = None
     decision_comment: Optional[str] = None
@@ -115,6 +129,9 @@ class CaseResponse(BaseModel):
     updated_at: Optional[datetime]
     updated_by_user_id: Optional[int]
     updated_by: Optional[UserBrief]
+
+    # Basis for the case
+    basis: Optional[str]
 
     # Applicant info - split name fields
     applicant_last_name: str
@@ -157,6 +174,10 @@ class CaseResponse(BaseModel):
     police_department: Optional[str]
     police_contact_user_id: Optional[int]
     police_contact: Optional[UserBrief]
+
+    # Notes
+    notes_text: Optional[str]
+    notes_images: List[str]
 
     # Computed full names
     applicant_full_name: str
