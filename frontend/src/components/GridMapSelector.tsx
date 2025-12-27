@@ -171,6 +171,7 @@ export function GridMapSelector({
             defaultZoom={13}
             onClick={handleMapClick}
             mapId="field-search-grid-map"
+            gestureHandling="greedy"
           >
             {centerLat && centerLon && (
               <AdvancedMarker position={{ lat: centerLat, lng: centerLon }} />
