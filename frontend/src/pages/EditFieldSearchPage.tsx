@@ -46,6 +46,7 @@ export function EditFieldSearchPage() {
   const [gridCellSize, setGridCellSize] = useState<number | null>(null);
   const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
   const [generatedGridUrl, setGeneratedGridUrl] = useState<string | null>(null);
+  const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
 
   // Get field search details
   const { data: fieldSearchData, isLoading: fieldSearchLoading } = useQuery({
@@ -321,8 +322,9 @@ export function EditFieldSearchPage() {
                     <img
                       src={fieldSearchData.search.latest_orientation_image}
                       alt="Ориентировка"
-                      className="max-w-full h-auto rounded-lg border border-gray-200"
+                      className="max-w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                       style={{ maxHeight: '400px' }}
+                      onClick={() => setIsOrientationFullscreen(true)}
                     />
                   </div>
                 )}
@@ -753,6 +755,28 @@ export function EditFieldSearchPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Fullscreen orientation image */}
+        {isOrientationFullscreen && fieldSearchData?.search?.latest_orientation_image && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+            onClick={() => setIsOrientationFullscreen(false)}
+          >
+            <button
+              onClick={() => setIsOrientationFullscreen(false)}
+              className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition-colors"
+              aria-label="Закрити"
+            >
+              ×
+            </button>
+            <img
+              src={fieldSearchData.search.latest_orientation_image}
+              alt="Ориентировка"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
       </Container>

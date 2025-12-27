@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fieldSearchesApi } from '@/api/field-searches';
@@ -9,6 +10,7 @@ import { FileText } from 'lucide-react';
 export function FieldSearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
 
   const { data: fieldSearchData, isLoading, error } = useQuery({
     queryKey: ['field-search', id],
@@ -123,8 +125,9 @@ export function FieldSearchDetailsPage() {
                       <img
                         src={fieldSearchData.search.latest_orientation_image}
                         alt="Ориентировка"
-                        className="max-w-full h-auto rounded-lg border border-gray-200"
+                        className="max-w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                         style={{ maxHeight: '400px' }}
+                        onClick={() => setIsOrientationFullscreen(true)}
                       />
                     </div>
                   )}
@@ -269,6 +272,28 @@ export function FieldSearchDetailsPage() {
             </Card>
           )}
         </div>
+
+        {/* Fullscreen orientation image */}
+        {isOrientationFullscreen && fieldSearchData?.search?.latest_orientation_image && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+            onClick={() => setIsOrientationFullscreen(false)}
+          >
+            <button
+              onClick={() => setIsOrientationFullscreen(false)}
+              className="absolute top-4 right-4 text-white text-4xl hover:text-gray-300 transition-colors"
+              aria-label="Закрити"
+            >
+              ×
+            </button>
+            <img
+              src={fieldSearchData.search.latest_orientation_image}
+              alt="Ориентировка"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </Container>
     </div>
   );
