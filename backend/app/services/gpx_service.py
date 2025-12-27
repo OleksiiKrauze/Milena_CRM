@@ -258,12 +258,17 @@ def generate_gpx(
         name = SubElement(wpt, "name")
         name.text = wp["name"]
 
-    # Add tracks (one track per line segment to avoid diagonal connections)
-    for segment_idx, segment in enumerate(track_segments):
-        trk = SubElement(gpx, "trk")
-        trk_name = SubElement(trk, "name")
-        trk_name.text = f"Grid_Line_{segment_idx + 1}"
+    # Add single track with multiple segments (each line as separate segment)
+    # This ensures OsmAnd displays the grid automatically without diagonal connections
+    trk = SubElement(gpx, "trk")
+    trk_name = SubElement(trk, "name")
+    trk_name.text = "Search Grid"
 
+    trk_desc = SubElement(trk, "desc")
+    trk_desc.text = f"Field search grid: {cols}x{rows} cells, {cell_size_meters}m each"
+
+    # Each grid line is a separate segment to avoid diagonal connections
+    for segment in track_segments:
         trkseg = SubElement(trk, "trkseg")
         for lat, lon in segment:
             trkpt = SubElement(trkseg, "trkpt")
