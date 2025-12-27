@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useState, useRef } from 'react';
 import { APIProvider, Map, AdvancedMarker, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps';
-import html2canvas from 'html2canvas';
+import { domToJpeg } from 'modern-screenshot';
 import { uploadApi } from '@/api/upload';
 import { Download } from 'lucide-react';
 
@@ -157,44 +157,33 @@ export function GridMapSelector({
 
     setIsExporting(true);
     try {
-      // Capture the map container as canvas
-      const canvas = await html2canvas(mapContainerRef.current, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-      });
+      // Wait for map to fully render
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Calculate dimensions to have 2000px on the longest side
-      const originalWidth = canvas.width;
-      const originalHeight = canvas.height;
+      // Get current dimensions
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      const originalWidth = rect.width;
+      const originalHeight = rect.height;
       const maxDimension = 2000;
 
-      let targetWidth, targetHeight;
+      // Calculate scale to achieve 2000px on longest side
+      let scale;
       if (originalWidth > originalHeight) {
-        targetWidth = maxDimension;
-        targetHeight = Math.round((originalHeight / originalWidth) * maxDimension);
+        scale = maxDimension / originalWidth;
       } else {
-        targetHeight = maxDimension;
-        targetWidth = Math.round((originalWidth / originalHeight) * maxDimension);
+        scale = maxDimension / originalHeight;
       }
 
-      // Create a new canvas with target dimensions
-      const resizedCanvas = document.createElement('canvas');
-      resizedCanvas.width = targetWidth;
-      resizedCanvas.height = targetHeight;
-      const ctx = resizedCanvas.getContext('2d');
-      if (!ctx) throw new Error('Failed to get canvas context');
-
-      ctx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
-
-      // Convert to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        resizedCanvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Failed to create blob'));
-        }, 'image/jpeg', 0.95);
+      // Capture as JPEG with calculated scale
+      const dataUrl = await domToJpeg(mapContainerRef.current, {
+        quality: 0.95,
+        scale: scale,
+        backgroundColor: '#ffffff',
       });
+
+      // Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
 
       // Create file from blob
       const file = new File([blob], `map-export-${Date.now()}.jpg`, { type: 'image/jpeg' });
