@@ -164,7 +164,7 @@ export function GridMapSelector({
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
       <div className="space-y-4">
         {/* Map */}
-        <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
+        <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300" style={{ touchAction: 'none' }}>
           <Map
             defaultCenter={center}
             center={center}
@@ -172,6 +172,9 @@ export function GridMapSelector({
             onClick={handleMapClick}
             mapId="field-search-grid-map"
             gestureHandling="greedy"
+            disableDefaultUI={false}
+            zoomControl={true}
+            scrollwheel={true}
           >
             {centerLat && centerLon && (
               <AdvancedMarker position={{ lat: centerLat, lng: centerLon }} />
