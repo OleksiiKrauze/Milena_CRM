@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { APIProvider, Map, AdvancedMarker, MapMouseEvent } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, type MapMouseEvent } from '@vis.gl/react-google-maps';
 
 interface GridMapSelectorProps {
   centerLat: number | null;
