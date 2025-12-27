@@ -42,14 +42,16 @@ function GridOverlay({
     const gridHeight = rows * cellSize;
 
     // Calculate grid bounds
-    const halfWidthDeg = (gridWidth / 2) / metersPerDegree;
-    const halfHeightDeg = (gridHeight / 2) / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
+    // For latitude (north-south): 1 degree ≈ 111km everywhere
+    // For longitude (west-east): 1 degree = 111km * cos(latitude)
+    const halfHeightDeg = (gridHeight / 2) / metersPerDegree;
+    const halfWidthDeg = (gridWidth / 2) / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
 
     const startLat = centerLat - halfHeightDeg;
     const startLon = centerLon - halfWidthDeg;
 
-    const cellWidthDeg = cellSize / metersPerDegree;
-    const cellHeightDeg = cellSize / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
+    const cellHeightDeg = cellSize / metersPerDegree;
+    const cellWidthDeg = cellSize / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
 
     // Draw each cell
     for (let row = 0; row < rows; row++) {
@@ -153,8 +155,10 @@ export function GridMapSelector({
     const gridWidth = cols * cellSize;
     const gridHeight = rows * cellSize;
 
-    const halfWidthDeg = (gridWidth / 2) / metersPerDegree;
-    const halfHeightDeg = (gridHeight / 2) / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
+    // For latitude (north-south): 1 degree ≈ 111km everywhere
+    // For longitude (west-east): 1 degree = 111km * cos(latitude)
+    const halfHeightDeg = (gridHeight / 2) / metersPerDegree;
+    const halfWidthDeg = (gridWidth / 2) / (metersPerDegree * Math.cos(centerLat * Math.PI / 180));
 
     return {
       north: centerLat + halfHeightDeg,
