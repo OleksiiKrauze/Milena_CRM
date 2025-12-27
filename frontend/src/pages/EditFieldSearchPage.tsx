@@ -182,6 +182,30 @@ export function EditFieldSearchPage() {
     }
   };
 
+  const handleDownloadGrid = async () => {
+    if (!id) return;
+
+    try {
+      const blob = await fieldSearchesApi.downloadGrid(Number(id));
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element to trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = preparationGridFile?.split('/').pop() || 'grid.gpx';
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      setApiError(error.response?.data?.error?.message || error.message || 'Помилка завантаження файлу');
+    }
+  };
+
   const updateMutation = useMutation({
     mutationFn: (data: EditFieldSearchForm) => {
       const cleanedData: any = {};
@@ -535,12 +559,13 @@ export function EditFieldSearchPage() {
                 {generatedGridUrl && (
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-sm text-green-800 mb-2">Сітка успішно згенерована!</p>
-                    <a
-                      href={`/api/field_searches/${id}/download-grid`}
+                    <button
+                      type="button"
+                      onClick={handleDownloadGrid}
                       className="text-sm text-green-600 hover:underline"
                     >
                       Завантажити GPX файл
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
@@ -553,12 +578,13 @@ export function EditFieldSearchPage() {
                 {preparationGridFile ? (
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <FileText className="w-5 h-5 text-gray-600" />
-                    <a
-                      href={`/api/field_searches/${id}/download-grid`}
-                      className="text-sm text-primary-600 hover:underline flex-1"
+                    <button
+                      type="button"
+                      onClick={handleDownloadGrid}
+                      className="text-sm text-primary-600 hover:underline flex-1 text-left"
                     >
                       {preparationGridFile.split('/').pop()}
-                    </a>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setPreparationGridFile(null)}

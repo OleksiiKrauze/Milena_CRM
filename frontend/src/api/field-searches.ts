@@ -62,4 +62,11 @@ export const fieldSearchesApi = {
     const response = await api.post<{ grid_file_url: string; filename: string }>(`/field_searches/${fieldSearchId}/generate-grid`);
     return response.data;
   },
+
+  downloadGrid: async (fieldSearchId: number): Promise<Blob> => {
+    const response = await api.get(`/field_searches/${fieldSearchId}/download-grid`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

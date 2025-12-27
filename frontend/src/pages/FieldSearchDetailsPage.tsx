@@ -11,12 +11,37 @@ export function FieldSearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
+  const [apiError, setApiError] = useState<string>('');
 
   const { data: fieldSearchData, isLoading, error } = useQuery({
     queryKey: ['field-search', id],
     queryFn: () => fieldSearchesApi.get(Number(id)),
     enabled: !!id,
   });
+
+  const handleDownloadGrid = async () => {
+    if (!id) return;
+
+    try {
+      const blob = await fieldSearchesApi.downloadGrid(Number(id));
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element to trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fieldSearchData?.preparation_grid_file?.split('/').pop() || 'grid.gpx';
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error: any) {
+      setApiError(error.response?.data?.error?.message || error.message || 'Помилка завантаження файлу');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -196,12 +221,13 @@ export function FieldSearchDetailsPage() {
                     <p className="text-sm text-gray-600 mb-2">Файл сітки квадратів</p>
                     <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                       <FileText className="w-5 h-5 text-gray-600" />
-                      <a
-                        href={`/api/field_searches/${fieldSearchData.id}/download-grid`}
-                        className="text-sm text-primary-600 hover:underline flex-1"
+                      <button
+                        type="button"
+                        onClick={handleDownloadGrid}
+                        className="text-sm text-primary-600 hover:underline flex-1 text-left"
                       >
                         {fieldSearchData.preparation_grid_file.split('/').pop()}
-                      </a>
+                      </button>
                     </div>
                   </div>
                 )}
