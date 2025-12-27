@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete
 from typing import List, Optional
@@ -416,7 +415,7 @@ def generate_grid(
     - grid_rows
     - grid_cell_size
 
-    Downloads the generated GPX file with proper filename and content type.
+    Returns JSON with grid_file_url and filename for the generated GPX file.
     """
     # Get field search with eager loading of search and case
     db_field_search = db.query(FieldSearch).options(
@@ -506,12 +505,8 @@ def generate_grid(
         db_field_search.preparation_grid_file = grid_file_url
         db.commit()
 
-        # Return file as download with proper content type
-        return FileResponse(
-            path=str(file_path),
-            media_type="application/gpx+xml",
-            filename=filename
-        )
+        # Return JSON with file URL instead of triggering download
+        return {"grid_file_url": grid_file_url, "filename": filename}
 
     except Exception as e:
         raise HTTPException(

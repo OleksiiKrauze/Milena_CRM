@@ -58,31 +58,8 @@ export const fieldSearchesApi = {
     await api.delete(`/field_searches/${id}`);
   },
 
-  generateGrid: async (fieldSearchId: number): Promise<void> => {
-    const response = await api.post(`/field_searches/${fieldSearchId}/generate-grid`, {}, {
-      responseType: 'blob',
-    });
-
-    // Create a download link for the blob
-    const blob = new Blob([response.data], { type: 'application/gpx+xml' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-
-    // Extract filename from Content-Disposition header or use default
-    const contentDisposition = response.headers['content-disposition'];
-    let filename = 'grid.gpx';
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1];
-      }
-    }
-
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  generateGrid: async (fieldSearchId: number): Promise<{ grid_file_url: string; filename: string }> => {
+    const response = await api.post<{ grid_file_url: string; filename: string }>(`/field_searches/${fieldSearchId}/generate-grid`);
+    return response.data;
   },
 };
