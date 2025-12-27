@@ -83,8 +83,9 @@ function GridOverlay({
         const centerCellLon = (west + east) / 2;
 
         // Create cell label (e.g., A1, B2, C3)
+        // Row numbering from top to bottom (like in GPX): top row = 1, bottom row = rows
         const colLabel = columnLabel(col);
-        const rowLabel = String(row + 1);
+        const rowLabel = String(rows - row);
         const cellName = `${colLabel}${rowLabel}`;
 
         // Draw polygon
