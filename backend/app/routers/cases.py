@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.db import get_db
 from app.schemas.case import (
@@ -77,7 +77,7 @@ def list_cases(
     current_user: User = Depends(get_current_user)
 ):
     """Get list of cases with pagination"""
-    query = db.query(Case)
+    query = db.query(Case).options(joinedload(Case.searches))
 
     # Filter by decision type if provided
     if decision_type_filter:

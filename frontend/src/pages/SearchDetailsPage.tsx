@@ -70,9 +70,9 @@ export function SearchDetailsPage() {
     if (!result) return null;
     switch (result) {
       case 'alive': return 'Живий';
-      case 'dead': return 'Мертвий';
+      case 'dead': return 'Виявлено';
       case 'location_known': return 'Місцезнаходження відомо';
-      case 'not_found': return 'Не знайдений';
+      case 'not_found': return 'Пошук припинено';
       default: return result;
     }
   };

@@ -425,9 +425,9 @@ export function CaseDetailsPage() {
                           <p>
                             Результат:{' '}
                             {search.result === 'alive' && 'Живий'}
-                            {search.result === 'dead' && 'Мертвий'}
+                            {search.result === 'dead' && 'Виявлено'}
                             {search.result === 'location_known' && 'Місцезнаходження відомо'}
-                            {search.result === 'not_found' && 'Не знайдений'}
+                            {search.result === 'not_found' && 'Пошук припинено'}
                             {!['alive', 'dead', 'location_known', 'not_found'].includes(search.result) && search.result}
                           </p>
                         )}

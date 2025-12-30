@@ -87,9 +87,9 @@ export function SearchListPage() {
                 >
                   <option value="">Всі результати</option>
                   <option value="alive">Живий</option>
-                  <option value="dead">Мертвий</option>
+                  <option value="dead">Виявлено</option>
                   <option value="location_known">Місцезнаходження відомо</option>
-                  <option value="not_found">Не знайдений</option>
+                  <option value="not_found">Пошук припинено</option>
                 </select>
               </div>
 
@@ -140,11 +140,11 @@ export function SearchListPage() {
                 // Определяем цвет фона в зависимости от результата
                 let bgColor = 'bg-white'; // По умолчанию белый для "не визначено"
                 if (search.result === 'alive') {
-                  bgColor = 'bg-green-100';
+                  bgColor = 'bg-green-200';
                 } else if (search.result === 'dead') {
-                  bgColor = 'bg-gray-300';
+                  bgColor = 'bg-gray-600 text-white';
                 } else if (search.result === 'not_found') {
-                  bgColor = 'bg-white';
+                  bgColor = 'bg-gray-300';
                 }
                 // location_known оставляем белым
 
@@ -199,9 +199,9 @@ export function SearchListPage() {
                           <p>
                             <span className="font-medium">Результат:</span>{' '}
                             {search.result === 'alive' && 'Живий'}
-                            {search.result === 'dead' && 'Мертвий'}
+                            {search.result === 'dead' && 'Виявлено'}
                             {search.result === 'location_known' && 'Місцезнаходження відомо'}
-                            {search.result === 'not_found' && 'Не знайдений'}
+                            {search.result === 'not_found' && 'Пошук припинено'}
                             {!['alive', 'dead', 'location_known', 'not_found'].includes(search.result) && search.result}
                           </p>
                         )}

@@ -192,9 +192,9 @@ export function FieldSearchListPage() {
                           <p>
                             <span className="font-medium">Результат:</span>{' '}
                             {fieldSearch.result === 'alive' && 'Живий'}
-                            {fieldSearch.result === 'dead' && 'Мертвий'}
+                            {fieldSearch.result === 'dead' && 'Виявлено'}
                             {fieldSearch.result === 'location_known' && 'Місцезнаходження відомо'}
-                            {fieldSearch.result === 'not_found' && 'Не знайдений'}
+                            {fieldSearch.result === 'not_found' && 'Пошук припинено'}
                             {!['alive', 'dead', 'location_known', 'not_found'].includes(fieldSearch.result) && fieldSearch.result}
                           </p>
                         )}

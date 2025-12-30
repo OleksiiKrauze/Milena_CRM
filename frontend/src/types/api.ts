@@ -262,6 +262,8 @@ export interface Case {
   decision_type: string;
   decision_comment: string | null;
   tags: string[];
+  // Latest search result (computed property)
+  latest_search_result: string | null;
 }
 
 export interface CaseCreate {

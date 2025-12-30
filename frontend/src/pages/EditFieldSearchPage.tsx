@@ -458,9 +458,9 @@ export function EditFieldSearchPage() {
                 >
                   <option value="">Не вказано</option>
                   <option value="alive">Живий</option>
-                  <option value="dead">Мертвий</option>
+                  <option value="dead">Виявлено</option>
                   <option value="location_known">Місцезнаходження відомо</option>
-                  <option value="not_found">Не знайдений</option>
+                  <option value="not_found">Пошук припинено</option>
                 </select>
               </div>
 

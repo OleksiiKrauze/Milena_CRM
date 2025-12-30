@@ -59,27 +59,52 @@ export function CasesListPage() {
               </div>
             ) : (
               data.cases.map((caseItem) => {
-                // Определяем цвет фона в зависимости от decision_type
+                // Определяем цвет фона в зависимости от decision_type и latest_search_result
                 let bgColor = '';
-                if (caseItem.decision_type === 'Пошук') {
-                  bgColor = 'bg-green-50';
-                } else if (caseItem.decision_type === 'Відмова') {
-                  bgColor = 'bg-gray-100';
+                let textColor = '';
+
+                if (caseItem.decision_type === 'Відмова') {
+                  bgColor = 'bg-white';
                 } else if (caseItem.decision_type === 'На розгляді') {
                   bgColor = 'bg-pink-50';
+                } else if (caseItem.decision_type === 'Пошук') {
+                  // Если у заявки есть поиск с результатом
+                  if (caseItem.latest_search_result === 'dead') {
+                    bgColor = 'bg-gray-600';
+                    textColor = 'text-white';
+                  } else if (caseItem.latest_search_result === 'alive') {
+                    bgColor = 'bg-green-200';
+                  } else if (caseItem.latest_search_result === 'not_found') {
+                    bgColor = 'bg-gray-300';
+                  } else {
+                    // Если нет результата поиска или другой результат
+                    bgColor = 'bg-yellow-100';
+                  }
                 }
+
+                // Получаем текст результата поиска
+                const getSearchResultLabel = (result: string | null) => {
+                  if (!result) return null;
+                  switch (result) {
+                    case 'alive': return 'Живий';
+                    case 'dead': return 'Виявлено';
+                    case 'location_known': return 'Місцезнаходження відомо';
+                    case 'not_found': return 'Пошук припинено';
+                    default: return result;
+                  }
+                };
 
                 return (
                   <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
                     <Card className={`active:opacity-90 transition-colors ${bgColor}`}>
                       <CardContent className="p-4">
                       <div className="mb-2 flex items-baseline gap-2">
-                        <span className="text-sm font-medium text-gray-500">#{caseItem.id}</span>
-                        <h3 className="font-semibold text-gray-900">
+                        <span className={`text-sm font-medium ${textColor || 'text-gray-500'}`}>#{caseItem.id}</span>
+                        <h3 className={`font-semibold ${textColor || 'text-gray-900'}`}>
                           {caseItem.missing_full_name}
                         </h3>
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className={`space-y-1 text-sm ${textColor || 'text-gray-600'}`}>
                         <p>
                           <span className="font-medium">Заявник:</span>{' '}
                           {caseItem.applicant_full_name}
@@ -92,12 +117,18 @@ export function CasesListPage() {
                           <span className="font-medium">Рішення:</span>{' '}
                           {caseItem.decision_type}
                         </p>
+                        {caseItem.latest_search_result && (
+                          <p>
+                            <span className="font-medium">Результат пошуку:</span>{' '}
+                            {getSearchResultLabel(caseItem.latest_search_result)}
+                          </p>
+                        )}
                         {caseItem.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {caseItem.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+                                className={`px-2 py-1 rounded text-xs ${textColor ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700'}`}
                               >
                                 {tag}
                               </span>

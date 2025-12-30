@@ -188,6 +188,9 @@ class CaseResponse(BaseModel):
     decision_comment: Optional[str]
     tags: List[str]
 
+    # Latest search result (computed property)
+    latest_search_result: Optional[str]
+
     model_config = {"from_attributes": True}
 
 

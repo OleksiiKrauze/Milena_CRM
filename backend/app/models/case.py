@@ -90,3 +90,12 @@ class Case(Base):
         if self.missing_middle_name:
             parts.append(self.missing_middle_name)
         return ' '.join(parts)
+
+    @property
+    def latest_search_result(self) -> str | None:
+        """Get the result from the most recent search"""
+        if not self.searches:
+            return None
+        # Sort searches by created_at descending and get the first one's result
+        latest = max(self.searches, key=lambda s: s.created_at)
+        return latest.result
