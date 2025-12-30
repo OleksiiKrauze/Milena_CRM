@@ -139,10 +139,12 @@ export function SearchListPage() {
               {data.searches.map((search) => {
                 // Определяем цвет фона в зависимости от результата
                 let bgColor = 'bg-white'; // По умолчанию белый для "не визначено"
+                let textColor = 'text-gray-900'; // По умолчанию черный текст
                 if (search.result === 'alive') {
                   bgColor = 'bg-green-200';
                 } else if (search.result === 'dead') {
-                  bgColor = 'bg-gray-600 text-white';
+                  bgColor = 'bg-gray-500';
+                  textColor = 'text-white';
                 } else if (search.result === 'not_found') {
                   bgColor = 'bg-gray-300';
                 }
@@ -156,7 +158,7 @@ export function SearchListPage() {
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-gray-900">Пошук #{search.id}</h3>
+                        <h3 className={`font-semibold ${textColor}`}>Пошук #{search.id}</h3>
                         <Badge variant={getStatusBadgeVariant(search.status)}>
                           {search.status === 'planned' && 'Запланований'}
                           {search.status === 'active' && 'Активний'}
@@ -164,7 +166,7 @@ export function SearchListPage() {
                           {search.status === 'cancelled' && 'Скасований'}
                         </Badge>
                       </div>
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className={`space-y-1 text-sm ${textColor}`}>
                         {search.case && (
                           <p>
                             <span className="font-medium">Зниклий:</span>{' '}
