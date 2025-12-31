@@ -169,6 +169,7 @@ export interface Search {
   status: string;
   notes: string | null;
   latest_orientation_image: string | null;
+  orientations?: Orientation[];
 }
 
 export interface SearchCreate {
