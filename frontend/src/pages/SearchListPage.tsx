@@ -141,7 +141,7 @@ export function SearchListPage() {
                 let bgColor = 'bg-white'; // По умолчанию белый для "не визначено"
                 let textColor = 'text-gray-900'; // По умолчанию черный текст
                 if (search.result === 'alive') {
-                  bgColor = 'bg-green-200';
+                  bgColor = 'bg-green-300';
                 } else if (search.result === 'dead') {
                   bgColor = 'bg-gray-500';
                   textColor = 'text-white';

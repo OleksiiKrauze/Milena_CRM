@@ -66,19 +66,19 @@ export function CasesListPage() {
                 if (caseItem.decision_type === 'Відмова') {
                   bgColor = 'bg-white';
                 } else if (caseItem.decision_type === 'На розгляді') {
-                  bgColor = 'bg-pink-50';
+                  bgColor = 'bg-pink-200';
                 } else if (caseItem.decision_type === 'Пошук') {
                   // Если у заявки есть поиск с результатом
                   if (caseItem.latest_search_result === 'dead') {
-                    bgColor = 'bg-gray-600';
+                    bgColor = 'bg-gray-500';
                     textColor = 'text-white';
                   } else if (caseItem.latest_search_result === 'alive') {
-                    bgColor = 'bg-green-200';
+                    bgColor = 'bg-green-300';
                   } else if (caseItem.latest_search_result === 'not_found') {
                     bgColor = 'bg-gray-300';
                   } else {
                     // Если нет результата поиска или другой результат
-                    bgColor = 'bg-yellow-100';
+                    bgColor = 'bg-yellow-200';
                   }
                 }
 
