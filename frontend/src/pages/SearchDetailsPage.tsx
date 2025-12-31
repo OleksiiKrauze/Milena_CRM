@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { searchesApi } from '@/api/searches';
 import { orientationsApi } from '@/api/orientations';
+import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
@@ -13,6 +14,8 @@ export function SearchDetailsPage() {
   const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [uploadingOrientationId, setUploadingOrientationId] = useState<number | null>(null);
+  const [isCreatingWithUpload, setIsCreatingWithUpload] = useState(false);
 
   const { data: searchData, isLoading, error } = useQuery({
     queryKey: ['search-full', id],
@@ -28,8 +31,117 @@ export function SearchDetailsPage() {
     },
   });
 
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ orientationId, files }: { orientationId: number; files: File[] }) => {
+      const uploadedUrls = await uploadApi.uploadImages(files);
+      const orientation = searchData?.orientations?.find(o => o.id === orientationId);
+      if (!orientation) throw new Error('Orientation not found');
+
+      return orientationsApi.update(orientationId, {
+        uploaded_images: [...orientation.uploaded_images, ...uploadedUrls],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['search-full', id] });
+      setUploadingOrientationId(null);
+    },
+    onError: (error) => {
+      console.error('Failed to upload images:', error);
+      alert('Помилка завантаження зображень');
+      setUploadingOrientationId(null);
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async ({ orientationId, imageUrl, isExported }: { orientationId: number; imageUrl: string; isExported: boolean }) => {
+      const orientation = searchData?.orientations?.find(o => o.id === orientationId);
+      if (!orientation) throw new Error('Orientation not found');
+
+      // Delete from server
+      const filename = imageUrl.split('/').pop();
+      if (filename) {
+        await uploadApi.deleteImage(filename);
+      }
+
+      // Update orientation - remove from appropriate array
+      if (isExported) {
+        return orientationsApi.update(orientationId, {
+          exported_files: orientation.exported_files.filter(url => url !== imageUrl),
+        });
+      } else {
+        return orientationsApi.update(orientationId, {
+          uploaded_images: orientation.uploaded_images.filter(url => url !== imageUrl),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['search-full', id] });
+    },
+    onError: (error) => {
+      console.error('Failed to delete image:', error);
+      alert('Помилка видалення зображення');
+    },
+  });
+
+  const createOrientationWithUploadMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      // Create new orientation
+      const newOrientation = await orientationsApi.create({
+        search_id: Number(id),
+        is_approved: false,
+      });
+
+      // Upload images
+      const uploadedUrls = await uploadApi.uploadImages(files);
+
+      // Update orientation with uploaded images
+      return orientationsApi.update(newOrientation.id, {
+        uploaded_images: uploadedUrls,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['search-full', id] });
+      setIsCreatingWithUpload(false);
+    },
+    onError: (error) => {
+      console.error('Failed to create orientation with upload:', error);
+      alert('Помилка створення орієнтування');
+      setIsCreatingWithUpload(false);
+    },
+  });
+
   const handleDeleteOrientation = (orientationId: number) => {
     deleteMutation.mutate(orientationId);
+  };
+
+  const handleUploadImages = (orientationId: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    setUploadingOrientationId(orientationId);
+    uploadImageMutation.mutate({ orientationId, files: fileArray });
+  };
+
+  const handleDeleteImage = (orientationId: number, imageUrl: string, isExported: boolean) => {
+    if (confirm('Видалити це зображення?')) {
+      deleteImageMutation.mutate({ orientationId, imageUrl, isExported });
+    }
+  };
+
+  const handleCreateWithUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        const fileArray = Array.from(target.files);
+        setIsCreatingWithUpload(true);
+        createOrientationWithUploadMutation.mutate(fileArray);
+      }
+    };
+    input.click();
   };
 
   if (isLoading) {
@@ -170,14 +282,27 @@ export function SearchDetailsPage() {
           {/* Orientations */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <CardTitle>Орієнтування ({searchData.orientations?.length || 0})</CardTitle>
-                <Button
-                  size="sm"
-                  onClick={() => navigate(`/searches/${searchData.id}/create-orientation`)}
-                >
-                  + Створити орієнтування
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/searches/${searchData.id}/create-orientation`)}
+                    fullWidth
+                  >
+                    🎨 Створити в конструкторі
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleCreateWithUpload}
+                    fullWidth
+                    disabled={isCreatingWithUpload}
+                    variant="outline"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  >
+                    {isCreatingWithUpload ? 'Завантаження...' : '📁 Завантажити готове'}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -197,17 +322,69 @@ export function SearchDetailsPage() {
                         )}
                       </div>
 
-                      {/* Image Preview */}
-                      {orientation.exported_files && orientation.exported_files.length > 0 && (
-                        <div
-                          className="mb-3 cursor-pointer"
-                          onClick={() => setSelectedImage(orientation.exported_files[orientation.exported_files.length - 1])}
-                        >
-                          <img
-                            src={`${import.meta.env.VITE_API_URL || '/api'}${orientation.exported_files[orientation.exported_files.length - 1]}`}
-                            alt="Орієнтування"
-                            className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors"
-                          />
+                      {/* Combined Gallery: Exported Files + Uploaded Images */}
+                      {((orientation.exported_files && orientation.exported_files.length > 0) ||
+                        (orientation.uploaded_images && orientation.uploaded_images.length > 0)) && (
+                        <div className="mb-3">
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Exported Files from Constructor */}
+                            {orientation.exported_files?.map((imageUrl, index) => (
+                              <div key={`exported-${index}`} className="relative group">
+                                <div className="relative">
+                                  <img
+                                    src={`${import.meta.env.VITE_API_URL || '/api'}${imageUrl}`}
+                                    alt={`Орієнтування з конструктора ${index + 1}`}
+                                    className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors cursor-pointer"
+                                    onClick={() => setSelectedImage(imageUrl)}
+                                  />
+                                  <div className="absolute top-1 left-1">
+                                    <Badge variant="default" className="bg-purple-100 text-purple-800 text-xs">
+                                      🎨 Конструктор
+                                    </Badge>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteImage(orientation.id, imageUrl, true);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 shadow-md"
+                                    title="Видалити"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Uploaded Images */}
+                            {orientation.uploaded_images?.map((imageUrl, index) => (
+                              <div key={`uploaded-${index}`} className="relative group">
+                                <div className="relative">
+                                  <img
+                                    src={`${import.meta.env.VITE_API_URL || '/api'}${imageUrl}`}
+                                    alt={`Завантажене зображення ${index + 1}`}
+                                    className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors cursor-pointer"
+                                    onClick={() => setSelectedImage(imageUrl)}
+                                  />
+                                  <div className="absolute top-1 left-1">
+                                    <Badge variant="default" className="bg-blue-100 text-blue-800 text-xs">
+                                      📁 Завантажено
+                                    </Badge>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteImage(orientation.id, imageUrl, false);
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 shadow-md"
+                                    title="Видалити"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -218,6 +395,9 @@ export function SearchDetailsPage() {
                         )}
                         {orientation.exported_files && orientation.exported_files.length > 0 && (
                           <p>Експортовано файлів: {orientation.exported_files.length}</p>
+                        )}
+                        {orientation.uploaded_images && orientation.uploaded_images.length > 0 && (
+                          <p>Завантажено зображень: {orientation.uploaded_images.length}</p>
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
@@ -239,15 +419,37 @@ export function SearchDetailsPage() {
                             Редагувати як нове
                           </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setDeleteConfirmId(orientation.id)}
-                          fullWidth
-                          className="text-red-600 border-red-600 hover:bg-red-50"
-                        >
-                          Видалити
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.multiple = true;
+                              input.onchange = (e) => {
+                                const target = e.target as HTMLInputElement;
+                                handleUploadImages(orientation.id, target.files);
+                              };
+                              input.click();
+                            }}
+                            fullWidth
+                            disabled={uploadingOrientationId === orientation.id}
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                          >
+                            {uploadingOrientationId === orientation.id ? 'Завантаження...' : '📁 Додати зображення'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDeleteConfirmId(orientation.id)}
+                            fullWidth
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            Видалити
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

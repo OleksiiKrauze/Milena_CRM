@@ -62,6 +62,16 @@ def create_field_search(
                 detail=f"Flyer with id {field_search_data.flyer_id} not found"
             )
 
+    # Verify orientation if provided
+    if field_search_data.orientation_id:
+        from app.models.orientation import Orientation
+        orientation = db.query(Orientation).filter(Orientation.id == field_search_data.orientation_id).first()
+        if not orientation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Orientation with id {field_search_data.orientation_id} not found"
+            )
+
     # Parse status enum
     fs_status = FieldSearchStatus.planning
     if field_search_data.status:
@@ -78,6 +88,7 @@ def create_field_search(
         initiator_inforg_id=field_search_data.initiator_inforg_id,
         start_date=field_search_data.start_date,
         flyer_id=field_search_data.flyer_id,
+        orientation_id=field_search_data.orientation_id,
         meeting_datetime=field_search_data.meeting_datetime,
         meeting_place=field_search_data.meeting_place,
         coordinator_id=field_search_data.coordinator_id,
@@ -116,10 +127,13 @@ def list_field_searches(
     current_user: User = Depends(get_current_user)
 ):
     """Get list of field searches with pagination and filters"""
+    from app.models.orientation import Orientation
     query = db.query(FieldSearch).options(
         joinedload(FieldSearch.search).joinedload(Search.case),
+        joinedload(FieldSearch.search).joinedload(Search.orientations),
         joinedload(FieldSearch.initiator_inforg),
-        joinedload(FieldSearch.coordinator)
+        joinedload(FieldSearch.coordinator),
+        joinedload(FieldSearch.orientation)
     )
 
     # Filter by case_id if provided (need to join through search)
@@ -153,7 +167,9 @@ def get_field_search(
     from app.models.orientation import Orientation
 
     db_field_search = db.query(FieldSearch).options(
-        joinedload(FieldSearch.search).joinedload(Search.case)
+        joinedload(FieldSearch.search).joinedload(Search.case),
+        joinedload(FieldSearch.search).joinedload(Search.orientations),
+        joinedload(FieldSearch.orientation)
     ).filter(FieldSearch.id == field_search_id).first()
 
     if not db_field_search:

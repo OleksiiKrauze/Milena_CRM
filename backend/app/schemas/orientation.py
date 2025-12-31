@@ -12,6 +12,7 @@ class OrientationCreate(BaseModel):
     text_content: Optional[str] = Field(None, description="Text content of the orientation")
     is_approved: bool = Field(default=False, description="Whether the orientation is approved")
     exported_files: list[str] = Field(default_factory=list, description="URLs to exported orientation files")
+    uploaded_images: list[str] = Field(default_factory=list, description="URLs to uploaded orientation images")
 
 
 class OrientationUpdate(BaseModel):
@@ -22,6 +23,7 @@ class OrientationUpdate(BaseModel):
     text_content: Optional[str] = None
     is_approved: Optional[bool] = None
     exported_files: Optional[list[str]] = None
+    uploaded_images: Optional[list[str]] = None
 
 
 class OrientationResponse(BaseModel):
@@ -36,6 +38,7 @@ class OrientationResponse(BaseModel):
     text_content: Optional[str]
     is_approved: bool
     exported_files: list[str]
+    uploaded_images: list[str]
 
     model_config = {"from_attributes": True}
 

@@ -37,6 +37,7 @@ class FieldSearch(Base):
 
     start_date = Column(Date)
     flyer_id = Column(Integer, ForeignKey('flyers.id', ondelete='SET NULL'))
+    orientation_id = Column(Integer, ForeignKey('orientations.id', ondelete='SET NULL'))
 
     meeting_datetime = Column(DateTime(timezone=True))
     meeting_place = Column(String(500))
@@ -67,6 +68,7 @@ class FieldSearch(Base):
     search = relationship('Search', back_populates='field_searches')
     initiator_inforg = relationship('User', foreign_keys=[initiator_inforg_id])
     flyer = relationship('Flyer', foreign_keys=[flyer_id])
+    orientation = relationship('Orientation', foreign_keys=[orientation_id])
     coordinator = relationship('User', foreign_keys=[coordinator_id])
 
     @property

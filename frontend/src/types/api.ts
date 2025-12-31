@@ -116,6 +116,7 @@ export interface FieldSearch {
       missing_full_name: string;
     } | null;
     latest_orientation_image: string | null;
+    orientations: Orientation[];
   } | null;
   case_id: number | null;
   created_at: string;
@@ -125,6 +126,8 @@ export interface FieldSearch {
   coordinator: UserBrief | null;
   start_date: string | null;
   flyer_id: number | null;
+  orientation_id: number | null;
+  orientation: Orientation | null;
   meeting_datetime: string | null;
   meeting_place: string | null;
   status: string;
@@ -445,6 +448,7 @@ export interface Orientation {
   text_content: string | null;
   is_approved: boolean;
   exported_files: string[];
+  uploaded_images: string[];
 }
 
 export interface OrientationListResponse {

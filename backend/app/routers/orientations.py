@@ -45,7 +45,8 @@ def create_orientation(
         canvas_data=orientation_data.canvas_data,
         text_content=orientation_data.text_content,
         is_approved=orientation_data.is_approved,
-        exported_files=orientation_data.exported_files
+        exported_files=orientation_data.exported_files,
+        uploaded_images=orientation_data.uploaded_images
     )
 
     db.add(db_orientation)

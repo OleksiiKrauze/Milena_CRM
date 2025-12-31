@@ -49,6 +49,7 @@ export const orientationsApi = {
     text_content?: string;
     is_approved?: boolean;
     exported_files?: string[];
+    uploaded_images?: string[];
   }): Promise<Orientation> => {
     const response = await api.patch<Orientation>(`/orientations/${id}`, data);
     return response.data;

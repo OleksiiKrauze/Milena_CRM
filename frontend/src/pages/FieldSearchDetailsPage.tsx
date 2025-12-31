@@ -144,17 +144,6 @@ export function FieldSearchDetailsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Зниклий</p>
                   <p className="font-medium">{fieldSearchData.search.case.missing_full_name}</p>
-                  {fieldSearchData.search.latest_orientation_image && (
-                    <div className="mt-3">
-                      <img
-                        src={fieldSearchData.search.latest_orientation_image}
-                        alt="Ориентировка"
-                        className="max-w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
-                        style={{ maxHeight: '400px' }}
-                        onClick={() => setIsOrientationFullscreen(true)}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
               {fieldSearchData.initiator_inforg && (
@@ -207,6 +196,69 @@ export function FieldSearchDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Selected Orientation */}
+          {fieldSearchData.orientation && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Обране ориентування</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium">Орієнтування #{fieldSearchData.orientation.id}</p>
+                    {fieldSearchData.orientation.is_approved && (
+                      <Badge variant="success">Узгоджено</Badge>
+                    )}
+                  </div>
+
+                  {/* Combined gallery of images */}
+                  {((fieldSearchData.orientation.exported_files && fieldSearchData.orientation.exported_files.length > 0) ||
+                    (fieldSearchData.orientation.uploaded_images && fieldSearchData.orientation.uploaded_images.length > 0)) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Exported Files from Constructor */}
+                      {fieldSearchData.orientation.exported_files?.map((imageUrl, index) => (
+                        <div key={`exported-${index}`} className="relative">
+                          <img
+                            src={`${import.meta.env.VITE_API_URL || '/api'}${imageUrl}`}
+                            alt={`Орієнтування з конструктора ${index + 1}`}
+                            className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors cursor-pointer"
+                            onClick={() => setIsOrientationFullscreen(true)}
+                          />
+                          <div className="absolute top-1 left-1">
+                            <Badge variant="default" className="bg-purple-100 text-purple-800 text-xs">
+                              🎨 Конструктор
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Uploaded Images */}
+                      {fieldSearchData.orientation.uploaded_images?.map((imageUrl, index) => (
+                        <div key={`uploaded-${index}`} className="relative">
+                          <img
+                            src={`${import.meta.env.VITE_API_URL || '/api'}${imageUrl}`}
+                            alt={`Завантажене зображення ${index + 1}`}
+                            className="w-full rounded-lg border border-gray-300 hover:border-primary-500 transition-colors cursor-pointer"
+                            onClick={() => setIsOrientationFullscreen(true)}
+                          />
+                          <div className="absolute top-1 left-1">
+                            <Badge variant="default" className="bg-blue-100 text-blue-800 text-xs">
+                              📁 Завантажено
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    Створено: {formatDateTime(fieldSearchData.orientation.created_at)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Preparation Section */}
           {(fieldSearchData.preparation_grid_file || fieldSearchData.preparation_map_image) && (
@@ -298,7 +350,7 @@ export function FieldSearchDetailsPage() {
         </div>
 
         {/* Fullscreen orientation image */}
-        {isOrientationFullscreen && fieldSearchData?.search?.latest_orientation_image && (
+        {isOrientationFullscreen && fieldSearchData?.orientation && (
           <div
             className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
             onClick={() => setIsOrientationFullscreen(false)}
@@ -311,8 +363,11 @@ export function FieldSearchDetailsPage() {
               ×
             </button>
             <img
-              src={fieldSearchData.search.latest_orientation_image}
-              alt="Ориентировка"
+              src={`${import.meta.env.VITE_API_URL || '/api'}${
+                fieldSearchData.orientation.exported_files?.[0] ||
+                fieldSearchData.orientation.uploaded_images?.[0]
+              }`}
+              alt="Ориентування"
               className="max-w-full max-h-full object-contain"
               onClick={(e) => e.stopPropagation()}
             />

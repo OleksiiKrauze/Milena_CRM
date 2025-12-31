@@ -11,6 +11,7 @@ export interface FieldSearchCreate {
   initiator_inforg_id?: number;
   start_date?: string;
   flyer_id?: number;
+  orientation_id?: number;
   meeting_datetime?: string;
   meeting_place?: string;
   coordinator_id?: number;
@@ -24,6 +25,7 @@ export interface FieldSearchUpdate {
   initiator_inforg_id?: number;
   start_date?: string;
   flyer_id?: number;
+  orientation_id?: number;
   meeting_datetime?: string;
   meeting_place?: string;
   coordinator_id?: number;

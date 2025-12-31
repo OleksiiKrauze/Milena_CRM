@@ -4,6 +4,17 @@ from datetime import datetime, date
 from app.schemas.auth import UserBrief, CaseBrief
 
 
+class OrientationBrief(BaseModel):
+    """Schema for brief orientation info"""
+    id: int
+    created_at: datetime
+    is_approved: bool
+    exported_files: List[str]
+    uploaded_images: List[str]
+
+    model_config = {"from_attributes": True}
+
+
 class ParticipantInfo(BaseModel):
     """Schema for participant info"""
     user_id: int
@@ -22,6 +33,7 @@ class SearchBrief(BaseModel):
     case_id: int
     case: Optional[CaseBrief]
     latest_orientation_image: Optional[str] = Field(None, description="URL to latest exported orientation image")
+    orientations: List[OrientationBrief] = Field(default_factory=list, description="List of orientations for this search")
 
     model_config = {"from_attributes": True}
 
@@ -32,6 +44,7 @@ class FieldSearchCreate(BaseModel):
     initiator_inforg_id: Optional[int] = None
     start_date: Optional[date] = None
     flyer_id: Optional[int] = None
+    orientation_id: Optional[int] = None
     meeting_datetime: Optional[datetime] = None
     meeting_place: Optional[str] = Field(None, max_length=500)
     coordinator_id: Optional[int] = None
@@ -61,6 +74,7 @@ class FieldSearchUpdate(BaseModel):
     initiator_inforg_id: Optional[int] = None
     start_date: Optional[date] = None
     flyer_id: Optional[int] = None
+    orientation_id: Optional[int] = None
     meeting_datetime: Optional[datetime] = None
     meeting_place: Optional[str] = Field(None, max_length=500)
     coordinator_id: Optional[int] = None
@@ -96,6 +110,8 @@ class FieldSearchResponse(BaseModel):
     initiator_inforg: Optional[UserBrief]
     start_date: Optional[date]
     flyer_id: Optional[int]
+    orientation_id: Optional[int]
+    orientation: Optional[OrientationBrief]
     meeting_datetime: Optional[datetime]
     meeting_place: Optional[str]
     coordinator_id: Optional[int]

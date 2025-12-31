@@ -47,6 +47,7 @@ export function EditFieldSearchPage() {
   const [isGeneratingGrid, setIsGeneratingGrid] = useState(false);
   const [generatedGridUrl, setGeneratedGridUrl] = useState<string | null>(null);
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
+  const [selectedOrientationId, setSelectedOrientationId] = useState<string>('');
 
   // Get field search details
   const { data: fieldSearchData, isLoading: fieldSearchLoading } = useQuery({
@@ -87,6 +88,7 @@ export function EditFieldSearchPage() {
       setGridCols(fieldSearchData.grid_cols);
       setGridRows(fieldSearchData.grid_rows);
       setGridCellSize(fieldSearchData.grid_cell_size);
+      setSelectedOrientationId(fieldSearchData.orientation_id?.toString() || '');
     }
   }, [fieldSearchData]);
 
@@ -225,6 +227,11 @@ export function EditFieldSearchPage() {
       }
       if (cleanedData.coordinator_id) {
         cleanedData.coordinator_id = Number(cleanedData.coordinator_id);
+      }
+      if (selectedOrientationId) {
+        cleanedData.orientation_id = Number(selectedOrientationId);
+      } else {
+        cleanedData.orientation_id = null;
       }
 
       // Add file upload fields
@@ -396,6 +403,65 @@ export function EditFieldSearchPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Orientation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ориентування
+                </label>
+                {fieldSearchData?.search?.orientations && fieldSearchData.search.orientations.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Option: No orientation */}
+                    <div
+                      onClick={() => setSelectedOrientationId('')}
+                      className={`relative border-2 rounded-lg p-2 cursor-pointer transition-all ${
+                        selectedOrientationId === ''
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center h-24 bg-gray-100 rounded text-gray-400">
+                        Не вказано
+                      </div>
+                    </div>
+
+                    {fieldSearchData.search.orientations.map((orientation: any) => {
+                      const previewImage = orientation.exported_files?.[0] || orientation.uploaded_images?.[0];
+                      return (
+                        <div
+                          key={orientation.id}
+                          onClick={() => setSelectedOrientationId(orientation.id.toString())}
+                          className={`relative border-2 rounded-lg p-2 cursor-pointer transition-all ${
+                            selectedOrientationId === orientation.id.toString()
+                              ? 'border-primary-500 bg-primary-50'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          {previewImage ? (
+                            <img
+                              src={`${import.meta.env.VITE_API_URL || '/api'}${previewImage}`}
+                              alt={`Ориентування #${orientation.id}`}
+                              className="w-full h-24 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-24 bg-gray-100 rounded text-gray-400">
+                              Немає зображення
+                            </div>
+                          )}
+                          <div className="mt-1 flex items-center justify-between text-xs">
+                            <span className="font-medium">#{orientation.id}</span>
+                            {orientation.is_approved && (
+                              <span className="text-green-600">✓ Узгоджено</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Ориентування для цього пошуку не створено</p>
+                )}
               </div>
 
               {/* Status */}

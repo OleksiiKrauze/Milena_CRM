@@ -32,6 +32,9 @@ class Orientation(Base):
     # Exported JPEG files
     exported_files = Column(ARRAY(String), default=list)  # Paths to exported JPEG files
 
+    # Uploaded images (user-uploaded orientation images)
+    uploaded_images = Column(ARRAY(String), default=list)  # Paths to uploaded orientation images
+
     # Relationships
     search = relationship('Search', back_populates='orientations')
     template = relationship('FlyerTemplate')
