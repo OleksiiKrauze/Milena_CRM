@@ -18,6 +18,7 @@ export const casesApi = {
     date_from?: string;
     date_to?: string;
     period?: string;
+    search_query?: string;
   }): Promise<CaseListResponse> => {
     const response = await api.get<CaseListResponse>('/cases/', { params });
     return response.data;

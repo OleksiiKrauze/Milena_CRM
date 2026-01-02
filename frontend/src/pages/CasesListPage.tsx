@@ -18,6 +18,7 @@ export function CasesListPage() {
   const [period, setPeriod] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -30,7 +31,7 @@ export function CasesListPage() {
   }, [urlDecisionType]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['cases', decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo, page],
+    queryKey: ['cases', decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo, searchQuery, page],
     queryFn: () => {
       const params: any = { skip: page * limit, limit };
       if (decisionTypeFilter) params.decision_type_filter = decisionTypeFilter;
@@ -39,6 +40,7 @@ export function CasesListPage() {
       if (period && period !== 'all') params.period = period;
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo) params.date_to = dateTo;
+      if (searchQuery) params.search_query = searchQuery;
       return casesApi.list(params);
     },
     refetchInterval: 5000, // Auto-refresh every 5 seconds
@@ -47,7 +49,7 @@ export function CasesListPage() {
   // Reset to page 0 when filters change
   useEffect(() => {
     setPage(0);
-  }, [decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo]);
+  }, [decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo, searchQuery]);
 
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
   const hasNextPage = page < totalPages - 1;
@@ -60,9 +62,10 @@ export function CasesListPage() {
     setPeriod('all');
     setDateFrom('');
     setDateTo('');
+    setSearchQuery('');
   };
 
-  const hasActiveFilters = decisionTypeFilter || searchStatusFilter || searchResultFilter || period !== 'all' || dateFrom || dateTo;
+  const hasActiveFilters = decisionTypeFilter || searchStatusFilter || searchResultFilter || period !== 'all' || dateFrom || dateTo || searchQuery;
 
   return (
     <div className="min-h-screen pb-nav">
@@ -72,6 +75,20 @@ export function CasesListPage() {
         {/* Filters Card */}
         <Card className="mb-4">
           <CardContent className="p-4 space-y-3">
+            {/* Search Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Пошук за прізвищем зниклого
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Введіть прізвище..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+
             {/* Period Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

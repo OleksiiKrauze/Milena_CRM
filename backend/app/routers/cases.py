@@ -84,6 +84,7 @@ def list_cases(
     date_from: str = Query(None, description="Filter cases from this date (YYYY-MM-DD)"),
     date_to: str = Query(None, description="Filter cases to this date (YYYY-MM-DD)"),
     period: str = Query(None, description="Quick filter: 10d, 30d, all"),
+    search_query: str = Query(None, description="Search by missing person's last name"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -93,6 +94,11 @@ def list_cases(
     from app.models.search import Search
 
     query = db.query(Case).options(joinedload(Case.searches))
+
+    # Search by missing person's last name
+    if search_query:
+        search_term = f"%{search_query}%"
+        query = query.filter(Case.missing_last_name.ilike(search_term))
 
     # Filter by decision type if provided
     if decision_type_filter:
