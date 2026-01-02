@@ -13,6 +13,11 @@ export const casesApi = {
     skip?: number;
     limit?: number;
     decision_type_filter?: string;
+    search_status_filter?: string;
+    search_result_filter?: string;
+    date_from?: string;
+    date_to?: string;
+    period?: string;
   }): Promise<CaseListResponse> => {
     const response = await api.get<CaseListResponse>('/cases/', { params });
     return response.data;

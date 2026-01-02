@@ -79,16 +79,66 @@ def list_cases(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(50, ge=1, le=100, description="Max number of records to return"),
     decision_type_filter: str = Query(None, description="Filter by decision type"),
+    search_status_filter: str = Query(None, description="Filter by search status"),
+    search_result_filter: str = Query(None, description="Filter by search result"),
+    date_from: str = Query(None, description="Filter cases from this date (YYYY-MM-DD)"),
+    date_to: str = Query(None, description="Filter cases to this date (YYYY-MM-DD)"),
+    period: str = Query(None, description="Quick filter: 10d, 30d, all"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get list of cases with pagination"""
+    """Get list of cases with pagination and filters"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import and_, or_
+    from app.models.search import Search
+
     query = db.query(Case).options(joinedload(Case.searches))
 
     # Filter by decision type if provided
     if decision_type_filter:
-        # DecisionType enum values are in Ukrainian, so we filter by the string value
         query = query.filter(Case.decision_type == decision_type_filter)
+
+    # Filter by search status (from latest search)
+    if search_status_filter:
+        # Subquery to get case IDs with matching search status
+        subquery = db.query(Search.case_id).filter(
+            Search.status == search_status_filter
+        ).group_by(Search.case_id).subquery()
+        query = query.filter(Case.id.in_(subquery))
+
+    # Filter by search result (from latest search)
+    if search_result_filter:
+        # Subquery to get case IDs with matching search result
+        subquery = db.query(Search.case_id).filter(
+            Search.result == search_result_filter
+        ).group_by(Search.case_id).subquery()
+        query = query.filter(Case.id.in_(subquery))
+
+    # Handle period filter (takes precedence over date_from/date_to)
+    if period:
+        now = datetime.now()
+        if period == '10d':
+            date_from = (now - timedelta(days=10)).strftime('%Y-%m-%d')
+        elif period == '30d':
+            date_from = (now - timedelta(days=30)).strftime('%Y-%m-%d')
+        # 'all' means no date filter
+
+    # Filter by date range
+    if date_from:
+        try:
+            date_from_dt = datetime.strptime(date_from, '%Y-%m-%d')
+            query = query.filter(Case.created_at >= date_from_dt)
+        except ValueError:
+            pass  # Invalid date format, skip filter
+
+    if date_to:
+        try:
+            date_to_dt = datetime.strptime(date_to, '%Y-%m-%d')
+            # Add one day to include the entire end date
+            date_to_dt = date_to_dt + timedelta(days=1)
+            query = query.filter(Case.created_at < date_to_dt)
+        except ValueError:
+            pass  # Invalid date format, skip filter
 
     total = query.count()
     cases = query.order_by(Case.created_at.desc()).offset(skip).limit(limit).all()

@@ -5,12 +5,23 @@ import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent, Loading, Button } from '@/components/ui';
 import { formatDate } from '@/utils/formatters';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function CasesListPage() {
   const [searchParams] = useSearchParams();
   const urlDecisionType = searchParams.get('decision_type') || '';
+
+  // Filters state
   const [decisionTypeFilter, setDecisionTypeFilter] = useState<string>(urlDecisionType);
+  const [searchStatusFilter, setSearchStatusFilter] = useState<string>('');
+  const [searchResultFilter, setSearchResultFilter] = useState<string>('');
+  const [period, setPeriod] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const limit = 50;
 
   useEffect(() => {
     if (urlDecisionType) {
@@ -19,32 +30,190 @@ export function CasesListPage() {
   }, [urlDecisionType]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['cases', decisionTypeFilter],
-    queryFn: () => casesApi.list(decisionTypeFilter ? { decision_type_filter: decisionTypeFilter } : {}),
+    queryKey: ['cases', decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo, page],
+    queryFn: () => {
+      const params: any = { skip: page * limit, limit };
+      if (decisionTypeFilter) params.decision_type_filter = decisionTypeFilter;
+      if (searchStatusFilter) params.search_status_filter = searchStatusFilter;
+      if (searchResultFilter) params.search_result_filter = searchResultFilter;
+      if (period && period !== 'all') params.period = period;
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+      return casesApi.list(params);
+    },
     refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
+
+  // Reset to page 0 when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [decisionTypeFilter, searchStatusFilter, searchResultFilter, period, dateFrom, dateTo]);
+
+  const totalPages = data ? Math.ceil(data.total / limit) : 0;
+  const hasNextPage = page < totalPages - 1;
+  const hasPrevPage = page > 0;
+
+  const clearFilters = () => {
+    setDecisionTypeFilter('');
+    setSearchStatusFilter('');
+    setSearchResultFilter('');
+    setPeriod('all');
+    setDateFrom('');
+    setDateTo('');
+  };
+
+  const hasActiveFilters = decisionTypeFilter || searchStatusFilter || searchResultFilter || period !== 'all' || dateFrom || dateTo;
 
   return (
     <div className="min-h-screen pb-nav">
       <Header title="Заявки" />
 
       <Container className="py-6">
-        {/* Filter */}
-        <div className="mb-4">
-          <select
-            value={decisionTypeFilter}
-            onChange={(e) => setDecisionTypeFilter(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Всі рішення</option>
-            <option value="На розгляді">На розгляді</option>
-            <option value="Пошук">Пошук</option>
-            <option value="Відмова">Відмова</option>
-          </select>
-        </div>
+        {/* Filters Card */}
+        <Card className="mb-4">
+          <CardContent className="p-4 space-y-3">
+            {/* Period Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Період
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setPeriod('10d')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    period === '10d'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  10 днів
+                </button>
+                <button
+                  onClick={() => setPeriod('30d')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    period === '30d'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  30 днів
+                </button>
+                <button
+                  onClick={() => setPeriod('all')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    period === 'all'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Всі
+                </button>
+              </div>
+            </div>
 
-        {/* Refresh button */}
-        <div className="mb-4 flex justify-end">
+            {/* Date Range Filter */}
+            {period === 'all' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Від дати
+                  </label>
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    До дати
+                  </label>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Decision Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Рішення
+              </label>
+              <select
+                value={decisionTypeFilter}
+                onChange={(e) => setDecisionTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Всі рішення</option>
+                <option value="На розгляді">На розгляді</option>
+                <option value="Пошук">Пошук</option>
+                <option value="Відмова">Відмова</option>
+              </select>
+            </div>
+
+            {/* Search Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Статус пошуку
+              </label>
+              <select
+                value={searchStatusFilter}
+                onChange={(e) => setSearchStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Всі статуси</option>
+                <option value="planned">Запланований</option>
+                <option value="active">Активний</option>
+                <option value="completed">Завершений</option>
+                <option value="cancelled">Скасований</option>
+              </select>
+            </div>
+
+            {/* Search Result Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Результат пошуку
+              </label>
+              <select
+                value={searchResultFilter}
+                onChange={(e) => setSearchResultFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Всі результати</option>
+                <option value="alive">Живий</option>
+                <option value="dead">Виявлено</option>
+                <option value="location_known">Місцезнаходження відомо</option>
+                <option value="not_found">Пошук припинено</option>
+              </select>
+            </div>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={clearFilters}
+              >
+                Скинути фільтри
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Results Header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            {data && (
+              <>
+                Показано {page * limit + 1}-{Math.min((page + 1) * limit, data.total)} з {data.total}
+              </>
+            )}
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -159,10 +328,31 @@ export function CasesListPage() {
           </div>
         )}
 
-        {data && data.total > data.cases.length && (
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Показано {data.cases.length} з {data.total}
-          </p>
+        {/* Pagination */}
+        {data && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setPage(page - 1)}
+              disabled={!hasPrevPage || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Попередня
+            </Button>
+
+            <div className="text-sm text-gray-600">
+              Сторінка {page + 1} з {totalPages}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setPage(page + 1)}
+              disabled={!hasNextPage || isLoading}
+            >
+              Наступна
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         )}
       </Container>
     </div>
