@@ -18,38 +18,54 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add forum import settings to settings table
-    op.add_column('settings', sa.Column('forum_url', sa.String(), nullable=True))
-    op.add_column('settings', sa.Column('forum_username', sa.String(), nullable=True))
-    op.add_column('settings', sa.Column('forum_password', sa.String(), nullable=True))
-    op.add_column('settings', sa.Column('forum_subforum_id', sa.Integer(), nullable=True, server_default='150'))
+    # Import needed for column existence check
+    from sqlalchemy import inspect
+    from sqlalchemy.engine import reflection
 
-    # Create forum_import_status table
-    op.create_table(
-        'forum_import_status',
-        sa.Column('id', sa.Integer(), nullable=False, server_default='1'),
-        sa.Column('is_running', sa.Boolean(), nullable=False, server_default='false'),
-        sa.Column('status', sa.String(), nullable=False, server_default='idle'),
-        sa.Column('total_topics', sa.Integer(), nullable=True, server_default='0'),
-        sa.Column('processed_topics', sa.Integer(), nullable=True, server_default='0'),
-        sa.Column('successful_topics', sa.Integer(), nullable=True, server_default='0'),
-        sa.Column('failed_topics', sa.Integer(), nullable=True, server_default='0'),
-        sa.Column('current_topic_title', sa.String(), nullable=True),
-        sa.Column('current_operation', sa.String(), nullable=True),
-        sa.Column('started_at', sa.DateTime(), nullable=True),
-        sa.Column('finished_at', sa.DateTime(), nullable=True),
-        sa.Column('updated_at', sa.DateTime(), nullable=True, server_default=sa.text('NOW()')),
-        sa.Column('last_error', sa.Text(), nullable=True),
-        sa.Column('forum_url', sa.String(), nullable=True),
-        sa.Column('subforum_id', sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
-    )
+    conn = op.get_bind()
+    inspector = inspect(conn)
 
-    # Insert default row
-    op.execute("""
-        INSERT INTO forum_import_status (id, is_running, status, total_topics, processed_topics, successful_topics, failed_topics)
-        VALUES (1, false, 'idle', 0, 0, 0, 0)
-    """)
+    # Add forum import settings to settings table (only if they don't exist)
+    existing_columns = [col['name'] for col in inspector.get_columns('settings')]
+
+    if 'forum_url' not in existing_columns:
+        op.add_column('settings', sa.Column('forum_url', sa.String(), nullable=True))
+    if 'forum_username' not in existing_columns:
+        op.add_column('settings', sa.Column('forum_username', sa.String(), nullable=True))
+    if 'forum_password' not in existing_columns:
+        op.add_column('settings', sa.Column('forum_password', sa.String(), nullable=True))
+    if 'forum_subforum_id' not in existing_columns:
+        op.add_column('settings', sa.Column('forum_subforum_id', sa.Integer(), nullable=True, server_default='150'))
+
+    # Create forum_import_status table (only if it doesn't exist)
+    existing_tables = inspector.get_table_names()
+
+    if 'forum_import_status' not in existing_tables:
+        op.create_table(
+            'forum_import_status',
+            sa.Column('id', sa.Integer(), nullable=False, server_default='1'),
+            sa.Column('is_running', sa.Boolean(), nullable=False, server_default='false'),
+            sa.Column('status', sa.String(), nullable=False, server_default='idle'),
+            sa.Column('total_topics', sa.Integer(), nullable=True, server_default='0'),
+            sa.Column('processed_topics', sa.Integer(), nullable=True, server_default='0'),
+            sa.Column('successful_topics', sa.Integer(), nullable=True, server_default='0'),
+            sa.Column('failed_topics', sa.Integer(), nullable=True, server_default='0'),
+            sa.Column('current_topic_title', sa.String(), nullable=True),
+            sa.Column('current_operation', sa.String(), nullable=True),
+            sa.Column('started_at', sa.DateTime(), nullable=True),
+            sa.Column('finished_at', sa.DateTime(), nullable=True),
+            sa.Column('updated_at', sa.DateTime(), nullable=True, server_default=sa.text('NOW()')),
+            sa.Column('last_error', sa.Text(), nullable=True),
+            sa.Column('forum_url', sa.String(), nullable=True),
+            sa.Column('subforum_id', sa.Integer(), nullable=True),
+            sa.PrimaryKeyConstraint('id')
+        )
+
+        # Insert default row only if table was just created
+        op.execute("""
+            INSERT INTO forum_import_status (id, is_running, status, total_topics, processed_topics, successful_topics, failed_topics)
+            VALUES (1, false, 'idle', 0, 0, 0, 0)
+        """)
 
 
 def downgrade() -> None:
