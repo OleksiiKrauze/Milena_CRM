@@ -12,6 +12,8 @@ import { Container, Button, Input, Card, CardContent, Loading } from '@/componen
 import { X, Upload, Sparkles } from 'lucide-react';
 
 const editCaseSchema = z.object({
+  // Allow editing created_at
+  created_at: z.string().optional(),
   // Basis
   basis: z.string().optional(),
   // Applicant - split name fields
@@ -96,6 +98,7 @@ export function EditCasePage() {
   useEffect(() => {
     if (caseData) {
       reset({
+        created_at: caseData.created_at ? new Date(caseData.created_at).toISOString().substring(0, 16) : '',
         basis: caseData.basis || '',
         applicant_last_name: caseData.applicant_last_name,
         applicant_first_name: caseData.applicant_first_name,
@@ -312,6 +315,21 @@ export function EditCasePage() {
 
       <Container className="py-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Created Date */}
+          <Card>
+            <CardContent className="p-4">
+              <Input
+                type="datetime-local"
+                label="Дата створення заявки"
+                error={errors.created_at?.message}
+                {...register('created_at')}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Залиште порожнім для автоматичної дати
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Basis */}
           <Card>
             <CardContent className="p-4">

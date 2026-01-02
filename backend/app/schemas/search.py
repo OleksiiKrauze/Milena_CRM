@@ -31,6 +31,9 @@ class SearchCreate(BaseModel):
 
 class SearchUpdate(BaseModel):
     """Schema for updating a search"""
+    # Allow updating created_at
+    created_at: Optional[datetime] = None
+
     initiator_inforg_id: Optional[int] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None

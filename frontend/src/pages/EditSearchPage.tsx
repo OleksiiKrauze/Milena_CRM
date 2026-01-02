@@ -9,6 +9,7 @@ import type { SearchUpdate } from '@/types/api';
 import { useState, useEffect } from 'react';
 
 interface EditSearchForm {
+  created_at: string;
   initiator_inforg_id: string;
   start_date: string;
   end_date: string;
@@ -43,6 +44,7 @@ export function EditSearchPage() {
   useEffect(() => {
     if (searchData) {
       reset({
+        created_at: searchData.created_at ? new Date(searchData.created_at).toISOString().substring(0, 16) : '',
         initiator_inforg_id: searchData.initiator_inforg_id?.toString() || '',
         start_date: searchData.start_date || '',
         end_date: searchData.end_date || '',
@@ -70,6 +72,11 @@ export function EditSearchPage() {
       // Convert initiator_inforg_id to number
       if (cleanedData.initiator_inforg_id) {
         cleanedData.initiator_inforg_id = Number(cleanedData.initiator_inforg_id);
+      }
+
+      // Convert created_at to ISO datetime if provided
+      if (cleanedData.created_at) {
+        cleanedData.created_at = new Date(cleanedData.created_at).toISOString();
       }
 
       const searchUpdate: SearchUpdate = cleanedData;
@@ -124,6 +131,21 @@ export function EditSearchPage() {
 
       <Container className="py-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Created At */}
+          <Card>
+            <CardContent className="p-4">
+              <Input
+                type="datetime-local"
+                label="Дата створення пошуку"
+                error={errors.created_at?.message}
+                {...register('created_at')}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Залиште порожнім для автоматичної дати
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Case info */}
           <Card>
             <CardHeader>

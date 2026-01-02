@@ -69,6 +69,9 @@ class CaseCreate(BaseModel):
 
 class CaseUpdate(BaseModel):
     """Schema for updating a case"""
+    # Allow updating created_at
+    created_at: Optional[datetime] = None
+
     # Basis for the case
     basis: Optional[str] = Field(None, max_length=200)
 
