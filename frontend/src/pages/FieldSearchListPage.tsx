@@ -5,6 +5,7 @@ import { fieldSearchesApi } from '@/api/field-searches';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDateTime } from '@/utils/formatters';
+import { RefreshCw } from 'lucide-react';
 
 export function FieldSearchListPage() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export function FieldSearchListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [caseIdFilter, setCaseIdFilter] = useState<string>(caseIdParam || '');
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['field-searches', statusFilter, caseIdFilter],
     queryFn: () => {
       const params: any = {};
@@ -22,6 +23,7 @@ export function FieldSearchListPage() {
       if (caseIdFilter) params.case_id = Number(caseIdFilter);
       return fieldSearchesApi.list(params);
     },
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   if (isLoading) {
@@ -103,9 +105,20 @@ export function FieldSearchListPage() {
             </CardContent>
           </Card>
 
-          {/* Results count */}
-          <div className="text-sm text-gray-600">
-            Знайдено: {data?.total || 0} виїздів
+          {/* Results count and refresh button */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Знайдено: {data?.total || 0} виїздів
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Оновити
+            </Button>
           </div>
 
           {/* Field Searches list */}

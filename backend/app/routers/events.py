@@ -66,7 +66,8 @@ def list_events(
         query = query.filter(Event.event_type == event_type)
 
     total = query.count()
-    events = query.order_by(Event.event_datetime.desc()).offset(skip).limit(limit).all()
+    # Сортируем по возрастанию - последнее событие внизу
+    events = query.order_by(Event.event_datetime.asc()).offset(skip).limit(limit).all()
 
     return {"total": total, "events": events}
 

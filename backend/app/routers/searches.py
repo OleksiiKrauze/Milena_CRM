@@ -60,6 +60,10 @@ def create_search(
         notes=search_data.notes
     )
 
+    # Set custom created_at if provided (for data migration)
+    if search_data.created_at:
+        db_search.created_at = search_data.created_at
+
     db.add(db_search)
     db.flush()  # Get search ID
 

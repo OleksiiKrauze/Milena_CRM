@@ -16,6 +16,9 @@ from app.schemas.auth import UserBrief, CaseBrief
 
 class SearchCreate(BaseModel):
     """Schema for creating a search"""
+    # Optional custom created_at for data migration
+    created_at: Optional[datetime] = None
+
     case_id: int = Field(..., description="Case ID this search belongs to")
     initiator_inforg_id: Optional[int] = Field(None, description="User ID of the inforg who initiated this search")
     start_date: Optional[date] = None

@@ -33,6 +33,8 @@ from app.routers import events
 from app.routers import dashboard
 from app.routers import management
 from app.routers import upload
+from app.routers import settings
+from app.routers import forum_import
 import app.models  # Import all models to register them with Base
 from pathlib import Path
 
@@ -134,6 +136,8 @@ app.include_router(events.router)
 app.include_router(dashboard.router)
 app.include_router(management.router)
 app.include_router(upload.router)
+app.include_router(settings.router)
+app.include_router(forum_import.router)
 
 # Mount uploads directory for static file serving
 UPLOAD_DIR = Path("/app/uploads")

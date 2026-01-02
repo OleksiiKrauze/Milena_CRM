@@ -10,6 +10,9 @@ from app.schemas.auth import UserBrief
 
 class CaseCreate(BaseModel):
     """Schema for creating a case"""
+    # Optional custom created_at for data migration
+    created_at: Optional[datetime] = None
+
     # Basis for the case
     basis: Optional[str] = Field(None, max_length=200)
 

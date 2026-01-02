@@ -16,6 +16,7 @@ import { UserDetailsPage } from '@/pages/UserDetailsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RolesManagementPage } from '@/pages/RolesManagementPage';
 import { DirectionsManagementPage } from '@/pages/DirectionsManagementPage';
+import { CaseSettingsPage } from '@/pages/CaseSettingsPage';
 import { SearchListPage } from '@/pages/SearchListPage';
 import { CreateSearchPage } from '@/pages/CreateSearchPage';
 import { SearchDetailsPage } from '@/pages/SearchDetailsPage';
@@ -29,6 +30,7 @@ import { EventDetailsPage } from '@/pages/EventDetailsPage';
 import { EditEventPage } from '@/pages/EditEventPage';
 import { FlyerTemplatesPage } from '@/pages/FlyerTemplatesPage';
 import { CreateOrientationPage } from '@/pages/CreateOrientationPage';
+import { ForumImportPage } from '@/pages/ForumImportPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -278,10 +280,26 @@ export function App() {
             }
           />
           <Route
+            path="/settings/cases"
+            element={
+              <ProtectedRoute>
+                <CaseSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/flyer-templates"
             element={
               <ProtectedRoute>
                 <FlyerTemplatesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/forum-import"
+            element={
+              <ProtectedRoute>
+                <ForumImportPage />
               </ProtectedRoute>
             }
           />

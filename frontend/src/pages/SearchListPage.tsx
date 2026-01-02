@@ -5,6 +5,7 @@ import { searchesApi } from '@/api/searches';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate } from '@/utils/formatters';
+import { RefreshCw } from 'lucide-react';
 
 export function SearchListPage() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export function SearchListPage() {
   const [resultFilter, setResultFilter] = useState<string>('');
   const [caseIdFilter, setCaseIdFilter] = useState<string>(caseIdParam || '');
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['searches', statusFilter, resultFilter, caseIdFilter],
     queryFn: () => {
       const params: any = {};
@@ -24,6 +25,7 @@ export function SearchListPage() {
       if (caseIdFilter) params.case_id = Number(caseIdFilter);
       return searchesApi.list(params);
     },
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   if (isLoading) {
@@ -122,9 +124,20 @@ export function SearchListPage() {
             </CardContent>
           </Card>
 
-          {/* Results count */}
-          <div className="text-sm text-gray-600">
-            Знайдено: {data?.total || 0} пошуків
+          {/* Results count and refresh button */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Знайдено: {data?.total || 0} пошуків
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Оновити
+            </Button>
           </div>
 
           {/* Searches list */}

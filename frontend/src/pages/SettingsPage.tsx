@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent } from '@/components/ui';
-import { Users, Shield, MapPin, FileText, ChevronRight } from 'lucide-react';
+import { Users, Shield, MapPin, FileText, FileEdit, ChevronRight, Download } from 'lucide-react';
 
 export function SettingsPage() {
   const settingsOptions = [
@@ -30,12 +30,28 @@ export function SettingsPage() {
       bgColor: 'bg-green-50',
     },
     {
+      title: 'Заявки',
+      description: 'Налаштування ChatGPT промпта для автозаповнення',
+      icon: FileEdit,
+      path: '/settings/cases',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+    },
+    {
       title: 'Шаблони орієнтувань',
       description: 'Завантаження шаблонів для створення орієнтувань',
       icon: FileText,
       path: '/settings/flyer-templates',
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
+    },
+    {
+      title: 'Імпорт з форуму',
+      description: 'Імпорт заявок з форуму ПСО "Милена"',
+      icon: Download,
+      path: '/settings/forum-import',
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50',
     },
   ];
 

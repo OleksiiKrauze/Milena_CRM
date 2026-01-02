@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
-import { Container, Card, CardContent, Loading } from '@/components/ui';
+import { Container, Card, CardContent, Loading, Button } from '@/components/ui';
 import { formatDate } from '@/utils/formatters';
-import { Search } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 
 export function CasesListPage() {
   const [searchParams] = useSearchParams();
@@ -18,9 +18,10 @@ export function CasesListPage() {
     }
   }, [urlDecisionType]);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['cases', decisionTypeFilter],
     queryFn: () => casesApi.list(decisionTypeFilter ? { decision_type_filter: decisionTypeFilter } : {}),
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
   });
 
   return (
@@ -40,6 +41,19 @@ export function CasesListPage() {
             <option value="Пошук">Пошук</option>
             <option value="Відмова">Відмова</option>
           </select>
+        </div>
+
+        {/* Refresh button */}
+        <div className="mb-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Оновити
+          </Button>
         </div>
 
         {isLoading && <Loading text="Завантаження заявок..." />}

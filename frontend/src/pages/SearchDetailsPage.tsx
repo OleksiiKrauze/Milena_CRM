@@ -476,7 +476,9 @@ export function SearchDetailsPage() {
                 <p className="text-sm text-gray-600">Події не додано</p>
               ) : (
                 <div className="space-y-3">
-                  {searchData.events.map((event) => (
+                  {searchData.events
+                    .sort((a, b) => new Date(a.event_datetime).getTime() - new Date(b.event_datetime).getTime())
+                    .map((event) => (
                     <div
                       key={event.id}
                       className="p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
@@ -490,15 +492,31 @@ export function SearchDetailsPage() {
                       </div>
                       <p className="text-sm text-gray-600 whitespace-pre-wrap">{event.description}</p>
                       {event.media_files && event.media_files.length > 0 && (
-                        <div className="mt-2 flex gap-1">
-                          {event.media_files.slice(0, 3).map((_, index) => (
-                            <div key={index} className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
-                              📎
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {event.media_files.slice(0, 5).map((mediaUrl, index) => (
+                            <div
+                              key={index}
+                              className="relative aspect-square"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImage(mediaUrl);
+                              }}
+                            >
+                              <img
+                                src={`${import.meta.env.VITE_API_URL || '/api'}${mediaUrl}`}
+                                alt={`Медіафайл ${index + 1}`}
+                                className="w-full h-full object-cover rounded-lg border border-gray-300 hover:border-primary-500 transition-colors cursor-pointer"
+                              />
                             </div>
                           ))}
-                          {event.media_files.length > 3 && (
-                            <div className="w-12 h-12 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
-                              +{event.media_files.length - 3}
+                          {event.media_files.length > 5 && (
+                            <div className="aspect-square bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-sm text-gray-600 font-medium cursor-pointer hover:bg-gray-300 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImage(event.media_files[5]);
+                              }}
+                            >
+                              +{event.media_files.length - 5}
                             </div>
                           )}
                         </div>

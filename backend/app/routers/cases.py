@@ -23,6 +23,8 @@ def create_case(
     """Create a new case (заявка на поиск)"""
     db_case = Case(
         created_by_user_id=current_user.id,
+        # Basis
+        basis=case_data.basis,
         # Applicant - split name fields
         applicant_last_name=case_data.applicant_last_name,
         applicant_first_name=case_data.applicant_first_name,
@@ -60,6 +62,10 @@ def create_case(
         decision_comment=case_data.decision_comment,
         tags=case_data.tags or []
     )
+
+    # Set custom created_at if provided (for data migration)
+    if case_data.created_at:
+        db_case.created_at = case_data.created_at
 
     db.add(db_case)
     db.commit()
@@ -181,6 +187,7 @@ def get_case_full(
 @router.post("/autofill", response_model=CaseAutofillResponse)
 def autofill_case_fields(
     request: CaseAutofillRequest,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -191,7 +198,7 @@ def autofill_case_fields(
     """
     try:
         openai_service = get_openai_service()
-        extracted_fields = openai_service.parse_case_info(request.initial_info)
+        extracted_fields = openai_service.parse_case_info(db, request.initial_info)
 
         return CaseAutofillResponse(fields=extracted_fields)
 

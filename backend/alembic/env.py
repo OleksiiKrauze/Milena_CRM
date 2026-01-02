@@ -22,6 +22,8 @@ from app.models.distribution import Distribution
 from app.models.map_grid import MapGrid
 from app.models.institutions_call import InstitutionsCall
 from app.models.field_search import FieldSearch
+from app.models.settings import Settings
+from app.models.forum_import import ForumImportStatus
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
