@@ -98,7 +98,17 @@ export function EditCasePage() {
   useEffect(() => {
     if (caseData) {
       reset({
-        created_at: caseData.created_at ? new Date(caseData.created_at).toISOString().substring(0, 16) : '',
+        created_at: caseData.created_at
+          ? (() => {
+              const date = new Date(caseData.created_at);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+              return `${year}-${month}-${day}T${hours}:${minutes}`;
+            })()
+          : '',
         basis: caseData.basis || '',
         applicant_last_name: caseData.applicant_last_name,
         applicant_first_name: caseData.applicant_first_name,
@@ -114,7 +124,15 @@ export function EditCasePage() {
         missing_gender: caseData.missing_gender || '',
         missing_birthdate: caseData.missing_birthdate ? caseData.missing_birthdate.split('T')[0] : '',
         missing_last_seen_datetime: caseData.missing_last_seen_datetime
-          ? new Date(caseData.missing_last_seen_datetime).toISOString().substring(0, 16)
+          ? (() => {
+              const date = new Date(caseData.missing_last_seen_datetime);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+              return `${year}-${month}-${day}T${hours}:${minutes}`;
+            })()
           : '',
         missing_last_seen_place: caseData.missing_last_seen_place || '',
         missing_description: caseData.missing_description || '',
