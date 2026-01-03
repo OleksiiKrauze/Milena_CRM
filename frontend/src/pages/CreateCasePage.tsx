@@ -283,7 +283,7 @@ export function CreateCasePage() {
               />
 
               <Input
-                label="Ким приходиться пропавший"
+                label="Ким приходиться заявник"
                 placeholder="Мати, батько, друг..."
                 error={errors.applicant_relation?.message}
                 {...register('applicant_relation')}
@@ -294,7 +294,7 @@ export function CreateCasePage() {
           {/* Missing Person Info */}
           <Card>
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Дані пропавшого</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Дані зниклого</h3>
 
               <Input
                 label="Населений пункт"
@@ -318,7 +318,7 @@ export function CreateCasePage() {
               />
 
               <Input
-                label="Прізвище пропавшого"
+                label="Прізвище зниклого"
                 placeholder="Коваль"
                 error={errors.missing_last_name?.message}
                 {...register('missing_last_name')}
@@ -326,7 +326,7 @@ export function CreateCasePage() {
               />
 
               <Input
-                label="Ім'я пропавшого"
+                label="Ім'я зниклого"
                 placeholder="Іван"
                 error={errors.missing_first_name?.message}
                 {...register('missing_first_name')}
@@ -334,7 +334,7 @@ export function CreateCasePage() {
               />
 
               <Input
-                label="По батькові пропавшого (необов'язково)"
+                label="По батькові зниклого (необов'язково)"
                 placeholder="Петрович"
                 error={errors.missing_middle_name?.message}
                 {...register('missing_middle_name')}
@@ -367,7 +367,7 @@ export function CreateCasePage() {
               {/* Photo Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Фото пропавшого
+                  Фото зниклого
                 </label>
 
                 {/* Upload Button */}
@@ -756,6 +756,8 @@ export function CreateCasePage() {
                 >
                   <option value="На розгляді">На розгляді</option>
                   <option value="Пошук">Пошук</option>
+                  <option value="Без пошуку - живий">Без пошуку - живий</option>
+                  <option value="Без пошуку - виявлено">Без пошуку - виявлено</option>
                   <option value="Відмова">Відмова</option>
                 </select>
                 {errors.decision_type && (

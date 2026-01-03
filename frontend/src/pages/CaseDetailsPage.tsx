@@ -190,7 +190,7 @@ export function CaseDetailsPage() {
           {/* Missing Person Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Дані пропавшого</CardTitle>
+              <CardTitle>Дані зниклого</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>

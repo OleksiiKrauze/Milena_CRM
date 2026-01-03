@@ -169,6 +169,8 @@ export function CasesListPage() {
                 <option value="">Всі рішення</option>
                 <option value="На розгляді">На розгляді</option>
                 <option value="Пошук">Пошук</option>
+                <option value="Без пошуку - живий">Без пошуку - живий</option>
+                <option value="Без пошуку - виявлено">Без пошуку - виявлено</option>
                 <option value="Відмова">Відмова</option>
               </select>
             </div>
@@ -267,6 +269,11 @@ export function CasesListPage() {
                   bgColor = 'bg-white';
                 } else if (caseItem.decision_type === 'На розгляді') {
                   bgColor = 'bg-pink-200';
+                } else if (caseItem.decision_type === 'Без пошуку - живий') {
+                  bgColor = 'bg-green-300';
+                } else if (caseItem.decision_type === 'Без пошуку - виявлено') {
+                  bgColor = 'bg-gray-500';
+                  textColor = 'text-white';
                 } else if (caseItem.decision_type === 'Пошук') {
                   // Если у заявки есть поиск с результатом
                   if (caseItem.latest_search_result === 'dead') {
