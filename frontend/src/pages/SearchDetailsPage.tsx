@@ -16,6 +16,7 @@ export function SearchDetailsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [uploadingOrientationId, setUploadingOrientationId] = useState<number | null>(null);
   const [isCreatingWithUpload, setIsCreatingWithUpload] = useState(false);
+  const [showDeleteSearchConfirm, setShowDeleteSearchConfirm] = useState(false);
 
   const { data: searchData, isLoading, error } = useQuery({
     queryKey: ['search-full', id],
@@ -28,6 +29,22 @@ export function SearchDetailsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['search-full', id] });
       setDeleteConfirmId(null);
+    },
+  });
+
+  const deleteSearchMutation = useMutation({
+    mutationFn: () => searchesApi.delete(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['searches'] });
+      queryClient.invalidateQueries({ queryKey: ['case-full', searchData?.case_id.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      // Redirect to case page
+      if (searchData?.case_id) {
+        navigate(`/cases/${searchData.case_id}`);
+      } else {
+        navigate('/searches');
+      }
     },
   });
 
@@ -195,14 +212,24 @@ export function SearchDetailsPage() {
 
       <Container className="py-6">
         <div className="space-y-4">
-          {/* Edit Button */}
-          <Button
-            onClick={() => navigate(`/searches/${searchData.id}/edit`)}
-            fullWidth
-            variant="outline"
-          >
-            Редагувати пошук
-          </Button>
+          {/* Edit and Delete Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate(`/searches/${searchData.id}/edit`)}
+              fullWidth
+              variant="outline"
+            >
+              Редагувати пошук
+            </Button>
+            <Button
+              onClick={() => setShowDeleteSearchConfirm(true)}
+              fullWidth
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              Видалити пошук
+            </Button>
+          </div>
 
           {/* Main Info */}
           <Card>
@@ -734,6 +761,38 @@ export function SearchDetailsPage() {
                 disabled={deleteMutation.isPending}
               >
                 {deleteMutation.isPending ? 'Видалення...' : 'Видалити'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Search Confirmation Modal */}
+      {showDeleteSearchConfirm && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowDeleteSearchConfirm(false)}
+        >
+          <div className="relative bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Видалити пошук?</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Ця дія незворотна. Пошук буде видалено разом зі всіма пов'язаними орієнтуваннями, подіями, виїздами та іншими даними.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteSearchConfirm(false)}
+                fullWidth
+              >
+                Скасувати
+              </Button>
+              <Button
+                onClick={() => deleteSearchMutation.mutate()}
+                fullWidth
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleteSearchMutation.isPending}
+              >
+                {deleteSearchMutation.isPending ? 'Видалення...' : 'Видалити'}
               </Button>
             </div>
           </div>

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { eventsApi } from '@/api/events';
 import { Header } from '@/components/layout/Header';
@@ -8,11 +9,28 @@ import { formatDateTime } from '@/utils/formatters';
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: eventData, isLoading, error } = useQuery({
     queryKey: ['event', id],
     queryFn: () => eventsApi.get(Number(id)),
     enabled: !!id,
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: () => eventsApi.delete(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['search-full', eventData?.search_id.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      // Redirect to search page
+      if (eventData?.search_id) {
+        navigate(`/searches/${eventData.search_id}`);
+      } else {
+        navigate('/events');
+      }
+    },
   });
 
   if (isLoading) {
@@ -45,14 +63,24 @@ export function EventDetailsPage() {
 
       <Container className="py-6">
         <div className="space-y-4">
-          {/* Edit Button */}
-          <Button
-            onClick={() => navigate(`/events/${eventData.id}/edit`)}
-            fullWidth
-            variant="outline"
-          >
-            Редагувати подію
-          </Button>
+          {/* Edit and Delete Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate(`/events/${eventData.id}/edit`)}
+              fullWidth
+              variant="outline"
+            >
+              Редагувати подію
+            </Button>
+            <Button
+              onClick={() => setShowDeleteConfirm(true)}
+              fullWidth
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+            >
+              Видалити подію
+            </Button>
+          </div>
 
           {/* Main Info */}
           <Card>
@@ -180,6 +208,38 @@ export function EventDetailsPage() {
           </Button>
         </div>
       </Container>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div className="relative bg-white rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">Видалити подію?</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Ця дія незворотна. Подія буде видалена разом зі всіма пов'язаними медіафайлами.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                fullWidth
+              >
+                Скасувати
+              </Button>
+              <Button
+                onClick={() => deleteEventMutation.mutate()}
+                fullWidth
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleteEventMutation.isPending}
+              >
+                {deleteEventMutation.isPending ? 'Видалення...' : 'Видалити'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
