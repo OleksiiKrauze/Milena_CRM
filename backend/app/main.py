@@ -76,7 +76,7 @@ app = FastAPI(
 )
 
 # Configure CORS
-default_origins = "http://localhost:3000,http://localhost:5173,https://milena.in.ua,http://milena.in.ua"
+default_origins = "http://localhost:3000,http://localhost:5173,https://milena.in.ua,http://milena.in.ua,https://www.milena.in.ua,http://www.milena.in.ua"
 allowed_origins = os.getenv("CORS_ORIGINS", default_origins).split(",")
 
 app.add_middleware(
@@ -85,6 +85,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Add request logging middleware
