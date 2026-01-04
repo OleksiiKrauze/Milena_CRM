@@ -41,6 +41,8 @@ class SearchBrief(BaseModel):
 class FieldSearchCreate(BaseModel):
     """Schema for creating a field search"""
     search_id: int = Field(..., description="Search ID this field search belongs to")
+    # Optional custom created_at for data migration
+    created_at: Optional[datetime] = None
     initiator_inforg_id: Optional[int] = None
     start_date: Optional[date] = None
     flyer_id: Optional[int] = None
@@ -71,6 +73,8 @@ class FieldSearchCreate(BaseModel):
 
 class FieldSearchUpdate(BaseModel):
     """Schema for updating a field search"""
+    # Allow updating created_at
+    created_at: Optional[datetime] = None
     initiator_inforg_id: Optional[int] = None
     start_date: Optional[date] = None
     flyer_id: Optional[int] = None

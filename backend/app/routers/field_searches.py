@@ -110,6 +110,10 @@ def create_field_search(
         search_photos=field_search_data.search_photos or []
     )
 
+    # Set custom created_at if provided (for data migration)
+    if field_search_data.created_at:
+        db_field_search.created_at = field_search_data.created_at
+
     db.add(db_field_search)
     db.commit()
     db.refresh(db_field_search)
