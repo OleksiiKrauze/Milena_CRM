@@ -14,6 +14,7 @@ import { getOriginalFilename } from '@/utils/formatters';
 import { GridMapSelector } from '@/components/GridMapSelector';
 
 interface CreateFieldSearchForm {
+  created_at: string;
   initiator_inforg_id: string;
   start_date: string;
   meeting_datetime: string;
@@ -169,6 +170,11 @@ export function CreateFieldSearchPage() {
         }
       }
 
+      // Convert created_at to ISO format if provided
+      if (cleanedData.created_at) {
+        cleanedData.created_at = new Date(cleanedData.created_at).toISOString();
+      }
+
       // Convert IDs to numbers
       if (cleanedData.initiator_inforg_id) {
         cleanedData.initiator_inforg_id = Number(cleanedData.initiator_inforg_id);
@@ -273,6 +279,14 @@ export function CreateFieldSearchPage() {
               <CardTitle>Інформація про виїзд</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Created At */}
+              <Input
+                label="Дата створення"
+                type="datetime-local"
+                {...register('created_at')}
+                error={errors.created_at?.message}
+              />
+
               {/* Initiator */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -13,6 +13,7 @@ import { getOriginalFilename } from '@/utils/formatters';
 import { GridMapSelector } from '@/components/GridMapSelector';
 
 interface EditFieldSearchForm {
+  created_at: string;
   initiator_inforg_id: string;
   start_date: string;
   meeting_datetime: string;
@@ -58,6 +59,7 @@ export function EditFieldSearchPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<EditFieldSearchForm>({
     values: fieldSearchData ? {
+      created_at: fieldSearchData.created_at ? new Date(fieldSearchData.created_at).toISOString().slice(0, 16) : '',
       initiator_inforg_id: fieldSearchData.initiator_inforg_id?.toString() || '',
       start_date: fieldSearchData.start_date || '',
       meeting_datetime: fieldSearchData.meeting_datetime || '',
@@ -221,6 +223,11 @@ export function EditFieldSearchPage() {
         }
       }
 
+      // Convert created_at to ISO format if provided
+      if (cleanedData.created_at) {
+        cleanedData.created_at = new Date(cleanedData.created_at).toISOString();
+      }
+
       // Convert IDs to numbers
       if (cleanedData.initiator_inforg_id) {
         cleanedData.initiator_inforg_id = Number(cleanedData.initiator_inforg_id);
@@ -369,6 +376,14 @@ export function EditFieldSearchPage() {
               <CardTitle>Інформація про виїзд</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Created At */}
+              <Input
+                label="Дата створення"
+                type="datetime-local"
+                {...register('created_at')}
+                error={errors.created_at?.message}
+              />
+
               {/* Initiator */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
