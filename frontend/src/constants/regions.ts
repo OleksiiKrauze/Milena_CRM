@@ -9,13 +9,13 @@ export interface Region {
   isPriority?: boolean;
 }
 
-// Priority regions (shown first with ★ marker)
+// Priority regions (shown first and in bold)
 const PRIORITY_REGIONS: Region[] = [
-  { value: 'Харківська', label: '★ Харківська', isPriority: true },
-  { value: 'Дніпропетровська', label: '★ Дніпропетровська', isPriority: true },
-  { value: 'Запорізька', label: '★ Запорізька', isPriority: true },
-  { value: 'Херсонська', label: '★ Херсонська', isPriority: true },
-  { value: 'Київська', label: '★ Київська', isPriority: true },
+  { value: 'Харківська', label: 'Харківська', isPriority: true },
+  { value: 'Дніпропетровська', label: 'Дніпропетровська', isPriority: true },
+  { value: 'Запорізька', label: 'Запорізька', isPriority: true },
+  { value: 'Херсонська', label: 'Херсонська', isPriority: true },
+  { value: 'Київська', label: 'Київська', isPriority: true },
 ];
 
 // All other regions in alphabetical order
