@@ -10,6 +10,7 @@ import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
 import { Container, Button, Input, Card, CardContent } from '@/components/ui';
 import { X, Upload, Sparkles } from 'lucide-react';
+import { UKRAINIAN_REGIONS } from '@/constants/regions';
 
 const createCaseSchema = z.object({
   // Basis
@@ -303,12 +304,29 @@ export function CreateCasePage() {
                 {...register('missing_settlement')}
               />
 
-              <Input
-                label="Область"
-                placeholder="Київська область"
-                error={errors.missing_region?.message}
-                {...register('missing_region')}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Область
+                </label>
+                <select
+                  {...register('missing_region')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Оберіть область</option>
+                  {UKRAINIAN_REGIONS.map((region) => (
+                    <option
+                      key={region.value}
+                      value={region.value}
+                      style={region.isPriority ? { fontWeight: 'bold' } : {}}
+                    >
+                      {region.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.missing_region && (
+                  <p className="mt-1 text-sm text-red-600">{errors.missing_region.message}</p>
+                )}
+              </div>
 
               <Input
                 label="Адреса проживання"
