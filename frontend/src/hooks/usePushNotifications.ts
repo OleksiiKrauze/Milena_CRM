@@ -35,10 +35,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
   // Check if push notifications are supported
   useEffect(() => {
-    const supported =
-      'Notification' in window &&
-      'serviceWorker' in navigator &&
-      'PushManager' in window;
+    const hasNotification = 'Notification' in window;
+    const hasServiceWorker = 'serviceWorker' in navigator;
+    const hasPushManager = 'PushManager' in window;
+
+    const supported = hasNotification && hasServiceWorker && hasPushManager;
+
+    console.log('[Push Notifications] Support check:', {
+      hasNotification,
+      hasServiceWorker,
+      hasPushManager,
+      supported,
+      userAgent: navigator.userAgent,
+    });
 
     setIsSupported(supported);
 

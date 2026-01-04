@@ -57,6 +57,9 @@ export function NotificationSettings() {
 
   // Show "not supported" message
   if (!isSupported) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
     return (
       <Card>
         <CardHeader>
@@ -69,10 +72,22 @@ export function NotificationSettings() {
               <p className="text-sm font-medium text-yellow-800">
                 Push-сповіщення не підтримуються
               </p>
-              <p className="text-sm text-yellow-700 mt-1">
-                Ваш браузер не підтримує push-сповіщення. Спробуйте використати сучасний браузер
-                (Chrome, Firefox, Safari 16.4+).
-              </p>
+              {isIOS && isSafari ? (
+                <div className="text-sm text-yellow-700 mt-1 space-y-2">
+                  <p>Для iOS Safari потрібно встановити додаток:</p>
+                  <ol className="list-decimal ml-4 space-y-1">
+                    <li>Натисніть кнопку "Поділитися" внизу</li>
+                    <li>Виберіть "На екран «Домой»"</li>
+                    <li>Відкрийте додаток з домашнього екрану</li>
+                    <li>Push-сповіщення будуть доступні</li>
+                  </ol>
+                </div>
+              ) : (
+                <p className="text-sm text-yellow-700 mt-1">
+                  Ваш браузер не підтримує push-сповіщення. Спробуйте використати сучасний браузер
+                  (Chrome, Firefox, Safari 16.4+).
+                </p>
+              )}
             </div>
           </div>
         </CardContent>
