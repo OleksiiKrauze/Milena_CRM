@@ -12,31 +12,37 @@ export default defineConfig({
       devOptions: {
         enabled: false, // Disable in development to avoid caching issues
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Missing Persons CRM',
-        short_name: 'CRM',
-        description: 'CRM система для поиска пропавших людей',
+        name: 'Мілена CRM',
+        short_name: 'Мілена',
+        description: 'CRM система для пошуку зниклих осіб',
         theme_color: '#0ea5e9',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
+        lang: 'uk',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png'
           }
         ]
       },
