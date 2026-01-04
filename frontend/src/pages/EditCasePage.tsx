@@ -237,6 +237,11 @@ export function EditCasePage() {
           else if (key === 'missing_last_seen_datetime' && value) {
             setValue(key, String(value).substring(0, 16));
           }
+          // Handle region field - normalize by removing "область" suffix
+          else if (key === 'missing_region' && value) {
+            const normalizedRegion = String(value).replace(/\s*область$/i, '').trim();
+            setValue(key, normalizedRegion);
+          }
           // Handle all other fields
           else {
             setValue(key, value);
