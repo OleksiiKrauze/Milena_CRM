@@ -9,6 +9,8 @@ from app.models.field_search import FieldSearch, FieldSearchStatus, field_search
 from app.models.map_grid import MapGrid, GridCell, GridCellStatus
 from app.models.institutions_call import InstitutionsCall
 from app.models.event import Event
+from app.models.push_subscription import PushSubscription
+from app.models.notification_setting import NotificationSetting
 
 __all__ = [
     'User', 'Role', 'Direction', 'UserStatus', 'user_roles', 'user_directions',
@@ -22,4 +24,6 @@ __all__ = [
     'MapGrid', 'GridCell', 'GridCellStatus',
     'InstitutionsCall',
     'Event',
+    'PushSubscription',
+    'NotificationSetting',
 ]

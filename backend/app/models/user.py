@@ -45,6 +45,10 @@ class User(Base):
     roles = relationship('Role', secondary=user_roles, back_populates='users')
     directions = relationship('Direction', secondary=user_directions, back_populates='users')
 
+    # One-to-many relationships for push notifications
+    push_subscriptions = relationship('PushSubscription', back_populates='user', cascade='all, delete-orphan')
+    notification_settings = relationship('NotificationSetting', back_populates='user', cascade='all, delete-orphan')
+
     @property
     def full_name(self) -> str:
         """Generate full name from components"""

@@ -111,6 +111,26 @@ def create_public_case(
 
         logger.info(f"Public case created successfully: ID={db_case.id}, IP={client_ip}")
 
+        # Send push notification to users with cases:read permission
+        try:
+            from app.services.push_notification_service import push_service
+            from app.core.notification_types import NotificationType
+
+            push_service.send_notification_to_users_with_permission(
+                db=db,
+                notification_type=NotificationType.NEW_PUBLIC_CASE,
+                title="Нова заявка з сайту",
+                body=f"Нова заявка: {db_case.missing_full_name}",
+                data={
+                    "case_id": db_case.id,
+                    "missing_name": db_case.missing_full_name
+                },
+                url=f"/cases/{db_case.id}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to send push notification for new case: {e}")
+            # Don't fail the request if notification fails
+
         return PublicCaseResponse(
             success=True,
             message="Заявку успішно створено. Наша команда зв'яжеться з вами найближчим часом.",

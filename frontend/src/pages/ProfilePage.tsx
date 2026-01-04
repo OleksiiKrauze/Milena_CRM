@@ -6,6 +6,7 @@ import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Button, Loading, Input } from '@/components/ui';
+import { NotificationSettings } from '@/components/NotificationSettings';
 import { formatPhone } from '@/utils/formatters';
 import { LogOut, Mail, Phone, MapPin, Lock } from 'lucide-react';
 
@@ -187,6 +188,9 @@ export function ProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Push Notifications */}
+          <NotificationSettings />
 
           {/* Comment */}
           {user.comment && (

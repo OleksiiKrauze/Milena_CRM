@@ -350,6 +350,51 @@ def add_participants(
         )
         db.execute(stmt)
 
+    # Send push notifications to each participant
+    try:
+        from app.services.push_notification_service import push_service
+        from app.core.notification_types import NotificationType
+        from app.core.logging_config import get_logger
+
+        logger = get_logger(__name__)
+
+        # Get field search with related search and case
+        fs = db.query(FieldSearch).options(
+            joinedload(FieldSearch.search).joinedload(Search.case)
+        ).filter(FieldSearch.id == field_search_id).first()
+
+        missing_name = "Unknown"
+        if fs and fs.search and fs.search.case:
+            missing_name = fs.search.case.missing_full_name
+
+        start_date = "не вказано"
+        if fs and fs.start_date:
+            start_date = fs.start_date.strftime("%d.%m.%Y")
+
+        # Send notification to each participant
+        for participant in participants_data.participants:
+            try:
+                push_service.send_notification(
+                    db=db,
+                    user_id=participant.user_id,
+                    notification_type=NotificationType.FIELD_SEARCH_PARTICIPANT_ADDED,
+                    title="Вас призначено на виїзд",
+                    body=f"Пошук: {missing_name}, Дата: {start_date}",
+                    data={
+                        "field_search_id": field_search_id,
+                        "missing_name": missing_name,
+                        "start_date": start_date
+                    },
+                    url=f"/field-searches/{field_search_id}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to send push notification to participant {participant.user_id}: {e}")
+                # Don't fail the request if notification fails
+
+    except Exception as e:
+        # Log import/setup errors but don't fail the request
+        print(f"Failed to send push notifications for field search participants: {e}")
+
     db.commit()
 
     return {"message": f"Added {len(participants_data.participants)} participants"}
