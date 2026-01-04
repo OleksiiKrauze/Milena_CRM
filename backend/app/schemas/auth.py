@@ -27,9 +27,13 @@ class Token(BaseModel):
 
 
 class RoleResponse(BaseModel):
-    """Schema for role response"""
+    """Schema for role response in user context"""
     id: int
     name: str
+    display_name: str
+    description: Optional[str]
+    permissions: List[str]
+    is_system: bool
 
     model_config = {"from_attributes": True}
 

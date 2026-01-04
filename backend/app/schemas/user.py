@@ -39,8 +39,10 @@ class RoleResponse(BaseModel):
     """Schema for role response"""
     id: int
     name: str
+    display_name: str
     description: Optional[str]
-    parent_role_id: Optional[int] = None
+    permissions: List[str]
+    is_system: bool
 
     model_config = {"from_attributes": True}
 

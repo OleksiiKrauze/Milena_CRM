@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Text, Enum as SQLEnum, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Boolean, Enum as SQLEnum, Table, ForeignKey, ARRAY
 from sqlalchemy.orm import relationship
 from app.db import Base
 
@@ -55,16 +55,15 @@ class User(Base):
 
 
 class Role(Base):
-    """Role reference table with hierarchy"""
+    """Role with permissions (RBAC)"""
     __tablename__ = 'roles'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), unique=True, nullable=False, index=True)
-    description = Column(String(255))
-    parent_role_id = Column(Integer, ForeignKey('roles.id', ondelete='SET NULL'), nullable=True, index=True)
-
-    # Self-referential relationship for hierarchy
-    parent_role = relationship('Role', remote_side=[id], backref='child_roles')
+    name = Column(String(50), unique=True, nullable=False, index=True)  # Unique identifier (e.g., "admin", "coordinator")
+    display_name = Column(String(100), nullable=False)  # Display name (e.g., "Адміністратор")
+    description = Column(String(500))
+    permissions = Column(ARRAY(String), default=list, nullable=False)  # List of permission codes ["cases:read", "cases:create", ...]
+    is_system = Column(Boolean, default=False, nullable=False)  # System roles cannot be deleted
 
     # Relationship
     users = relationship('User', secondary=user_roles, back_populates='roles')

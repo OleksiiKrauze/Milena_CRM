@@ -1,193 +1,47 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from app.db import get_db
 from app.schemas.management import (
-    RoleCreate,
-    RoleUpdate,
-    RoleDetailResponse,
     DirectionCreate,
     DirectionUpdate,
     DirectionDetailResponse,
 )
-from app.models.user import User, Role, Direction
+from app.schemas.role import RoleResponse
+from app.models.user import User, Role, Direction, user_roles
 from app.routers.auth import require_role
 
 router = APIRouter(prefix="/management", tags=["Management"])
 
 
 # ============= ROLES MANAGEMENT =============
+# Note: Redirecting to new RBAC endpoints
 
-@router.get("/roles", response_model=List[RoleDetailResponse])
+@router.get("/roles", response_model=List[RoleResponse])
 def list_all_roles(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role("admin"))
 ):
-    """Get list of all roles with hierarchy (admin only)"""
-    roles = db.query(Role).all()
+    """Get list of all roles with user counts (admin only)"""
+    roles = db.query(Role).order_by(Role.name).all()
 
-    # Add parent_role_name to response
-    result = []
+    # Add user_count for each role
+    response = []
     for role in roles:
-        role_dict = {
-            "id": role.id,
-            "name": role.name,
-            "description": role.description,
-            "parent_role_id": role.parent_role_id,
-            "parent_role_name": role.parent_role.name if role.parent_role else None
-        }
-        result.append(RoleDetailResponse(**role_dict))
+        user_count = db.query(func.count(user_roles.c.user_id)).filter(
+            user_roles.c.role_id == role.id
+        ).scalar()
 
-    return result
+        role_response = RoleResponse.model_validate(role)
+        role_response.user_count = user_count
+        response.append(role_response)
 
-
-@router.post("/roles", response_model=RoleDetailResponse, status_code=status.HTTP_201_CREATED)
-def create_role(
-    role_data: RoleCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("admin"))
-):
-    """Create a new role (admin only)"""
-    # Check if role with this name already exists
-    existing_role = db.query(Role).filter(Role.name == role_data.name).first()
-    if existing_role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Role with name '{role_data.name}' already exists"
-        )
-
-    # Validate parent role if specified
-    if role_data.parent_role_id:
-        parent_role = db.query(Role).filter(Role.id == role_data.parent_role_id).first()
-        if not parent_role:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Parent role with id {role_data.parent_role_id} not found"
-            )
-
-    # Create new role
-    new_role = Role(
-        name=role_data.name,
-        description=role_data.description,
-        parent_role_id=role_data.parent_role_id
-    )
-
-    db.add(new_role)
-    db.commit()
-    db.refresh(new_role)
-
-    return RoleDetailResponse(
-        id=new_role.id,
-        name=new_role.name,
-        description=new_role.description,
-        parent_role_id=new_role.parent_role_id,
-        parent_role_name=new_role.parent_role.name if new_role.parent_role else None
-    )
+    return response
 
 
-@router.put("/roles/{role_id}", response_model=RoleDetailResponse)
-def update_role(
-    role_id: int,
-    role_data: RoleUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("admin"))
-):
-    """Update a role (admin only)"""
-    role = db.query(Role).filter(Role.id == role_id).first()
-
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with id {role_id} not found"
-        )
-
-    # Prevent circular hierarchy
-    if role_data.parent_role_id == role_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Role cannot be its own parent"
-        )
-
-    update_data = role_data.model_dump(exclude_unset=True)
-
-    # Check if name is being changed and already exists
-    if "name" in update_data:
-        existing_role = db.query(Role).filter(
-            Role.name == update_data["name"],
-            Role.id != role_id
-        ).first()
-        if existing_role:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Role with name '{update_data['name']}' already exists"
-            )
-
-    # Validate parent role if being changed
-    if "parent_role_id" in update_data and update_data["parent_role_id"]:
-        parent_role = db.query(Role).filter(Role.id == update_data["parent_role_id"]).first()
-        if not parent_role:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Parent role with id {update_data['parent_role_id']} not found"
-            )
-
-    # Update fields
-    for field, value in update_data.items():
-        setattr(role, field, value)
-
-    db.commit()
-    db.refresh(role)
-
-    return RoleDetailResponse(
-        id=role.id,
-        name=role.name,
-        description=role.description,
-        parent_role_id=role.parent_role_id,
-        parent_role_name=role.parent_role.name if role.parent_role else None
-    )
-
-
-@router.delete("/roles/{role_id}")
-def delete_role(
-    role_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("admin"))
-):
-    """Delete a role (admin only)"""
-    role = db.query(Role).filter(Role.id == role_id).first()
-
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with id {role_id} not found"
-        )
-
-    # Prevent deleting admin role
-    if role.name == "admin":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete admin role"
-        )
-
-    # Check if role is assigned to any users
-    if len(role.users) > 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot delete role '{role.name}' as it is assigned to {len(role.users)} user(s)"
-        )
-
-    # Check if role has child roles
-    child_roles = db.query(Role).filter(Role.parent_role_id == role_id).all()
-    if len(child_roles) > 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot delete role '{role.name}' as it has {len(child_roles)} child role(s)"
-        )
-
-    db.delete(role)
-    db.commit()
-
-    return {"detail": "Role deleted successfully"}
+# Note: Create, Update, Delete role endpoints moved to /roles router
+# Use /roles endpoints instead of /management/roles for role management
 
 
 # ============= DIRECTIONS MANAGEMENT =============

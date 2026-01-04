@@ -1,87 +1,168 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { managementApi } from '@/api/management';
+import { rolesApi } from '@/api/roles';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Input, Loading } from '@/components/ui';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Shield, Users, CheckSquare, Square } from 'lucide-react';
+import type { Role, RoleCreate, RoleUpdate, ResourcePermissions } from '@/types/api';
 
 export function RolesManagementPage() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [editingRole, setEditingRole] = useState<number | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '', parent_role_id: '' });
-
-  const { data: roles, isLoading } = useQuery({
-    queryKey: ['management-roles'],
-    queryFn: managementApi.listRoles,
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [formData, setFormData] = useState<{
+    name: string;
+    display_name: string;
+    description: string;
+    permissions: Set<string>;
+  }>({
+    name: '',
+    display_name: '',
+    description: '',
+    permissions: new Set(),
   });
 
+  // Fetch roles
+  const { data: roles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: rolesApi.list,
+  });
+
+  // Fetch available permissions
+  const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
+    queryKey: ['permissions'],
+    queryFn: rolesApi.getPermissions,
+  });
+
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: managementApi.createRole,
+    mutationFn: (data: RoleCreate) => rolesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['management-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
       resetForm();
+      alert('Роль успішно створена');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.detail || 'Помилка створення ролі');
     },
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => managementApi.updateRole(id, data),
+    mutationFn: ({ id, data }: { id: number; data: RoleUpdate }) => rolesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['management-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
       resetForm();
+      alert('Роль успішно оновлена');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.detail || 'Помилка оновлення ролі');
     },
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: managementApi.deleteRole,
+    mutationFn: (id: number) => rolesApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['management-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      alert('Роль успішно видалена');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.detail || 'Помилка видалення ролі');
     },
   });
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', parent_role_id: '' });
+    setFormData({
+      name: '',
+      display_name: '',
+      description: '',
+      permissions: new Set(),
+    });
     setEditingRole(null);
     setShowForm(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      name: formData.name,
-      description: formData.description || undefined,
-      parent_role_id: formData.parent_role_id ? parseInt(formData.parent_role_id) : undefined,
-    };
+
+    const permissionsArray = Array.from(formData.permissions);
 
     if (editingRole) {
-      updateMutation.mutate({ id: editingRole, data });
+      const updateData: RoleUpdate = {
+        name: formData.name !== editingRole.name ? formData.name : undefined,
+        display_name: formData.display_name !== editingRole.display_name ? formData.display_name : undefined,
+        description: formData.description !== (editingRole.description || '') ? formData.description : undefined,
+        permissions: permissionsArray,
+      };
+      updateMutation.mutate({ id: editingRole.id, data: updateData });
     } else {
-      createMutation.mutate(data);
+      const createData: RoleCreate = {
+        name: formData.name,
+        display_name: formData.display_name,
+        description: formData.description || undefined,
+        permissions: permissionsArray,
+      };
+      createMutation.mutate(createData);
     }
   };
 
-  const handleEdit = (role: any) => {
-    setEditingRole(role.id);
+  const handleEdit = (role: Role) => {
+    setEditingRole(role);
     setFormData({
       name: role.name,
+      display_name: role.display_name,
       description: role.description || '',
-      parent_role_id: role.parent_role_id?.toString() || '',
+      permissions: new Set(role.permissions),
     });
     setShowForm(true);
   };
 
-  const handleDelete = (roleId: number) => {
-    if (window.confirm('Ви впевнені, що хочете видалити цю роль?')) {
-      deleteMutation.mutate(roleId);
+  const handleDelete = (role: Role) => {
+    if (role.is_system) {
+      alert('Неможливо видалити системну роль');
+      return;
+    }
+    if (role.user_count && role.user_count > 0) {
+      alert(`Неможливо видалити роль: ${role.user_count} користувачів мають цю роль`);
+      return;
+    }
+    if (window.confirm(`Ви впевнені, що хочете видалити роль "${role.display_name}"?`)) {
+      deleteMutation.mutate(role.id);
     }
   };
 
-  if (isLoading) {
+  const togglePermission = (permission: string) => {
+    const newPermissions = new Set(formData.permissions);
+    if (newPermissions.has(permission)) {
+      newPermissions.delete(permission);
+    } else {
+      newPermissions.add(permission);
+    }
+    setFormData({ ...formData, permissions: newPermissions });
+  };
+
+  const toggleAllResourcePermissions = (_resource: string, resourcePerms: ResourcePermissions) => {
+    const newPermissions = new Set(formData.permissions);
+    const allSelected = resourcePerms.permissions.every(p => newPermissions.has(p.code));
+
+    if (allSelected) {
+      // Deselect all
+      resourcePerms.permissions.forEach(p => newPermissions.delete(p.code));
+    } else {
+      // Select all
+      resourcePerms.permissions.forEach(p => newPermissions.add(p.code));
+    }
+
+    setFormData({ ...formData, permissions: newPermissions });
+  };
+
+  if (rolesLoading || permissionsLoading) {
     return (
       <div className="min-h-screen pb-nav">
         <Header title="Управління ролями" showBack />
         <Container className="py-6">
-          <Loading text="Завантаження ролей..." />
+          <Loading text="Завантаження..." />
         </Container>
       </div>
     );
@@ -107,74 +188,125 @@ export function RolesManagementPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{editingRole ? 'Редагувати роль' : 'Нова роль'}</CardTitle>
-                  <button onClick={resetForm} className="text-gray-400 hover:text-gray-600">
+                  <Button variant="ghost" size="sm" onClick={resetForm}>
                     <X className="h-5 w-5" />
-                  </button>
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <Input
-                    label="Назва ролі"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Ідентифікатор <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="наприклад: operator"
+                      required
+                      disabled={editingRole?.is_system}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Латиниця, без пробілів (використовується в системі)
+                    </p>
+                  </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Опис
+                    <label className="block text-sm font-medium mb-1">
+                      Назва для відображення <span className="text-red-500">*</span>
                     </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      rows={3}
-                      placeholder="Опис ролі (необов'язково)"
+                    <Input
+                      value={formData.display_name}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                      placeholder="наприклад: Оператор"
+                      required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Підпорядковується
-                    </label>
-                    <select
-                      value={formData.parent_role_id}
-                      onChange={(e) => setFormData({ ...formData, parent_role_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                      <option value="">Адміністратору (за замовчуванням)</option>
-                      {roles?.filter(r => r.id !== editingRole).map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium mb-1">Опис</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                      placeholder="Короткий опис ролі"
+                    />
                   </div>
 
+                  {/* Permissions Section */}
+                  <div>
+                    <label className="block text-sm font-medium mb-3">
+                      Дозволи <span className="text-red-500">*</span>
+                    </label>
+                    <div className="space-y-4 border border-gray-200 rounded-lg p-4 max-h-96 overflow-y-auto">
+                      {permissionsData && Object.entries(permissionsData.by_resource).map(([resource, data]) => {
+                        const resourceData = data as ResourcePermissions;
+                        const allSelected = resourceData.permissions.every(p =>
+                          formData.permissions.has(p.code)
+                        );
+                        const someSelected = resourceData.permissions.some(p =>
+                          formData.permissions.has(p.code)
+                        );
+
+                        return (
+                          <div key={resource} className="border-b border-gray-100 last:border-0 pb-3">
+                            {/* Resource Header */}
+                            <div
+                              className="flex items-center gap-2 mb-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                              onClick={() => toggleAllResourcePermissions(resource, resourceData)}
+                            >
+                              {allSelected ? (
+                                <CheckSquare className="h-5 w-5 text-blue-600" />
+                              ) : someSelected ? (
+                                <div className="h-5 w-5 flex items-center justify-center">
+                                  <div className="h-3 w-3 bg-blue-600 rounded" />
+                                </div>
+                              ) : (
+                                <Square className="h-5 w-5 text-gray-400" />
+                              )}
+                              <span className="font-semibold text-gray-700">{resourceData.label}</span>
+                            </div>
+
+                            {/* Permissions Grid */}
+                            <div className="grid grid-cols-2 gap-2 ml-7">
+                              {resourceData.permissions.map((perm) => (
+                                <label
+                                  key={perm.code}
+                                  className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.permissions.has(perm.code)}
+                                    onChange={() => togglePermission(perm.code)}
+                                    className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-600">{perm.action_label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Обрано дозволів: {formData.permissions.size}
+                    </p>
+                  </div>
+
+                  {/* Form Actions */}
                   <div className="flex gap-2">
                     <Button
                       type="submit"
                       fullWidth
-                      loading={createMutation.isPending || updateMutation.isPending}
+                      disabled={createMutation.isPending || updateMutation.isPending}
                     >
                       {editingRole ? 'Зберегти' : 'Створити'}
                     </Button>
-                    <Button
-                      type="button"
-                      fullWidth
-                      variant="secondary"
-                      onClick={resetForm}
-                    >
+                    <Button type="button" variant="outline" fullWidth onClick={resetForm}>
                       Скасувати
                     </Button>
                   </div>
-
-                  {(createMutation.isError || updateMutation.isError) && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-800">Помилка збереження ролі</p>
-                    </div>
-                  )}
                 </form>
               </CardContent>
             </Card>
@@ -187,42 +319,52 @@ export function RolesManagementPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{role.name}</h3>
-                      {role.description && (
-                        <p className="text-sm text-gray-600 mt-1">{role.description}</p>
-                      )}
-                      {role.parent_role_name && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Підпорядковується: {role.parent_role_name}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">{role.display_name}</h3>
+                        {role.is_system && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <Shield className="h-3 w-3" />
+                            Системна
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {role.description || 'Без опису'}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {role.user_count || 0} користувачів
+                        </span>
+                        <span>
+                          {role.permissions.length} дозволів
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(role)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(role.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      </Button>
+                      {!role.is_system && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(role)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-
-          {deleteMutation.isError && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">Помилка видалення ролі</p>
-            </div>
-          )}
         </div>
       </Container>
     </div>

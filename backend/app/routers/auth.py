@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
+from typing import List, Callable
 from app.db import get_db
 from app.schemas.auth import UserCreate, UserLogin, Token, UserResponse
 from app.schemas.user import ChangePasswordRequest
 from app.services import auth_service
 from app.models.user import User
+from app.core.permissions import has_permission, has_any_permission
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer()
@@ -65,6 +67,50 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Admin role required"
         )
     return current_user
+
+
+# Helper: Get all user permissions from their roles
+def get_user_permissions(user: User) -> List[str]:
+    """Get all permissions from user's roles"""
+    permissions = set()
+    for role in user.roles:
+        permissions.update(role.permissions)
+    return list(permissions)
+
+
+# Dependency factory: Require specific permission
+def require_permission(required_permission: str) -> Callable:
+    """
+    Factory function to create permission-checking dependency.
+    Usage: @router.post("/cases", dependencies=[Depends(require_permission("cases:create"))])
+    """
+    def permission_checker(current_user: User = Depends(get_current_user)) -> User:
+        user_permissions = get_user_permissions(current_user)
+        if not has_permission(user_permissions, required_permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission '{required_permission}' required"
+            )
+        return current_user
+    return permission_checker
+
+
+# Dependency factory: Require any of the specified permissions
+def require_any_permission(required_permissions: List[str]) -> Callable:
+    """
+    Factory function to create permission-checking dependency for multiple permissions.
+    User needs at least ONE of the specified permissions.
+    Usage: @router.get("/data", dependencies=[Depends(require_any_permission(["cases:read", "searches:read"]))])
+    """
+    def permission_checker(current_user: User = Depends(get_current_user)) -> User:
+        user_permissions = get_user_permissions(current_user)
+        if not has_any_permission(user_permissions, required_permissions):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"One of these permissions required: {', '.join(required_permissions)}"
+            )
+        return current_user
+    return permission_checker
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

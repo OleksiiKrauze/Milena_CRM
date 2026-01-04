@@ -37,28 +37,48 @@ export interface User {
 export interface Role {
   id: number;
   name: string;
+  display_name: string;
   description: string | null;
-  parent_role_id: number | null;
-}
-
-export interface RoleDetail {
-  id: number;
-  name: string;
-  description: string | null;
-  parent_role_id: number | null;
-  parent_role_name: string | null;
+  permissions: string[];
+  is_system: boolean;
+  user_count?: number;
 }
 
 export interface RoleCreate {
   name: string;
+  display_name: string;
   description?: string;
-  parent_role_id?: number;
+  permissions: string[];
 }
 
 export interface RoleUpdate {
   name?: string;
+  display_name?: string;
   description?: string;
-  parent_role_id?: number;
+  permissions?: string[];
+}
+
+export interface PermissionInfo {
+  code: string;
+  resource: string;
+  resource_label: string;
+  action: string;
+  action_label: string;
+}
+
+export interface ResourcePermissions {
+  label: string;
+  permissions: {
+    action: string;
+    action_label: string;
+    code: string;
+  }[];
+}
+
+export interface PermissionsListResponse {
+  all_permissions: string[];
+  permissions_info: PermissionInfo[];
+  by_resource: Record<string, ResourcePermissions>;
 }
 
 export interface Direction {
