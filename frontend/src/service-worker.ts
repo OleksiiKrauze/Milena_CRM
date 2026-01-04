@@ -25,7 +25,6 @@ self.addEventListener('push', (event: PushEvent) => {
     badge: data?.badge || '/favicon-32x32.png',
     tag: data?.tag || 'default',
     data: data?.data || {},
-    vibrate: [200, 100, 200],
     requireInteraction: data?.requireInteraction || false,
   };
 
@@ -62,10 +61,10 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 });
 
 // Log service worker activation
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', () => {
   console.log('[Service Worker] Activated');
 });
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   console.log('[Service Worker] Installed');
 });

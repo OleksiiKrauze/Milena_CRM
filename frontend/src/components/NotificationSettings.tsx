@@ -4,7 +4,7 @@
  * Allows users to manage push notification preferences.
  * Shows only notification types that the user has permission to receive (RBAC filtering).
  */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, BellOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';

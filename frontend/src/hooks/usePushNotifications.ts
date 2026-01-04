@@ -2,7 +2,7 @@
  * React hook for managing push notifications
  */
 import { useState, useEffect, useCallback } from 'react';
-import { pushNotificationsApi, urlBase64ToUint8Array, arrayBufferToBase64 } from '@/api/push-notifications';
+import { pushNotificationsApi, urlBase64ToUint8Array } from '@/api/push-notifications';
 
 export type NotificationPermission = 'default' | 'granted' | 'denied';
 
@@ -131,7 +131,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       // Subscribe to push notifications
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey,
+        applicationServerKey: convertedVapidKey as BufferSource,
       });
 
       // Extract subscription data
