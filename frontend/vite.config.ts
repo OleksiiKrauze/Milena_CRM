@@ -14,8 +14,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Мілена CRM',
-        short_name: 'Мілена',
+        name: 'Milena CRM',
+        short_name: 'Milena',
         description: 'CRM система для пошуку зниклих осіб',
         theme_color: '#0ea5e9',
         background_color: '#ffffff',
