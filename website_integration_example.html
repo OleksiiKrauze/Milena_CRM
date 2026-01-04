@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Інтеграція форми з CRM - Приклад</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .code-box {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre {
+            margin: 0;
+            font-size: 14px;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>📋 Інтеграція форми з CRM MilenaCRM</h1>
+
+        <div class="info-box">
+            <h3>ℹ️ Інформація</h3>
+            <p>Цей документ містить приклад коду для інтеграції форми заявки на пошук людини з вашого сайту в CRM систему.</p>
+        </div>
+
+        <h2>1. API Endpoint</h2>
+        <div class="code-box">
+            <pre>POST https://crm.przmilena.click/api/public/cases</pre>
+        </div>
+
+        <h2>2. Необхідні заголовки (Headers)</h2>
+        <div class="code-box">
+<pre>Content-Type: application/json
+X-API-Key: YOUR_API_KEY_HERE (опційно, якщо налаштовано)</pre>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Увага:</strong> Якщо ви хочете використовувати API ключ для додаткової безпеки, встановіть змінну оточення <code>PUBLIC_API_KEY</code> в файлі <code>.env.production</code> на сервері.
+        </div>
+
+        <h2>3. Приклад JavaScript коду</h2>
+        <div class="code-box">
+<pre><code>// Приклад відправки форми в CRM
+async function submitCaseToAPI(formData) {
+    const API_URL = 'https://crm.przmilena.click/api/public/cases';
+
+    // Підготовка даних у форматі JSON
+    const caseData = {
+        // Обов'язкові поля
+        applicant_full_name: formData.applicantFullName,  // ПІБ заявника
+        applicant_phone: formData.applicantPhone,          // Телефон заявника
+        missing_full_name: formData.missingFullName,       // ПІБ зниклого
+
+        // Опційні поля
+        subject: formData.subject,                         // Тема
+        applicant_relation: formData.applicantRelation,    // Ким доводиться
+        missing_gender: formData.missingGender,            // Стать (Чоловіча/Жіноча)
+        missing_birthdate: formData.missingBirthdate,      // Дата народження (YYYY-MM-DD)
+        missing_region: formData.missingRegion,            // Область зникнення
+        additional_search_regions: formData.additionalRegions, // Додаткові області (через кому)
+        missing_phone: formData.missingPhone,              // Телефон зниклого
+        missing_settlement: formData.missingSettlement,    // Місцевість зникнення
+        missing_last_seen_date: formData.lastSeenDate,     // Дата зникнення (YYYY-MM-DD)
+        missing_last_seen_time: formData.lastSeenTime,     // Час зникнення (HH:MM)
+        police_report_info: formData.policeReport,         // Заява в поліцію
+        search_terrain_type: formData.terrainType,         // Тип місцевості (Місто/Ліс)
+        disappearance_circumstances: formData.circumstances, // Обставини зникнення
+        missing_diseases: formData.healthCondition,        // Стан здоров'я
+        missing_clothing: formData.clothing,               // Одяг
+        missing_special_signs: formData.specialSigns,      // Особливі прикмети
+        missing_belongings: formData.belongings,           // Речі при собі
+        missing_photos: formData.photos || [],             // Масив URLs фотографій
+        additional_info: formData.additionalInfo           // Додаткова інформація
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Розкоментуйте наступний рядок, якщо використовується API ключ:
+                // 'X-API-Key': 'YOUR_API_KEY_HERE'
+            },
+            body: JSON.stringify(caseData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Помилка при відправці заявки');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('Заявка успішно створена, ID:', result.case_id);
+            alert(result.message);
+            return result;
+        }
+
+    } catch (error) {
+        console.error('Помилка:', error);
+        alert('Виникла помилка при відправці заявки. Спробуйте пізніше.');
+        throw error;
+    }
+}
+
+// Приклад використання з Contact Form 7 (WordPress)
+document.addEventListener('wpcf7mailsent', function(event) {
+    // Отримуємо дані з форми Contact Form 7
+    const formData = {
+        applicantFullName: event.detail.inputs.find(i => i.name === 'applicant-name')?.value,
+        applicantPhone: event.detail.inputs.find(i => i.name === 'applicant-phone')?.value,
+        missingFullName: event.detail.inputs.find(i => i.name === 'missing-name')?.value,
+        applicantRelation: event.detail.inputs.find(i => i.name === 'applicant-relation')?.value,
+        missingGender: event.detail.inputs.find(i => i.name === 'missing-gender')?.value,
+        missingBirthdate: event.detail.inputs.find(i => i.name === 'missing-birthdate')?.value,
+        missingRegion: event.detail.inputs.find(i => i.name === 'missing-region')?.value,
+        additionalRegions: event.detail.inputs.find(i => i.name === 'additional-regions')?.value,
+        missingPhone: event.detail.inputs.find(i => i.name === 'missing-phone')?.value,
+        missingSettlement: event.detail.inputs.find(i => i.name === 'missing-settlement')?.value,
+        lastSeenDate: event.detail.inputs.find(i => i.name === 'last-seen-date')?.value,
+        lastSeenTime: event.detail.inputs.find(i => i.name === 'last-seen-time')?.value,
+        policeReport: event.detail.inputs.find(i => i.name === 'police-report')?.value,
+        terrainType: event.detail.inputs.find(i => i.name === 'terrain-type')?.value,
+        circumstances: event.detail.inputs.find(i => i.name === 'circumstances')?.value,
+        healthCondition: event.detail.inputs.find(i => i.name === 'health-condition')?.value,
+        clothing: event.detail.inputs.find(i => i.name === 'clothing')?.value,
+        specialSigns: event.detail.inputs.find(i => i.name === 'special-signs')?.value,
+        belongings: event.detail.inputs.find(i => i.name === 'belongings')?.value,
+        additionalInfo: event.detail.inputs.find(i => i.name === 'additional-info')?.value,
+        subject: event.detail.inputs.find(i => i.name === 'subject')?.value
+    };
+
+    // Відправляємо дані в CRM
+    submitCaseToAPI(formData);
+}, false);
+</code></pre>
+        </div>
+
+        <h2>4. Формат відповіді API</h2>
+
+        <h3>Успішна відповідь (201 Created):</h3>
+        <div class="code-box">
+<pre>{
+  "success": true,
+  "message": "Заявку успішно створено. Наша команда зв'яжеться з вами найближчим часом.",
+  "case_id": 123
+}</pre>
+        </div>
+
+        <h3>Помилка валідації (400 Bad Request):</h3>
+        <div class="code-box">
+<pre>{
+  "detail": "Помилка валідації даних: ..."
+}</pre>
+        </div>
+
+        <h3>Перевищення ліміту запитів (429 Too Many Requests):</h3>
+        <div class="code-box">
+<pre>{
+  "detail": {
+    "error": "Rate limit exceeded",
+    "message": "Too many requests. Please try again later.",
+    "remaining": 0,
+    "window_seconds": 60
+  }
+}</pre>
+        </div>
+
+        <h2>5. Обмеження (Rate Limiting)</h2>
+        <div class="info-box">
+            <p><strong>Ліміт:</strong> 5 запитів на 60 секунд з одного IP адреси</p>
+            <p>Це захищає API від спаму та зловживань.</p>
+        </div>
+
+        <h2>6. Налаштування на Production</h2>
+
+        <h3>6.1. Додайте в файл .env.production (опційно):</h3>
+        <div class="code-box">
+<pre># Опційний API ключ для додаткової безпеки публічних endpoints
+PUBLIC_API_KEY=your-secret-api-key-here
+
+# CORS налаштування (вже додано milena.in.ua)
+CORS_ORIGINS=http://localhost:5173,https://milena.in.ua,http://milena.in.ua,https://crm.przmilena.click</pre>
+        </div>
+
+        <h3>6.2. Перезапустіть backend контейнер:</h3>
+        <div class="code-box">
+<pre>cd ~/MilenaCRM
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production down
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d --build</pre>
+        </div>
+
+        <h2>7. Тестування API</h2>
+
+        <h3>Тест через curl:</h3>
+        <div class="code-box">
+<pre>curl -X POST https://crm.przmilena.click/api/public/cases \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applicant_full_name": "Іванов Іван Іванович",
+    "applicant_phone": "+380501234567",
+    "missing_full_name": "Петров Петро Петрович",
+    "applicant_relation": "Брат",
+    "missing_gender": "Чоловіча",
+    "missing_region": "Київська область",
+    "disappearance_circumstances": "Пішов з дому і не повернувся"
+  }'</pre>
+        </div>
+
+        <h2>8. Моніторинг заявок в CRM</h2>
+        <div class="info-box">
+            <p>Всі заявки з сайту автоматично потрапляють в CRM зі статусом <strong>"Нова з сайту"</strong> та тегом <strong>"Заявка з сайту"</strong>.</p>
+            <p>Ви можете фільтрувати такі заявки в списку кейсів за статусом.</p>
+        </div>
+
+        <div class="warning">
+            <h3>🔒 Безпека</h3>
+            <ul>
+                <li>API захищено rate limiting (5 запитів за 60 секунд з IP)</li>
+                <li>CORS налаштовано тільки для milena.in.ua</li>
+                <li>Можна додати API ключ для додаткової безпеки</li>
+                <li>Всі помилки логуються на сервері</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

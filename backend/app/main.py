@@ -35,6 +35,7 @@ from app.routers import management
 from app.routers import upload
 from app.routers import settings
 from app.routers import forum_import
+from app.routers import public
 import app.models  # Import all models to register them with Base
 from pathlib import Path
 
@@ -75,7 +76,8 @@ app = FastAPI(
 )
 
 # Configure CORS
-allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+default_origins = "http://localhost:3000,http://localhost:5173,https://milena.in.ua,http://milena.in.ua"
+allowed_origins = os.getenv("CORS_ORIGINS", default_origins).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -119,6 +121,7 @@ def on_shutdown():
 
 
 # Include routers
+app.include_router(public.router)  # Public endpoints first (no auth required)
 app.include_router(auth.router)
 app.include_router(cases.router)
 app.include_router(roles.router)
