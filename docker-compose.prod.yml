@@ -59,6 +59,22 @@ services:
       timeout: 5s
       retries: 5
 
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    container_name: crm_telegram_bot
+    restart: unless-stopped
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      CRM_API_URL: http://backend:8000
+      CRM_API_KEY: ${PUBLIC_API_KEY}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - crm_network
+
 volumes:
   postgres_data:
     driver: local

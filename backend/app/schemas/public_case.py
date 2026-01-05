@@ -155,3 +155,28 @@ class PublicCaseResponse(BaseModel):
     success: bool
     message: str
     case_id: Optional[int] = None
+
+
+class TelegramCaseCreate(BaseModel):
+    """Schema for creating case from Telegram bot"""
+    initial_info: str = Field(
+        ...,
+        min_length=10,
+        max_length=10000,
+        description="Текстова інформація про заявку від користувача Telegram"
+    )
+
+
+class TelegramCaseResponse(BaseModel):
+    """Response for Telegram case creation"""
+    success: bool
+    message: str
+    case_id: Optional[int] = None
+
+
+class TelegramPhotosResponse(BaseModel):
+    """Response for adding photos to Telegram case"""
+    success: bool
+    message: str
+    photos_count: int
+    photo_urls: List[str]

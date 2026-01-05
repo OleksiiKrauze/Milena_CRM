@@ -11,6 +11,7 @@ from app.core.permissions import Resource, Action
 class NotificationType(str, Enum):
     """Supported notification types"""
     NEW_PUBLIC_CASE = "new_public_case"
+    NEW_TELEGRAM_CASE = "new_telegram_case"
     FIELD_SEARCH_PARTICIPANT_ADDED = "field_search_participant_added"
 
 
@@ -18,6 +19,7 @@ class NotificationType(str, Enum):
 # User can only receive notifications for types they have permission to access
 NOTIFICATION_PERMISSIONS: Dict[NotificationType, str] = {
     NotificationType.NEW_PUBLIC_CASE: f"{Resource.CASES.value}:{Action.READ.value}",
+    NotificationType.NEW_TELEGRAM_CASE: f"{Resource.CASES.value}:{Action.READ.value}",
     NotificationType.FIELD_SEARCH_PARTICIPANT_ADDED: f"{Resource.FIELD_SEARCHES.value}:{Action.READ.value}",
 }
 
@@ -27,6 +29,10 @@ NOTIFICATION_LABELS: Dict[NotificationType, Dict[str, str]] = {
     NotificationType.NEW_PUBLIC_CASE: {
         "title": "Нова заявка з сайту",
         "description": "Отримувати сповіщення про нові заявки з публічного вебсайту"
+    },
+    NotificationType.NEW_TELEGRAM_CASE: {
+        "title": "Нова заявка з Telegram",
+        "description": "Отримувати сповіщення про нові заявки з Telegram бота"
     },
     NotificationType.FIELD_SEARCH_PARTICIPANT_ADDED: {
         "title": "Призначення на виїзд",
