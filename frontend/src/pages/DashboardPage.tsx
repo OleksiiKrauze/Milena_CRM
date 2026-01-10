@@ -70,22 +70,25 @@ export function DashboardPage() {
           </Card>
 
           {/* Searches Stats */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/searches')}
-          >
+          <Card>
             <CardHeader>
               <CardTitle>Пошуки</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/searches')}
+                >
                   <p className="text-3xl font-bold text-primary-600">
                     {stats?.searches?.total || 0}
                   </p>
                   <p className="text-sm text-gray-600">Всього пошуків</p>
                 </div>
-                <div>
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/searches?status_filter=active')}
+                >
                   <p className="text-3xl font-bold text-green-600">
                     {stats?.searches?.by_status?.active || 0}
                   </p>
@@ -96,26 +99,38 @@ export function DashboardPage() {
           </Card>
 
           {/* Field Searches Stats */}
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/field-searches')}
-          >
+          <Card>
             <CardHeader>
               <CardTitle>Виїзди на місцевість</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-3xl font-bold text-primary-600">
+              <div className="grid grid-cols-3 gap-3">
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/field-searches')}
+                >
+                  <p className="text-2xl font-bold text-primary-600">
                     {stats?.field_searches?.total || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Всього виїздів</p>
+                  <p className="text-xs text-gray-600">Всього</p>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-yellow-600">
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/field-searches?status_filter=planning')}
+                >
+                  <p className="text-2xl font-bold text-yellow-600">
                     {stats?.field_searches?.by_status?.planned || 0}
                   </p>
-                  <p className="text-sm text-gray-600">Заплановано</p>
+                  <p className="text-xs text-gray-600">Заплановано</p>
+                </div>
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/field-searches?status_filter=active')}
+                >
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats?.field_searches?.by_status?.active || 0}
+                  </p>
+                  <p className="text-xs text-gray-600">Активні</p>
                 </div>
               </div>
             </CardContent>

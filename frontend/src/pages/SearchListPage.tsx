@@ -11,8 +11,9 @@ export function SearchListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const caseIdParam = searchParams.get('case_id');
+  const statusParam = searchParams.get('status_filter');
 
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>(statusParam || '');
   const [resultFilter, setResultFilter] = useState<string>('');
   const [caseIdFilter, setCaseIdFilter] = useState<string>(caseIdParam || '');
 
