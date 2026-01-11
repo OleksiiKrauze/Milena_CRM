@@ -8,6 +8,7 @@ import { casesApi } from '@/api/cases';
 import { uploadApi } from '@/api/upload';
 import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
+import { utcToLocalDateTimeInput } from '@/utils/formatters';
 import { Container, Button, Input, Card, CardContent } from '@/components/ui';
 import { X, Upload, Sparkles } from 'lucide-react';
 import { UKRAINIAN_REGIONS } from '@/constants/regions';
@@ -162,7 +163,7 @@ export function CreateCasePage() {
           }
           // Handle datetime fields - format for datetime-local input
           else if (key === 'missing_last_seen_datetime' && value) {
-            setValue(key, String(value).substring(0, 16));
+            setValue(key, utcToLocalDateTimeInput(String(value)));
           }
           // Handle all other fields
           else {

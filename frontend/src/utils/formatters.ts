@@ -7,6 +7,7 @@ export function formatDate(dateString: string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'Europe/Kiev',
   });
 }
 
@@ -21,6 +22,7 @@ export function formatDateTime(dateString: string): string {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Europe/Kiev',
   });
 }
 
@@ -49,4 +51,54 @@ export function getOriginalFilename(url: string): string {
     return parts.slice(1).join('_');
   }
   return filename;
+}
+
+/**
+ * Convert UTC datetime string to local datetime string for datetime-local input
+ * Server returns: "2024-01-11T10:00:00Z" (UTC)
+ * Input needs: "2024-01-11T12:00" (Kyiv time, without Z)
+ */
+export function utcToLocalDateTimeInput(utcDateString: string): string {
+  if (!utcDateString) return '';
+
+  const date = new Date(utcDateString);
+
+  // Convert to Kyiv timezone and format for datetime-local input
+  const kyivTime = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Europe/Kiev',
+  }).formatToParts(date);
+
+  const parts: Record<string, string> = {};
+  kyivTime.forEach(({ type, value }) => {
+    parts[type] = value;
+  });
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+/**
+ * Convert local datetime from datetime-local input to UTC datetime string
+ * Input provides: "2024-01-11T12:00" (user's local time in Kyiv)
+ * Server needs: "2024-01-11T10:00:00Z" (UTC)
+ */
+export function localDateTimeInputToUtc(localDateString: string): string {
+  if (!localDateString) return '';
+
+  // Parse as Kyiv timezone
+  const [datePart, timePart] = localDateString.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+
+  // Convert to UTC by creating Date object and getting ISO string
+  const kyivOffset = new Date().toLocaleString('en-US', { timeZone: 'Europe/Kiev', timeZoneName: 'shortOffset' }).split('GMT')[1];
+  const offsetHours = parseInt(kyivOffset) || 2; // Default to +2 if can't parse
+
+  const utcDate = new Date(year, month - 1, day, hour - offsetHours, minute);
+  return utcDate.toISOString();
 }

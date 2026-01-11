@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Input, Button, Loading } from '@/components/ui';
 import type { EventUpdate } from '@/types/api';
 import { useState, useEffect } from 'react';
+import { utcToLocalDateTimeInput } from '@/utils/formatters';
 
 interface EditEventForm {
   event_datetime: string;
@@ -37,7 +38,7 @@ export function EditEventPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<EditEventForm>({
     values: eventData ? {
-      event_datetime: eventData.event_datetime.substring(0, 16), // Format for datetime-local input
+      event_datetime: utcToLocalDateTimeInput(eventData.event_datetime), // Format for datetime-local input
       event_type: eventData.event_type,
       description: eventData.description,
     } : undefined,
