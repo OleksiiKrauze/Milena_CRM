@@ -33,7 +33,8 @@ const createCaseSchema = z.object({
   missing_gender: z.string().optional(),
   missing_birthdate: z.string().optional(),
   missing_photo_url: z.string().optional(),
-  missing_last_seen_datetime: z.string().optional(),
+  missing_last_seen_date: z.string().optional(),
+  missing_last_seen_time: z.string().optional(),
   missing_last_seen_place: z.string().optional(),
   missing_description: z.string().optional(),
   missing_special_signs: z.string().optional(),
@@ -161,9 +162,12 @@ export function CreateCasePage() {
           else if (key === 'missing_birthdate' && value) {
             setValue(key, String(value).split('T')[0]);
           }
-          // Handle datetime fields - format for datetime-local input
+          // Handle datetime fields - split into date and time
           else if (key === 'missing_last_seen_datetime' && value) {
-            setValue(key, utcToLocalDateTimeInput(String(value)));
+            const datetime = utcToLocalDateTimeInput(String(value));
+            const [date, time] = datetime.split('T');
+            setValue('missing_last_seen_date', date);
+            setValue('missing_last_seen_time', time);
           }
           // Handle all other fields
           else {
@@ -221,6 +225,15 @@ export function CreateCasePage() {
 
   const onSubmit = (data: any) => {
     setApiError(null);
+
+    // Combine missing_last_seen_date and missing_last_seen_time into missing_last_seen_datetime
+    if (data.missing_last_seen_date || data.missing_last_seen_time) {
+      const date = data.missing_last_seen_date || new Date().toISOString().split('T')[0];
+      const time = data.missing_last_seen_time || '00:00';
+      data.missing_last_seen_datetime = `${date}T${time}:00`;
+      delete data.missing_last_seen_date;
+      delete data.missing_last_seen_time;
+    }
 
     // Convert police_contact_user_id from string to number
     if (data.police_contact_user_id) {
@@ -431,12 +444,20 @@ export function CreateCasePage() {
                 )}
               </div>
 
-              <Input
-                label="Дата та час коли бачили востаннє"
-                type="datetime-local"
-                error={errors.missing_last_seen_datetime?.message}
-                {...register('missing_last_seen_datetime')}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Дата коли бачили востаннє"
+                  type="date"
+                  error={errors.missing_last_seen_date?.message}
+                  {...register('missing_last_seen_date')}
+                />
+                <Input
+                  label="Час коли бачили востаннє"
+                  type="time"
+                  error={errors.missing_last_seen_time?.message}
+                  {...register('missing_last_seen_time')}
+                />
+              </div>
 
               <Input
                 label="Останнє місце, де бачили"
