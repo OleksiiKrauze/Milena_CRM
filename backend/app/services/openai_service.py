@@ -69,7 +69,7 @@ class OpenAIService:
      → applicant: {last_name: "Литвин", first_name: "Діана", middle_name: "Євгенівна", phone: "0992083991", relation: "вихователька"}
 
    ✓ "0935956421 - Оксана Анатоліївна, психолог"
-     → applicant: {last_name: null, first_name: "Оксана", middle_name: "Анатоліївна", phone: "0935956421", relation: "психолог"}
+     → applicant: {last_name: null, first_name: "Оксана", middle_name: "Анатоліївна", phone: "0935956421", relation: "psycholog"}
 
    ВАЖЛИВО: "Оксана", "Катерина", "Єкатерина" - ЦЕ ВАЛІДНІ ІМ'Я ЗАЯВНИКІВ!
    НЕ ігноруй їх, навіть якщо немає прізвища!
@@ -79,24 +79,43 @@ class OpenAIService:
    ❌ ЗАБОРОНЕНО пропускати першу контактну особу!
 
 2. Локація зниклого (missing_location):
-   - settlement: населений пункт
+   - settlement: населений пункт (заповнюється з локації ПЕРШОГО зниклого)
    - region: область (ВАЖЛИВО: тільки назва області БЕЗ слова "область", наприклад: "Харківська", "Київська", "Дніпропетровська")
-   - address: адреса
+   - address: адреса (заповнюється з адреси ПЕРШОГО зниклого)
 
-3. Дані зниклого (missing_person):
-   - last_name: прізвище
-   - first_name: ім'я
-   - middle_name: по батькові
-   - gender: стать ("Чоловік" або "Жінка")
+3. Дані зниклих (missing_persons) - МАСИВ об'єктів:
+   ⚠️ КРИТИЧНО ВАЖЛИВО: У заявці може бути ОДИН або КІЛЬКА зниклих! ⚠️
+
+   Якщо в тексті згадується більше однієї зниклої особи, поверни МАСИВ з усіма особами!
+   Якщо згадується лише одна особа, поверни масив з одним елементом.
+
+   Кожен об'єкт в масиві містить:
+   - last_name: прізвище зниклого
+   - first_name: ім'я зниклого
+   - middle_name: по батькові зниклого
+   - gender: стать ("чоловіча" або "жіноча")
    - birthdate: дата народження в форматі ISO (YYYY-MM-DD)
+   - phone: телефон зниклого
+   - settlement: населений пункт проживання цієї зниклої особи
+   - region: область проживання цієї зниклої особи
+   - address: адреса проживання цієї зниклої особи
    - last_seen_datetime: коли бачили останній раз в форматі ISO (YYYY-MM-DDTHH:MM:SS)
    - last_seen_place: де бачили останній раз
    - description: опис зовнішності
    - special_signs: особливі прикмети
    - diseases: захворювання
-   - phone: телефон зниклого
    - clothing: одяг
    - belongings: особисті речі
+
+   ПРИКЛАДИ:
+   ✓ Якщо згадується один зниклий "Іванов Петро":
+     → missing_persons: [{last_name: "Іванов", first_name: "Петро", ...}]
+
+   ✓ Якщо згадуються два зниклих "Іванов Петро та Іванова Марія":
+     → missing_persons: [
+         {last_name: "Іванов", first_name: "Петро", ...},
+         {last_name: "Іванова", first_name: "Марія", ...}
+       ]
 
 4. Додаткова інформація (additional):
    - search_regions: додаткові області для пошуку (масив рядків)
@@ -207,17 +226,77 @@ class OpenAIService:
                     field_name = f"applicant_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
-            # Missing person location
+            # Missing person location (backward compatibility - populated from first missing person)
             if "missing_location" in result and result["missing_location"] and isinstance(result["missing_location"], dict):
                 for key, value in result["missing_location"].items():
                     field_name = f"missing_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
-            # Missing person data
-            if "missing_person" in result and result["missing_person"] and isinstance(result["missing_person"], dict):
-                for key, value in result["missing_person"].items():
-                    field_name = f"missing_{key}"
-                    flat_result[field_name] = normalize_field_value(value, field_name)
+            # NEW: Missing persons array (replaces single missing_person)
+            if "missing_persons" in result and result["missing_persons"] and isinstance(result["missing_persons"], list):
+                missing_persons_array = []
+                for idx, mp in enumerate(result["missing_persons"]):
+                    if isinstance(mp, dict):
+                        # Build missing person object matching MissingPersonCreate schema
+                        mp_obj = {
+                            "last_name": normalize_field_value(mp.get("last_name")),
+                            "first_name": normalize_field_value(mp.get("first_name")),
+                            "middle_name": normalize_field_value(mp.get("middle_name")),
+                            "gender": normalize_field_value(mp.get("gender")),
+                            "birthdate": normalize_field_value(mp.get("birthdate")),
+                            "phone": normalize_field_value(mp.get("phone")),
+                            "settlement": normalize_field_value(mp.get("settlement")),
+                            "region": normalize_field_value(mp.get("region")),
+                            "address": normalize_field_value(mp.get("address")),
+                            "last_seen_datetime": normalize_field_value(mp.get("last_seen_datetime")),
+                            "last_seen_place": normalize_field_value(mp.get("last_seen_place")),
+                            "photos": normalize_field_value(mp.get("photos"), "missing_photos") or [],
+                            "description": normalize_field_value(mp.get("description")),
+                            "special_signs": normalize_field_value(mp.get("special_signs")),
+                            "diseases": normalize_field_value(mp.get("diseases")),
+                            "clothing": normalize_field_value(mp.get("clothing")),
+                            "belongings": normalize_field_value(mp.get("belongings")),
+                            "order_index": idx
+                        }
+                        missing_persons_array.append(mp_obj)
+
+                flat_result["missing_persons"] = missing_persons_array
+
+                # Auto-populate missing_location fields from first missing person if not already set
+                if missing_persons_array and len(missing_persons_array) > 0:
+                    first_person = missing_persons_array[0]
+                    if "missing_settlement" not in flat_result and first_person.get("settlement"):
+                        flat_result["missing_settlement"] = first_person["settlement"]
+                    if "missing_region" not in flat_result and first_person.get("region"):
+                        flat_result["missing_region"] = first_person["region"]
+                    if "missing_address" not in flat_result and first_person.get("address"):
+                        flat_result["missing_address"] = first_person["address"]
+
+            # LEGACY: Support old single missing_person format for backward compatibility
+            elif "missing_person" in result and result["missing_person"] and isinstance(result["missing_person"], dict):
+                # Convert single person to array format
+                mp = result["missing_person"]
+                mp_obj = {
+                    "last_name": normalize_field_value(mp.get("last_name")),
+                    "first_name": normalize_field_value(mp.get("first_name")),
+                    "middle_name": normalize_field_value(mp.get("middle_name")),
+                    "gender": normalize_field_value(mp.get("gender")),
+                    "birthdate": normalize_field_value(mp.get("birthdate")),
+                    "phone": normalize_field_value(mp.get("phone")),
+                    "settlement": normalize_field_value(mp.get("settlement")),
+                    "region": normalize_field_value(mp.get("region")),
+                    "address": normalize_field_value(mp.get("address")),
+                    "last_seen_datetime": normalize_field_value(mp.get("last_seen_datetime")),
+                    "last_seen_place": normalize_field_value(mp.get("last_seen_place")),
+                    "photos": normalize_field_value(mp.get("photos"), "missing_photos") or [],
+                    "description": normalize_field_value(mp.get("description")),
+                    "special_signs": normalize_field_value(mp.get("special_signs")),
+                    "diseases": normalize_field_value(mp.get("diseases")),
+                    "clothing": normalize_field_value(mp.get("clothing")),
+                    "belongings": normalize_field_value(mp.get("belongings")),
+                    "order_index": 0
+                }
+                flat_result["missing_persons"] = [mp_obj]
 
             # Additional data
             if "additional" in result and result["additional"] and isinstance(result["additional"], dict):
@@ -229,16 +308,6 @@ class OpenAIService:
                 for key, value in result["police"].items():
                     field_name = f"police_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
-
-            # Convert date strings to datetime objects if needed
-            date_fields = ["missing_birthdate", "missing_last_seen_datetime", "police_report_date"]
-            for field in date_fields:
-                if field in flat_result and flat_result[field]:
-                    try:
-                        # OpenAI returns ISO format strings
-                        flat_result[field] = flat_result[field]
-                    except Exception:
-                        flat_result[field] = None
 
             return flat_result
 

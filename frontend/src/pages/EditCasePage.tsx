@@ -213,28 +213,69 @@ export function EditCasePage() {
 
     try {
       const result = await casesApi.autofill(currentInitialInfo);
-      const fields = result.fields;
+      const autofillData = result.fields;
 
-      // Fill all extracted fields into the form
-      Object.entries(fields).forEach(([key, value]) => {
+      // Handle missing_persons array specially
+      if (autofillData.missing_persons && Array.isArray(autofillData.missing_persons)) {
+        // Clear existing missing persons from the form
+        const currentFieldsLength = fields.length;
+        for (let i = currentFieldsLength - 1; i >= 0; i--) {
+          remove(i);
+        }
+
+        // Add each missing person from autofill result
+        autofillData.missing_persons.forEach((mp: any, index: number) => {
+          // Process date/time fields for this person
+          const processedMp: any = { ...mp };
+
+          // Handle birthdate - extract date part
+          if (processedMp.birthdate) {
+            processedMp.birthdate = String(processedMp.birthdate).split('T')[0];
+          }
+
+          // Handle last_seen_datetime - split into date and time
+          if (processedMp.last_seen_datetime) {
+            const datetime = utcToLocalDateTimeInput(String(processedMp.last_seen_datetime));
+            const [date, time] = datetime.split('T');
+            processedMp.last_seen_date = date;
+            processedMp.last_seen_time = time;
+            delete processedMp.last_seen_datetime;
+          }
+
+          // Ensure photos is an array
+          if (!processedMp.photos) {
+            processedMp.photos = [];
+          }
+
+          append(processedMp);
+        });
+      }
+
+      // Fill all other extracted fields into the form
+      Object.entries(autofillData).forEach(([key, value]) => {
+        // Skip missing_persons as it's already handled
+        if (key === 'missing_persons') {
+          return;
+        }
+
         if (value !== null && value !== undefined) {
           // Handle array fields (tags, additional_search_regions)
           if (Array.isArray(value)) {
             setValue(key, value.join(', '));
           }
           // Handle date fields - extract date part for date input
-          else if (key === 'missing_birthdate' && value) {
+          else if (key.includes('birthdate') && value) {
             setValue(key, String(value).split('T')[0]);
           }
           // Handle datetime fields - split into date and time
-          else if (key === 'missing_last_seen_datetime' && value) {
+          else if (key.includes('last_seen_datetime') && value) {
             const datetime = utcToLocalDateTimeInput(String(value));
             const [date, time] = datetime.split('T');
-            setValue('missing_last_seen_date', date);
-            setValue('missing_last_seen_time', time);
+            setValue(key.replace('_datetime', '_date'), date);
+            setValue(key.replace('_datetime', '_time'), time);
           }
           // Handle region field - normalize by removing "область" suffix
-          else if (key === 'missing_region' && value) {
+          else if (key.includes('region') && value) {
             const normalizedRegion = String(value).replace(/\s*область$/i, '').trim();
             setValue(key, normalizedRegion);
           }

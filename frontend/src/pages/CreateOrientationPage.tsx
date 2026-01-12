@@ -1051,7 +1051,19 @@ export function CreateOrientationPage() {
     return <div>Пошук не знайдено</div>;
   }
 
-  const casePhotos = search.case?.missing_photos || [];
+  // Collect photos from all missing persons
+  const casePhotos: string[] = [];
+  if (search.case?.missing_persons && search.case.missing_persons.length > 0) {
+    // Get photos from all missing persons
+    search.case.missing_persons.forEach((person: any) => {
+      if (person.photos && Array.isArray(person.photos)) {
+        casePhotos.push(...person.photos);
+      }
+    });
+  } else if (search.case?.missing_photos) {
+    // Fallback to legacy field if missing_persons is empty
+    casePhotos.push(...search.case.missing_photos);
+  }
 
   return (
     <div className="min-h-screen pb-nav">
