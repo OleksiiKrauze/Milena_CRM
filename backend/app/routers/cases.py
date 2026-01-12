@@ -178,10 +178,16 @@ def list_cases(
         joinedload(Case.missing_persons)
     )
 
-    # Search by missing person's last name
+    # Search by missing person's last name (search across all missing persons)
     if search_query:
         search_term = f"%{search_query}%"
-        query = query.filter(Case.missing_last_name.ilike(search_term))
+        # Search in both legacy field and new missing_persons table
+        query = query.outerjoin(MissingPerson).filter(
+            or_(
+                Case.missing_last_name.ilike(search_term),
+                MissingPerson.last_name.ilike(search_term)
+            )
+        ).distinct()
 
     # Filter by decision type if provided
     if decision_type_filter:

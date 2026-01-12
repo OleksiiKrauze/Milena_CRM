@@ -301,15 +301,30 @@ export function CasesListPage() {
                   }
                 };
 
+                // Get all missing persons names
+                const missingPersonsNames = caseItem.missing_persons && caseItem.missing_persons.length > 0
+                  ? caseItem.missing_persons
+                      .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+                      .map((mp: any) =>
+                        [mp.last_name, mp.first_name, mp.middle_name]
+                          .filter(Boolean)
+                          .join(' ')
+                      )
+                  : [caseItem.missing_full_name];
+
                 return (
                   <Link key={caseItem.id} to={`/cases/${caseItem.id}`}>
                     <Card className={`active:opacity-90 transition-colors ${bgColor}`}>
                       <CardContent className="p-4">
                       <div className="mb-2 flex items-baseline gap-2">
                         <span className={`text-sm font-medium ${textColor || 'text-gray-500'}`}>#{caseItem.id}</span>
-                        <h3 className={`font-semibold ${textColor || 'text-gray-900'}`}>
-                          {caseItem.missing_full_name}
-                        </h3>
+                        <div className="flex-1">
+                          {missingPersonsNames.map((name, idx) => (
+                            <h3 key={idx} className={`font-semibold ${textColor || 'text-gray-900'}`}>
+                              {missingPersonsNames.length > 1 && `${idx + 1}. `}{name}
+                            </h3>
+                          ))}
+                        </div>
                       </div>
                       <div className={`space-y-1 text-sm ${textColor || 'text-gray-600'}`}>
                         <p>
