@@ -8,7 +8,7 @@ import { casesApi } from '@/api/cases';
 import { uploadApi } from '@/api/upload';
 import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
-import { utcToLocalDateTimeInput } from '@/utils/formatters';
+import { utcToLocalDateTimeInput, localDateTimeInputToUtc } from '@/utils/formatters';
 import { Container, Button, Input, Card, CardContent, Loading } from '@/components/ui';
 import { X, Upload, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { UKRAINIAN_REGIONS } from '@/constants/regions';
@@ -341,16 +341,22 @@ export function EditCasePage() {
           }
         }
 
-        // Combine last_seen_date and last_seen_time
+        // Combine last_seen_date and last_seen_time and convert to UTC
         if (cleanedMp.last_seen_date || cleanedMp.last_seen_time) {
           const date = cleanedMp.last_seen_date || new Date().toISOString().split('T')[0];
           const time = cleanedMp.last_seen_time || '00:00';
-          cleanedMp.last_seen_datetime = `${date}T${time}:00`;
+          const localDateTime = `${date}T${time}`;
+          cleanedMp.last_seen_datetime = localDateTimeInputToUtc(localDateTime);
           delete cleanedMp.last_seen_date;
           delete cleanedMp.last_seen_time;
         }
         return cleanedMp;
       });
+    }
+
+    // Convert created_at from local to UTC if provided
+    if (data.created_at) {
+      data.created_at = localDateTimeInputToUtc(data.created_at);
     }
 
     // Convert police_contact_user_id from string to number

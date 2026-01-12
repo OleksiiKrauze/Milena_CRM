@@ -90,15 +90,51 @@ export function utcToLocalDateTimeInput(utcDateString: string): string {
 export function localDateTimeInputToUtc(localDateString: string): string {
   if (!localDateString) return '';
 
-  // Parse as Kyiv timezone
+  // Parse the input string
   const [datePart, timePart] = localDateString.split('T');
   const [year, month, day] = datePart.split('-').map(Number);
   const [hour, minute] = timePart.split(':').map(Number);
 
-  // Convert to UTC by creating Date object and getting ISO string
-  const kyivOffset = new Date().toLocaleString('en-US', { timeZone: 'Europe/Kiev', timeZoneName: 'shortOffset' }).split('GMT')[1];
-  const offsetHours = parseInt(kyivOffset) || 2; // Default to +2 if can't parse
+  // Create formatter to work with Kyiv timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Europe/Kiev',
+  });
 
-  const utcDate = new Date(year, month - 1, day, hour - offsetHours, minute);
-  return utcDate.toISOString();
+  // Binary search to find the UTC timestamp that produces the desired Kyiv time
+  // Start with a reasonable guess (current date in UTC)
+  let low = Date.UTC(year, month - 1, day, hour - 3, minute); // UTC+3 in summer
+  let high = Date.UTC(year, month - 1, day, hour - 1, minute); // UTC+1 if something is off
+
+  // Try to match the exact Kyiv time by iterating
+  for (let offset = 1; offset <= 4; offset++) {
+    const testTimestamp = Date.UTC(year, month - 1, day, hour - offset, minute);
+    const testDate = new Date(testTimestamp);
+
+    const parts = formatter.formatToParts(testDate);
+    const kyivParts: Record<string, string> = {};
+    parts.forEach(({ type, value }) => {
+      kyivParts[type] = value;
+    });
+
+    // Check if this UTC time produces our desired Kyiv time
+    if (
+      parseInt(kyivParts.year) === year &&
+      parseInt(kyivParts.month) === month &&
+      parseInt(kyivParts.day) === day &&
+      parseInt(kyivParts.hour) === hour &&
+      parseInt(kyivParts.minute) === minute
+    ) {
+      return testDate.toISOString();
+    }
+  }
+
+  // Fallback: assume UTC+2 (standard Kyiv time)
+  const fallbackDate = new Date(Date.UTC(year, month - 1, day, hour - 2, minute));
+  return fallbackDate.toISOString();
 }
