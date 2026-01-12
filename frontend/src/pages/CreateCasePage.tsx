@@ -160,7 +160,14 @@ export function CreateCasePage() {
         // Add each missing person from autofill result
         autofillData.missing_persons.forEach((mp: any, index: number) => {
           // Process date/time fields for this person
-          const processedMp: any = { ...mp };
+          const processedMp: any = {};
+
+          // Copy only non-null values
+          for (const [key, value] of Object.entries(mp)) {
+            if (value !== null && value !== undefined) {
+              processedMp[key] = value;
+            }
+          }
 
           // Handle birthdate - extract date part
           if (processedMp.birthdate) {
@@ -192,7 +199,8 @@ export function CreateCasePage() {
           return;
         }
 
-        if (value !== null && value !== undefined) {
+        // Only set value if it's not null or undefined
+        if (value !== null && value !== undefined && value !== '') {
           // Handle array fields (tags, additional_search_regions)
           if (Array.isArray(value)) {
             setValue(key, value.join(', '));
