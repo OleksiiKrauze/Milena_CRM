@@ -74,6 +74,7 @@ export function EditCasePage() {
   const queryClient = useQueryClient();
   const [apiError, setApiError] = useState<string | null>(null);
   const [notesImages, setNotesImages] = useState<string[]>([]);
+  const [isNotesUploading, setIsNotesUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
 
   const { data: caseData, isLoading } = useQuery({
@@ -180,7 +181,7 @@ export function EditCasePage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setIsUploading(true);
+    setIsNotesUploading(true);
     setApiError(null);
 
     try {
@@ -190,7 +191,7 @@ export function EditCasePage() {
     } catch (error: any) {
       setApiError(error.message || 'Помилка завантаження зображень');
     } finally {
-      setIsUploading(false);
+      setIsNotesUploading(false);
       e.target.value = '';
     }
   };
@@ -654,7 +655,7 @@ export function EditCasePage() {
                   accept="image/*"
                   multiple
                   onChange={handleNotesImageSelect}
-                  disabled={isUploading}
+                  disabled={isNotesUploading}
                   className="hidden"
                   id="notes-images-input"
                 />
@@ -664,7 +665,7 @@ export function EditCasePage() {
                 >
                   <Upload className="h-4 w-4" />
                   <span className="text-sm">
-                    {isUploading ? 'Завантаження...' : 'Завантажити зображення'}
+                    {isNotesUploading ? 'Завантаження...' : 'Завантажити зображення'}
                   </span>
                 </label>
 

@@ -187,92 +187,109 @@ export function CaseDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Missing Person Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Дані зниклого</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600">Населений пункт</p>
-                <p className="font-medium">{caseData.missing_settlement || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Область</p>
-                <p className="font-medium">{caseData.missing_region || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Адреса проживання</p>
-                <p className="font-medium">{caseData.missing_address || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">ПІБ</p>
-                <p className="font-medium text-lg">{caseData.missing_full_name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Стать</p>
-                <p className="font-medium">{caseData.missing_gender || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Дата народження</p>
-                <p className="font-medium">{caseData.missing_birthdate ? formatDate(caseData.missing_birthdate) : '-'}</p>
-              </div>
-              {caseData.missing_photos && caseData.missing_photos.length > 0 && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Фото ({caseData.missing_photos.length})</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {caseData.missing_photos.map((photoUrl, index) => (
-                      <img
-                        key={index}
-                        src={photoUrl}
-                        alt={`Фото ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => window.open(photoUrl, '_blank')}
-                      />
-                    ))}
+          {/* Missing Persons - Display all */}
+          {caseData.missing_persons && caseData.missing_persons.length > 0 ? (
+            caseData.missing_persons.map((person: any, index: number) => (
+              <Card key={person.id || index}>
+                <CardHeader>
+                  <CardTitle>
+                    Дані зниклого {caseData.missing_persons.length > 1 ? `#${index + 1}` : ''}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">ПІБ</p>
+                    <p className="font-medium text-lg">
+                      {[person.last_name, person.first_name, person.middle_name].filter(Boolean).join(' ')}
+                    </p>
                   </div>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-gray-600">Коли бачили востаннє</p>
-                <p className="font-medium">{caseData.missing_last_seen_datetime ? formatDateTime(caseData.missing_last_seen_datetime) : '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Де бачили востаннє</p>
-                <p className="font-medium">{caseData.missing_last_seen_place || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Опис</p>
-                <p className="font-medium whitespace-pre-wrap">{caseData.missing_description || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Особливі прикмети</p>
-                <p className="font-medium whitespace-pre-wrap">{caseData.missing_special_signs || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Захворювання</p>
-                <p className="font-medium whitespace-pre-wrap">{caseData.missing_diseases || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Номер телефону</p>
-                <p className="font-medium">
-                  {caseData.missing_phone ? (
-                    <a href={`tel:${caseData.missing_phone}`} className="text-primary-600 hover:underline">
-                      {caseData.missing_phone}
-                    </a>
-                  ) : '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Одяг</p>
-                <p className="font-medium whitespace-pre-wrap">{caseData.missing_clothing || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Що було з собою</p>
-                <p className="font-medium whitespace-pre-wrap">{caseData.missing_belongings || '-'}</p>
-              </div>
-            </CardContent>
-          </Card>
+                  <div>
+                    <p className="text-sm text-gray-600">Стать</p>
+                    <p className="font-medium">{person.gender || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Дата народження</p>
+                    <p className="font-medium">{person.birthdate ? formatDate(person.birthdate) : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Телефон</p>
+                    <p className="font-medium">
+                      {person.phone ? (
+                        <a href={`tel:${person.phone}`} className="text-primary-600 hover:underline">
+                          {person.phone}
+                        </a>
+                      ) : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Населений пункт</p>
+                    <p className="font-medium">{person.settlement || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Область</p>
+                    <p className="font-medium">{person.region || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Адреса проживання</p>
+                    <p className="font-medium">{person.address || '-'}</p>
+                  </div>
+                  {person.photos && person.photos.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Фото ({person.photos.length})</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {person.photos.map((photoUrl: string, photoIndex: number) => (
+                          <img
+                            key={photoIndex}
+                            src={photoUrl}
+                            alt={`Фото ${photoIndex + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => window.open(photoUrl, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-600">Коли бачили востаннє</p>
+                    <p className="font-medium">{person.last_seen_datetime ? formatDateTime(person.last_seen_datetime) : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Де бачили востаннє</p>
+                    <p className="font-medium">{person.last_seen_place || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Опис</p>
+                    <p className="font-medium whitespace-pre-wrap">{person.description || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Особливі прикмети</p>
+                    <p className="font-medium whitespace-pre-wrap">{person.special_signs || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Захворювання</p>
+                    <p className="font-medium whitespace-pre-wrap">{person.diseases || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Одяг</p>
+                    <p className="font-medium whitespace-pre-wrap">{person.clothing || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Що було з собою</p>
+                    <p className="font-medium whitespace-pre-wrap">{person.belongings || '-'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Дані зниклого</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">Немає даних про зниклих</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Additional Search Information */}
           <Card>
