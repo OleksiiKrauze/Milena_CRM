@@ -1,5 +1,6 @@
 from app.models.user import User, Role, Direction, UserStatus, user_roles, user_directions
 from app.models.case import Case
+from app.models.missing_person import MissingPerson
 from app.models.search import Search, SearchStatus
 from app.models.flyer import Flyer
 from app.models.flyer_template import FlyerTemplate, TemplateType
@@ -15,6 +16,7 @@ from app.models.notification_setting import NotificationSetting
 __all__ = [
     'User', 'Role', 'Direction', 'UserStatus', 'user_roles', 'user_directions',
     'Case',
+    'MissingPerson',
     'Search', 'SearchStatus',
     'Flyer',
     'FlyerTemplate', 'TemplateType',

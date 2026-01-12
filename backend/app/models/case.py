@@ -30,9 +30,11 @@ class Case(Base):
     missing_region = Column(String(200))
     missing_address = Column(String(500))
 
-    # Missing person data - split name fields
-    missing_last_name = Column(String(100), nullable=False)
-    missing_first_name = Column(String(100), nullable=False)
+    # LEGACY: Missing person data - kept for backward compatibility
+    # New cases use missing_persons relationship (separate table)
+    # These fields are populated from first missing_person for old API compatibility
+    missing_last_name = Column(String(100), nullable=True)  # Changed to nullable
+    missing_first_name = Column(String(100), nullable=True)  # Changed to nullable
     missing_middle_name = Column(String(100))
     missing_gender = Column(String(20))
     missing_birthdate = Column(DateTime(timezone=True))
@@ -73,6 +75,7 @@ class Case(Base):
     created_by = relationship('User', foreign_keys=[created_by_user_id])
     updated_by = relationship('User', foreign_keys=[updated_by_user_id])
     police_contact = relationship('User', foreign_keys=[police_contact_user_id])
+    missing_persons = relationship('MissingPerson', back_populates='case', cascade='all, delete-orphan', order_by='MissingPerson.order_index')
     searches = relationship('Search', back_populates='case', cascade='all, delete-orphan')
 
     @property
