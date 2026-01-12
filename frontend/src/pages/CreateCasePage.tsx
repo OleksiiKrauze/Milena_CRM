@@ -226,15 +226,25 @@ export function CreateCasePage() {
     // Process each missing person's date/time fields
     if (data.missing_persons && data.missing_persons.length > 0) {
       data.missing_persons = data.missing_persons.map((mp: any) => {
-        // Combine last_seen_date and last_seen_time
-        if (mp.last_seen_date || mp.last_seen_time) {
-          const date = mp.last_seen_date || new Date().toISOString().split('T')[0];
-          const time = mp.last_seen_time || '00:00';
-          mp.last_seen_datetime = `${date}T${time}:00`;
-          delete mp.last_seen_date;
-          delete mp.last_seen_time;
+        // Clean empty strings - convert to undefined for optional fields
+        const cleanedMp: any = {};
+        for (const [key, value] of Object.entries(mp)) {
+          if (value === '') {
+            cleanedMp[key] = undefined;
+          } else {
+            cleanedMp[key] = value;
+          }
         }
-        return mp;
+
+        // Combine last_seen_date and last_seen_time
+        if (cleanedMp.last_seen_date || cleanedMp.last_seen_time) {
+          const date = cleanedMp.last_seen_date || new Date().toISOString().split('T')[0];
+          const time = cleanedMp.last_seen_time || '00:00';
+          cleanedMp.last_seen_datetime = `${date}T${time}:00`;
+          delete cleanedMp.last_seen_date;
+          delete cleanedMp.last_seen_time;
+        }
+        return cleanedMp;
       });
 
       // Auto-populate case-level location from first missing person for backward compatibility
