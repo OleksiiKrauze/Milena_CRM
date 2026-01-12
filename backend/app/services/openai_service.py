@@ -196,36 +196,36 @@ class OpenAIService:
             flat_result = {}
 
             # General data - поля верхнього рівня форми
-            if "general" in result and result["general"]:
+            if "general" in result and result["general"] and isinstance(result["general"], dict):
                 for key, value in result["general"].items():
                     # basis з промпту йде безпосередньо в basis в БД (поле "Підстава" зверху форми)
                     flat_result[key] = normalize_field_value(value, key)
 
             # Applicant data
-            if "applicant" in result and result["applicant"]:
+            if "applicant" in result and result["applicant"] and isinstance(result["applicant"], dict):
                 for key, value in result["applicant"].items():
                     field_name = f"applicant_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
             # Missing person location
-            if "missing_location" in result and result["missing_location"]:
+            if "missing_location" in result and result["missing_location"] and isinstance(result["missing_location"], dict):
                 for key, value in result["missing_location"].items():
                     field_name = f"missing_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
             # Missing person data
-            if "missing_person" in result and result["missing_person"]:
+            if "missing_person" in result and result["missing_person"] and isinstance(result["missing_person"], dict):
                 for key, value in result["missing_person"].items():
                     field_name = f"missing_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
             # Additional data
-            if "additional" in result and result["additional"]:
+            if "additional" in result and result["additional"] and isinstance(result["additional"], dict):
                 for key, value in result["additional"].items():
                     flat_result[key] = normalize_field_value(value, key)
 
             # Police data
-            if "police" in result and result["police"]:
+            if "police" in result and result["police"] and isinstance(result["police"], dict):
                 for key, value in result["police"].items():
                     field_name = f"police_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
