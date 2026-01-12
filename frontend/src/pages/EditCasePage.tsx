@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,8 +10,31 @@ import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
 import { utcToLocalDateTimeInput } from '@/utils/formatters';
 import { Container, Button, Input, Card, CardContent, Loading } from '@/components/ui';
-import { X, Upload, Sparkles } from 'lucide-react';
+import { X, Upload, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { UKRAINIAN_REGIONS } from '@/constants/regions';
+import { MissingPersonBlock } from '@/components/MissingPersonBlock';
+
+// Schema for a single missing person
+const missingPersonSchema = z.object({
+  last_name: z.string().min(2, 'Мінімум 2 символи'),
+  first_name: z.string().min(2, 'Мінімум 2 символи'),
+  middle_name: z.string().optional(),
+  gender: z.string().optional(),
+  birthdate: z.string().optional(),
+  phone: z.string().optional(),
+  settlement: z.string().optional(),
+  region: z.string().optional(),
+  address: z.string().optional(),
+  last_seen_date: z.string().optional(),
+  last_seen_time: z.string().optional(),
+  last_seen_place: z.string().optional(),
+  photos: z.array(z.string()).optional(),
+  description: z.string().optional(),
+  special_signs: z.string().optional(),
+  diseases: z.string().optional(),
+  clothing: z.string().optional(),
+  belongings: z.string().optional(),
+});
 
 const editCaseSchema = z.object({
   // Allow editing created_at
@@ -24,25 +47,8 @@ const editCaseSchema = z.object({
   applicant_middle_name: z.string().optional(),
   applicant_phone: z.string().optional(),
   applicant_relation: z.string().optional(),
-  // Missing person - location fields
-  missing_settlement: z.string().optional(),
-  missing_region: z.string().optional(),
-  missing_address: z.string().optional(),
-  // Missing person - split name fields
-  missing_last_name: z.string().min(2, 'Мінімум 2 символи'),
-  missing_first_name: z.string().min(2, 'Мінімум 2 символи'),
-  missing_middle_name: z.string().optional(),
-  missing_gender: z.string().optional(),
-  missing_birthdate: z.string().optional(),
-  missing_last_seen_date: z.string().optional(),
-  missing_last_seen_time: z.string().optional(),
-  missing_last_seen_place: z.string().optional(),
-  missing_description: z.string().optional(),
-  missing_special_signs: z.string().optional(),
-  missing_diseases: z.string().optional(),
-  missing_phone: z.string().optional(),
-  missing_clothing: z.string().optional(),
-  missing_belongings: z.string().optional(),
+  // NEW: Array of missing persons
+  missing_persons: z.array(missingPersonSchema).min(1, 'Потрібен хоча б один зниклий'),
   // Additional case information
   additional_search_regions: z.string().optional(),
   search_terrain_type: z.string().optional(),
@@ -67,9 +73,7 @@ export function EditCasePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [apiError, setApiError] = useState<string | null>(null);
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const [notesImages, setNotesImages] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
 
   const { data: caseData, isLoading } = useQuery({
@@ -83,10 +87,16 @@ export function EditCasePage() {
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
+      missing_persons: [{ last_name: '', first_name: '', photos: [] }],
     },
   });
-  const { register, handleSubmit, formState, reset, setValue, getValues, watch } = form;
+  const { register, handleSubmit, formState, reset, setValue, getValues, watch, control } = form;
   const errors = formState.errors;
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'missing_persons',
+  });
 
   // Fetch users for police contact dropdown
   const { data: users = [] } = useQuery({
@@ -118,32 +128,35 @@ export function EditCasePage() {
         applicant_middle_name: caseData.applicant_middle_name || '',
         applicant_phone: caseData.applicant_phone || '',
         applicant_relation: caseData.applicant_relation || '',
-        missing_settlement: caseData.missing_settlement || '',
-        missing_region: caseData.missing_region || '',
-        missing_address: caseData.missing_address || '',
-        missing_last_name: caseData.missing_last_name,
-        missing_first_name: caseData.missing_first_name,
-        missing_middle_name: caseData.missing_middle_name || '',
-        missing_gender: caseData.missing_gender || '',
-        missing_birthdate: caseData.missing_birthdate ? caseData.missing_birthdate.split('T')[0] : '',
-        missing_last_seen_datetime: caseData.missing_last_seen_datetime
-          ? (() => {
-              const date = new Date(caseData.missing_last_seen_datetime);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              const hours = String(date.getHours()).padStart(2, '0');
-              const minutes = String(date.getMinutes()).padStart(2, '0');
-              return `${year}-${month}-${day}T${hours}:${minutes}`;
-            })()
-          : '',
-        missing_last_seen_place: caseData.missing_last_seen_place || '',
-        missing_description: caseData.missing_description || '',
-        missing_special_signs: caseData.missing_special_signs || '',
-        missing_diseases: caseData.missing_diseases || '',
-        missing_phone: caseData.missing_phone || '',
-        missing_clothing: caseData.missing_clothing || '',
-        missing_belongings: caseData.missing_belongings || '',
+        missing_persons: caseData.missing_persons && caseData.missing_persons.length > 0
+          ? caseData.missing_persons.map((mp: any) => ({
+              last_name: mp.last_name || '',
+              first_name: mp.first_name || '',
+              middle_name: mp.middle_name || '',
+              gender: mp.gender || '',
+              birthdate: mp.birthdate ? mp.birthdate.split('T')[0] : '',
+              phone: mp.phone || '',
+              settlement: mp.settlement || '',
+              region: mp.region || '',
+              address: mp.address || '',
+              last_seen_date: mp.last_seen_datetime ? mp.last_seen_datetime.split('T')[0] : '',
+              last_seen_time: mp.last_seen_datetime
+                ? (() => {
+                    const date = new Date(mp.last_seen_datetime);
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  })()
+                : '',
+              last_seen_place: mp.last_seen_place || '',
+              photos: mp.photos || [],
+              description: mp.description || '',
+              special_signs: mp.special_signs || '',
+              diseases: mp.diseases || '',
+              clothing: mp.clothing || '',
+              belongings: mp.belongings || '',
+            }))
+          : [{ last_name: '', first_name: '', photos: [] }],
         additional_search_regions: caseData.additional_search_regions?.join(', ') || '',
         search_terrain_type: caseData.search_terrain_type || '',
         disappearance_circumstances: caseData.disappearance_circumstances || '',
@@ -158,33 +171,10 @@ export function EditCasePage() {
         decision_comment: caseData.decision_comment || '',
         tags: caseData.tags.join(', '),
       });
-      setUploadedPhotos(caseData.missing_photos || []);
       setNotesImages(caseData.notes_images || []);
     }
   }, [caseData, reset]);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setIsUploading(true);
-    setApiError(null);
-
-    try {
-      const filesArray = Array.from(files);
-      const uploadedUrls = await uploadApi.uploadImages(filesArray);
-      setUploadedPhotos((prev) => [...prev, ...uploadedUrls]);
-    } catch (error: any) {
-      setApiError(error.message || 'Помилка завантаження фото');
-    } finally {
-      setIsUploading(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleRemovePhoto = (photoUrl: string) => {
-    setUploadedPhotos((prev) => prev.filter((url) => url !== photoUrl));
-  };
 
   const handleNotesImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -280,7 +270,6 @@ export function EditCasePage() {
 
       const finalData = {
         ...cleanedData,
-        missing_photos: uploadedPhotos,
         notes_images: notesImages,
         tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
         additional_search_regions: additional_search_regions
@@ -306,13 +295,19 @@ export function EditCasePage() {
   const onSubmit = (data: any) => {
     setApiError(null);
 
-    // Combine missing_last_seen_date and missing_last_seen_time into missing_last_seen_datetime
-    if (data.missing_last_seen_date || data.missing_last_seen_time) {
-      const date = data.missing_last_seen_date || new Date().toISOString().split('T')[0];
-      const time = data.missing_last_seen_time || '00:00';
-      data.missing_last_seen_datetime = `${date}T${time}:00`;
-      delete data.missing_last_seen_date;
-      delete data.missing_last_seen_time;
+    // Process each missing person's date/time fields
+    if (data.missing_persons && data.missing_persons.length > 0) {
+      data.missing_persons = data.missing_persons.map((mp: any) => {
+        // Combine last_seen_date and last_seen_time
+        if (mp.last_seen_date || mp.last_seen_time) {
+          const date = mp.last_seen_date || new Date().toISOString().split('T')[0];
+          const time = mp.last_seen_time || '00:00';
+          mp.last_seen_datetime = `${date}T${time}:00`;
+          delete mp.last_seen_date;
+          delete mp.last_seen_time;
+        }
+        return mp;
+      });
     }
 
     // Convert police_contact_user_id from string to number
@@ -425,250 +420,38 @@ export function EditCasePage() {
             </CardContent>
           </Card>
 
-          {/* Missing Person Info */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Дані зниклого</h3>
+          {/* Missing Persons - Dynamic Blocks */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">Дані зниклих</h2>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => append({
+                  last_name: '',
+                  first_name: '',
+                  photos: [],
+                })}
+                className="inline-flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Додати ще одного зниклого
+              </Button>
+            </div>
 
-              <Input
-                label="Населений пункт"
-                placeholder="Київ"
-                error={errors.missing_settlement?.message}
-                {...register('missing_settlement')}
+            {fields.map((field, index) => (
+              <MissingPersonBlock
+                key={field.id}
+                index={index}
+                register={register}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                onRemove={() => remove(index)}
+                canRemove={fields.length > 1}
               />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Область
-                </label>
-                <select
-                  {...register('missing_region')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Оберіть область</option>
-                  {UKRAINIAN_REGIONS.map((region) => (
-                    <option
-                      key={region.value}
-                      value={region.value}
-                      style={region.isPriority ? { fontWeight: 'bold' } : {}}
-                    >
-                      {region.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.missing_region && (
-                  <p className="mt-1 text-sm text-red-600">{errors.missing_region.message}</p>
-                )}
-              </div>
-
-              <Input
-                label="Адреса проживання"
-                placeholder="вул. Хрещатик, буд. 1, кв. 5"
-                error={errors.missing_address?.message}
-                {...register('missing_address')}
-              />
-
-              <Input
-                label="Прізвище зниклого"
-                placeholder="Коваль"
-                error={errors.missing_last_name?.message}
-                {...register('missing_last_name')}
-                required
-              />
-
-              <Input
-                label="Ім'я зниклого"
-                placeholder="Іван"
-                error={errors.missing_first_name?.message}
-                {...register('missing_first_name')}
-                required
-              />
-
-              <Input
-                label="По батькові зниклого (необов'язково)"
-                placeholder="Петрович"
-                error={errors.missing_middle_name?.message}
-                {...register('missing_middle_name')}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Стать
-                </label>
-                <select
-                  {...register('missing_gender')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Не вказано</option>
-                  <option value="чоловіча">Чоловіча</option>
-                  <option value="жіноча">Жіноча</option>
-                </select>
-                {errors.missing_gender && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_gender.message}</p>
-                )}
-              </div>
-
-              <Input
-                label="Дата народження"
-                type="date"
-                error={errors.missing_birthdate?.message}
-                {...register('missing_birthdate')}
-              />
-
-              {/* Photo Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Фото зниклого
-                </label>
-
-                {/* Upload Button */}
-                <div className="mb-3">
-                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                    <Upload className="h-4 w-4" />
-                    <span>{isUploading ? 'Завантаження...' : 'Додати фото'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      disabled={isUploading}
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Можна завантажити декілька фото. Максимум 10 файлів, до 10 МБ кожен.
-                  </p>
-                </div>
-
-                {/* Photo Previews */}
-                {uploadedPhotos.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {uploadedPhotos.map((photoUrl, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={photoUrl}
-                          alt={`Фото ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePhoto(photoUrl)}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-lg"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Дата коли бачили востаннє"
-                  type="date"
-                  error={errors.missing_last_seen_date?.message}
-                  {...register('missing_last_seen_date')}
-                />
-                <Input
-                  label="Час коли бачили востаннє"
-                  type="time"
-                  error={errors.missing_last_seen_time?.message}
-                  {...register('missing_last_seen_time')}
-                />
-              </div>
-
-              <Input
-                label="Останнє місце, де бачили"
-                placeholder="м. Київ, вул. Хрещатик, буд. 1"
-                error={errors.missing_last_seen_place?.message}
-                {...register('missing_last_seen_place')}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Опис (зріст, тілобудова, одяг тощо)
-                </label>
-                <textarea
-                  {...register('missing_description')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={3}
-                  placeholder="Зріст 175 см, худорлявої статури, була в синій куртці..."
-                />
-                {errors.missing_description && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_description.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Особливі прикмети (шрами, татуювання, особливості)
-                </label>
-                <textarea
-                  {...register('missing_special_signs')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={2}
-                  placeholder="Татуювання на лівому плечі, шрам на правій щоці..."
-                />
-                {errors.missing_special_signs && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_special_signs.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Захворювання (якщо є важливі діагнози)
-                </label>
-                <textarea
-                  {...register('missing_diseases')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={2}
-                  placeholder="Діабет, деменція, епілепсія..."
-                />
-                {errors.missing_diseases && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_diseases.message}</p>
-                )}
-              </div>
-
-              <Input
-                label="Номер телефону зниклого"
-                type="tel"
-                placeholder="+380991234567"
-                error={errors.missing_phone?.message}
-                {...register('missing_phone')}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Одяг
-                </label>
-                <textarea
-                  {...register('missing_clothing')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={2}
-                  placeholder="Синя куртка, чорні джинси, білі кросівки..."
-                />
-                {errors.missing_clothing && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_clothing.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Що було з собою
-                </label>
-                <textarea
-                  {...register('missing_belongings')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows={2}
-                  placeholder="Рюкзак, телефон, документи..."
-                />
-                {errors.missing_belongings && (
-                  <p className="text-sm text-red-600 mt-1">{errors.missing_belongings.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
 
           {/* Additional Search Information */}
           <Card>
