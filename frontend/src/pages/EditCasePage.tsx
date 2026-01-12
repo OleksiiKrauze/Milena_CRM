@@ -112,17 +112,7 @@ export function EditCasePage() {
   useEffect(() => {
     if (caseData) {
       reset({
-        created_at: caseData.created_at
-          ? (() => {
-              const date = new Date(caseData.created_at);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              const hours = String(date.getHours()).padStart(2, '0');
-              const minutes = String(date.getMinutes()).padStart(2, '0');
-              return `${year}-${month}-${day}T${hours}:${minutes}`;
-            })()
-          : '',
+        created_at: caseData.created_at ? utcToLocalDateTimeInput(caseData.created_at) : '',
         basis: caseData.basis || '',
         applicant_last_name: caseData.applicant_last_name,
         applicant_first_name: caseData.applicant_first_name,
@@ -140,15 +130,8 @@ export function EditCasePage() {
               settlement: mp.settlement || '',
               region: mp.region || '',
               address: mp.address || '',
-              last_seen_date: mp.last_seen_datetime ? mp.last_seen_datetime.split('T')[0] : '',
-              last_seen_time: mp.last_seen_datetime
-                ? (() => {
-                    const date = new Date(mp.last_seen_datetime);
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    return `${hours}:${minutes}`;
-                  })()
-                : '',
+              last_seen_date: mp.last_seen_datetime ? utcToLocalDateTimeInput(mp.last_seen_datetime).split('T')[0] : '',
+              last_seen_time: mp.last_seen_datetime ? utcToLocalDateTimeInput(mp.last_seen_datetime).split('T')[1] : '',
               last_seen_place: mp.last_seen_place || '',
               photos: mp.photos || [],
               description: mp.description || '',
