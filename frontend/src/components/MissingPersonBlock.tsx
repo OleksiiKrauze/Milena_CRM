@@ -131,6 +131,28 @@ export function MissingPersonBlock({
           {...register(`missing_persons.${index}.phone`)}
         />
 
+        {/* Location */}
+        <Input
+          label="Населений пункт"
+          placeholder="Київ"
+          error={errors?.missing_persons?.[index]?.settlement?.message}
+          {...register(`missing_persons.${index}.settlement`)}
+        />
+
+        <Input
+          label="Область"
+          placeholder="Київська"
+          error={errors?.missing_persons?.[index]?.region?.message}
+          {...register(`missing_persons.${index}.region`)}
+        />
+
+        <Input
+          label="Адреса проживання"
+          placeholder="вул. Хрещатик, буд. 1, кв. 5"
+          error={errors?.missing_persons?.[index]?.address?.message}
+          {...register(`missing_persons.${index}.address`)}
+        />
+
         {/* Photos Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
