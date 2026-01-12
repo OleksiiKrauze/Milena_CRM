@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from app.schemas.search import SearchResponse
 
 from app.schemas.auth import UserBrief
+from app.schemas.missing_person import MissingPersonCreate, MissingPersonUpdate, MissingPerson
 
 
 class CaseCreate(BaseModel):
@@ -28,9 +29,10 @@ class CaseCreate(BaseModel):
     missing_region: Optional[str] = Field(None, max_length=200)
     missing_address: Optional[str] = Field(None, max_length=500)
 
-    # Missing person info - split name fields
-    missing_last_name: str = Field(..., min_length=1, max_length=100)
-    missing_first_name: str = Field(..., min_length=1, max_length=100)
+    # LEGACY: Missing person info - kept for backward compatibility with old API
+    # New cases should use missing_persons array instead
+    missing_last_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    missing_first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     missing_middle_name: Optional[str] = Field(None, max_length=100)
     missing_gender: Optional[str] = Field(None, max_length=20)
     missing_birthdate: Optional[datetime] = None
@@ -43,6 +45,9 @@ class CaseCreate(BaseModel):
     missing_phone: Optional[str] = Field(None, max_length=50)
     missing_clothing: Optional[str] = None
     missing_belongings: Optional[str] = None
+
+    # NEW: Multiple missing persons support
+    missing_persons: List[MissingPersonCreate] = []
 
     # Additional case information
     additional_search_regions: Optional[List[str]] = []
@@ -87,7 +92,7 @@ class CaseUpdate(BaseModel):
     missing_region: Optional[str] = Field(None, max_length=200)
     missing_address: Optional[str] = Field(None, max_length=500)
 
-    # Missing person info - split name fields
+    # LEGACY: Missing person info - kept for backward compatibility
     missing_last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     missing_first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     missing_middle_name: Optional[str] = Field(None, max_length=100)
@@ -102,6 +107,9 @@ class CaseUpdate(BaseModel):
     missing_phone: Optional[str] = Field(None, max_length=50)
     missing_clothing: Optional[str] = None
     missing_belongings: Optional[str] = None
+
+    # NEW: Multiple missing persons support (replaces entire list if provided)
+    missing_persons: Optional[List[MissingPersonCreate]] = None
 
     # Additional case information
     additional_search_regions: Optional[List[str]] = None
@@ -151,9 +159,10 @@ class CaseResponse(BaseModel):
     missing_region: Optional[str]
     missing_address: Optional[str]
 
-    # Missing person info - split name fields
-    missing_last_name: str
-    missing_first_name: str
+    # LEGACY: Missing person info - populated from first missing_person for backward compatibility
+    # Deprecated: Use missing_persons array instead
+    missing_last_name: Optional[str]
+    missing_first_name: Optional[str]
     missing_middle_name: Optional[str]
     missing_gender: Optional[str]
     missing_birthdate: Optional[datetime]
@@ -166,6 +175,9 @@ class CaseResponse(BaseModel):
     missing_phone: Optional[str]
     missing_clothing: Optional[str]
     missing_belongings: Optional[str]
+
+    # NEW: Multiple missing persons support
+    missing_persons: List[MissingPerson] = []
 
     # Additional case information
     additional_search_regions: List[str]
