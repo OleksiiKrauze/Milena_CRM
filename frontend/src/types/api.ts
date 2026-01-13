@@ -229,6 +229,30 @@ export interface SearchFull extends Search {
   events?: Event[];
 }
 
+// Missing Person types
+export interface MissingPerson {
+  id: number;
+  case_id: number;
+  last_name: string;
+  first_name: string;
+  middle_name: string | null;
+  gender: string | null;
+  birthdate: string | null;
+  phone: string | null;
+  settlement: string | null;
+  region: string | null;
+  address: string | null;
+  last_seen_datetime: string | null;
+  last_seen_place: string | null;
+  photos: string[];
+  description: string | null;
+  special_signs: string | null;
+  diseases: string | null;
+  clothing: string | null;
+  belongings: string | null;
+  order_index: number;
+}
+
 // Case types
 export interface Case {
   id: number;
@@ -288,6 +312,8 @@ export interface Case {
   tags: string[];
   // Latest search result (computed property)
   latest_search_result: string | null;
+  // Missing persons array (new structure)
+  missing_persons?: MissingPerson[];
 }
 
 export interface CaseCreate {

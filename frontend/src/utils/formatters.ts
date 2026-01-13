@@ -106,12 +106,7 @@ export function localDateTimeInputToUtc(localDateString: string): string {
     timeZone: 'Europe/Kiev',
   });
 
-  // Binary search to find the UTC timestamp that produces the desired Kyiv time
-  // Start with a reasonable guess (current date in UTC)
-  let low = Date.UTC(year, month - 1, day, hour - 3, minute); // UTC+3 in summer
-  let high = Date.UTC(year, month - 1, day, hour - 1, minute); // UTC+1 if something is off
-
-  // Try to match the exact Kyiv time by iterating
+  // Try to match the exact Kyiv time by iterating through possible UTC offsets
   for (let offset = 1; offset <= 4; offset++) {
     const testTimestamp = Date.UTC(year, month - 1, day, hour - offset, minute);
     const testDate = new Date(testTimestamp);
