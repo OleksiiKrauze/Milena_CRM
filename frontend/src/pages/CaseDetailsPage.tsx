@@ -193,7 +193,7 @@ export function CaseDetailsPage() {
               <Card key={person.id || index}>
                 <CardHeader>
                   <CardTitle>
-                    Дані зниклого {caseData.missing_persons.length > 1 ? `#${index + 1}` : ''}
+                    Дані зниклого {(caseData.missing_persons?.length || 0) > 1 ? `#${index + 1}` : ''}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">

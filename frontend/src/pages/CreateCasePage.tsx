@@ -11,7 +11,6 @@ import { Header } from '@/components/layout/Header';
 import { utcToLocalDateTimeInput } from '@/utils/formatters';
 import { Container, Button, Input, Card, CardContent } from '@/components/ui';
 import { X, Upload, Sparkles, Plus } from 'lucide-react';
-import { UKRAINIAN_REGIONS } from '@/constants/regions';
 import { MissingPersonBlock } from '@/components/MissingPersonBlock';
 
 // Schema for a single missing person
@@ -158,7 +157,7 @@ export function CreateCasePage() {
         }
 
         // Add each missing person from autofill result
-        autofillData.missing_persons.forEach((mp: any, index: number) => {
+        autofillData.missing_persons.forEach((mp: any) => {
           // Process date/time fields for this person
           const processedMp: any = {};
 
