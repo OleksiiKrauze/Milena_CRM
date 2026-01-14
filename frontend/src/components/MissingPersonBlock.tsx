@@ -24,9 +24,12 @@ export function MissingPersonBlock({
 }: MissingPersonBlockProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
 
-  // Watch photos for this missing person
+  // Watch photos and videos for this missing person
   const photos = watch(`missing_persons.${index}.photos`) || [];
+  const videos = watch(`missing_persons.${index}.videos`) || [];
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -51,6 +54,40 @@ export function MissingPersonBlock({
   const handleRemovePhoto = (photoUrl: string) => {
     const updatedPhotos = photos.filter((url: string) => url !== photoUrl);
     setValue(`missing_persons.${index}.photos`, updatedPhotos);
+  };
+
+  const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsVideoUploading(true);
+    setVideoUploadError(null);
+
+    try {
+      const filesArray = Array.from(files);
+
+      // Validate file size (100 MB max)
+      const maxSize = 100 * 1024 * 1024; // 100 MB
+      for (const file of filesArray) {
+        if (file.size > maxSize) {
+          throw new Error(`Файл ${file.name} перевищує 100 МБ`);
+        }
+      }
+
+      const uploadedUrls = await uploadApi.uploadMedia(filesArray);
+      const currentVideos = videos || [];
+      setValue(`missing_persons.${index}.videos`, [...currentVideos, ...uploadedUrls]);
+    } catch (error: any) {
+      setVideoUploadError(error.message || 'Помилка завантаження відео');
+    } finally {
+      setIsVideoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveVideo = (videoUrl: string) => {
+    const updatedVideos = videos.filter((url: string) => url !== videoUrl);
+    setValue(`missing_persons.${index}.videos`, updatedVideos);
   };
 
   return (
@@ -197,6 +234,57 @@ export function MissingPersonBlock({
                   >
                     <X className="h-4 w-4" />
                   </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Video Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Відео зниклого
+          </label>
+
+          <div className="mb-3">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+              <Upload className="h-4 w-4" />
+              <span>{isVideoUploading ? 'Завантаження...' : 'Вибрати відео'}</span>
+              <input
+                type="file"
+                accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                multiple
+                onChange={handleVideoSelect}
+                className="hidden"
+                disabled={isVideoUploading}
+              />
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Макс. 100 МБ на файл. Формати: MP4, MOV, AVI, MKV, WebM
+            </p>
+          </div>
+
+          {videoUploadError && (
+            <p className="text-sm text-red-600 mb-2">{videoUploadError}</p>
+          )}
+
+          {videos.length > 0 && (
+            <div className="space-y-2">
+              {videos.map((videoUrl: string, idx: number) => (
+                <div key={idx} className="relative group border rounded-lg p-2 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <video src={videoUrl} className="w-20 h-20 object-cover rounded" />
+                      <span className="text-sm text-gray-700">Відео {idx + 1}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVideo(videoUrl)}
+                      className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -32,6 +32,9 @@ class MissingPerson(Base):
     # Photos - array of URLs
     photos = Column(ARRAY(String), default=list)
 
+    # Videos - array of URLs
+    videos = Column(ARRAY(String), default=list)
+
     # Description
     description = Column(Text)  # Physical description
     special_signs = Column(Text)  # Special signs/marks

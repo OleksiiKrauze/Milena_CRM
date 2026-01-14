@@ -20,7 +20,7 @@ ALLOWED_MEDIA_EXTENSIONS = {
     ".gpx", ".kml"                              # GPS tracks
 }
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-MAX_MEDIA_FILE_SIZE = 50 * 1024 * 1024  # 50 MB for video/audio
+MAX_MEDIA_FILE_SIZE = 100 * 1024 * 1024  # 100 MB for video/audio
 
 
 def validate_image_file(file: UploadFile) -> None:
@@ -125,7 +125,7 @@ async def upload_media(files: List[UploadFile] = File(...)):
         if len(content) > MAX_MEDIA_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File {file.filename} is too large. Maximum size: 50 MB"
+                detail=f"File {file.filename} is too large. Maximum size: 100 MB"
             )
 
         # Generate unique filename while preserving original name

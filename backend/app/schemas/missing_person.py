@@ -17,6 +17,7 @@ class MissingPersonBase(BaseModel):
     last_seen_datetime: Optional[datetime] = None
     last_seen_place: Optional[str] = None
     photos: Optional[List[str]] = []
+    videos: Optional[List[str]] = []
     description: Optional[str] = None
     special_signs: Optional[str] = None
     diseases: Optional[str] = None
@@ -43,6 +44,7 @@ class MissingPersonUpdate(BaseModel):
     last_seen_datetime: Optional[datetime] = None
     last_seen_place: Optional[str] = None
     photos: Optional[List[str]] = None
+    videos: Optional[List[str]] = None
     description: Optional[str] = None
     special_signs: Optional[str] = None
     diseases: Optional[str] = None

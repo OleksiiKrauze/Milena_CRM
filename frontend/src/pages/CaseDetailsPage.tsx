@@ -249,6 +249,25 @@ export function CaseDetailsPage() {
                       </div>
                     </div>
                   )}
+                  {person.videos && person.videos.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Відео ({person.videos.length})</p>
+                      <div className="space-y-2">
+                        {person.videos.map((videoUrl: string, idx: number) => (
+                          <div key={idx} className="border rounded-lg overflow-hidden">
+                            <video
+                              src={videoUrl}
+                              controls
+                              className="w-full max-h-64 bg-black"
+                              preload="metadata"
+                            >
+                              Ваш браузер не підтримує відео.
+                            </video>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm text-gray-600">Коли бачили востаннє</p>
                     <p className="font-medium">{person.last_seen_datetime ? formatDateTime(person.last_seen_datetime) : '-'}</p>

@@ -12,6 +12,7 @@ import { utcToLocalDateTimeInput } from '@/utils/formatters';
 import { Container, Button, Input, Card, CardContent } from '@/components/ui';
 import { X, Upload, Sparkles, Plus } from 'lucide-react';
 import { MissingPersonBlock } from '@/components/MissingPersonBlock';
+import { TagsCheckboxGroup } from '@/components/TagsCheckboxGroup';
 
 // Schema for a single missing person
 const missingPersonSchema = z.object({
@@ -28,6 +29,7 @@ const missingPersonSchema = z.object({
   last_seen_time: z.string().optional(),
   last_seen_place: z.string().optional(),
   photos: z.array(z.string()).optional(),
+  videos: z.array(z.string()).optional(),
   description: z.string().optional(),
   special_signs: z.string().optional(),
   diseases: z.string().optional(),
@@ -76,6 +78,7 @@ export function CreateCasePage() {
   const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const form: any = useForm({
     resolver: zodResolver(createCaseSchema) as any,
@@ -200,8 +203,12 @@ export function CreateCasePage() {
 
         // Only set value if it's not null or undefined
         if (value !== null && value !== undefined && value !== '') {
-          // Handle array fields (tags, additional_search_regions)
-          if (Array.isArray(value)) {
+          // Handle tags separately - use state instead of form field
+          if (key === 'tags' && Array.isArray(value)) {
+            setSelectedTags(value);
+          }
+          // Handle other array fields (additional_search_regions)
+          else if (Array.isArray(value)) {
             setValue(key, value.join(', '));
           }
           // Handle date fields - extract date part for date input
@@ -249,7 +256,7 @@ export function CreateCasePage() {
       const finalData = {
         ...cleanedData,
         notes_images: notesImages,
-        tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
+        tags: selectedTags,
         additional_search_regions: additional_search_regions
           ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
@@ -675,15 +682,11 @@ export function CreateCasePage() {
                 )}
               </div>
 
-              <Input
-                label="Теги (через кому)"
-                placeholder="дитина, літня людина, деменція"
+              <TagsCheckboxGroup
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
                 error={errors.tags?.message}
-                {...register('tags')}
               />
-              <p className="text-xs text-gray-500 -mt-2">
-                Введіть теги через кому для полегшення пошуку (наприклад: дитина, пожилий, деменція)
-              </p>
             </CardContent>
           </Card>
 

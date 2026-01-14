@@ -311,6 +311,18 @@ class OpenAIService:
                     field_name = f"police_{key}"
                     flat_result[field_name] = normalize_field_value(value, field_name)
 
+            # Validate tags - only predefined tags allowed
+            if "tags" in flat_result and flat_result["tags"]:
+                PREDEFINED_TAGS = [
+                    "Дитина до 14", "Підліток 14-18", "Дорослий 18-60", "Літня людина 60+",
+                    "Проблеми з пам'яттю", "Потребує медичної допомоги", "Дезорієнтація",
+                    "Алкогольна залежність", "Наркотична залежність", "Військовий",
+                    "Рецидив", "Психічні розлади", "Особа з інвалідністю",
+                    "Суїцидальні нахили", "Схильність до агресії"
+                ]
+                if isinstance(flat_result["tags"], list):
+                    flat_result["tags"] = [tag for tag in flat_result["tags"] if tag in PREDEFINED_TAGS]
+
             return flat_result
 
         except Exception as e:

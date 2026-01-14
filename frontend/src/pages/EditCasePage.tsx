@@ -12,6 +12,7 @@ import { utcToLocalDateTimeInput, localDateTimeInputToUtc } from '@/utils/format
 import { Container, Button, Input, Card, CardContent, Loading } from '@/components/ui';
 import { X, Upload, Sparkles, Plus } from 'lucide-react';
 import { MissingPersonBlock } from '@/components/MissingPersonBlock';
+import { TagsCheckboxGroup } from '@/components/TagsCheckboxGroup';
 
 // Schema for a single missing person
 const missingPersonSchema = z.object({
@@ -28,6 +29,7 @@ const missingPersonSchema = z.object({
   last_seen_time: z.string().optional(),
   last_seen_place: z.string().optional(),
   photos: z.array(z.string()).optional(),
+  videos: z.array(z.string()).optional(),
   description: z.string().optional(),
   special_signs: z.string().optional(),
   diseases: z.string().optional(),
@@ -75,6 +77,7 @@ export function EditCasePage() {
   const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isNotesUploading, setIsNotesUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data: caseData, isLoading } = useQuery({
     queryKey: ['case', id],
@@ -152,9 +155,9 @@ export function EditCasePage() {
         notes_text: caseData.notes_text || '',
         decision_type: caseData.decision_type,
         decision_comment: caseData.decision_comment || '',
-        tags: caseData.tags.join(', '),
       });
       setNotesImages(caseData.notes_images || []);
+      setSelectedTags(caseData.tags || []);
     }
   }, [caseData, reset]);
 
@@ -303,7 +306,7 @@ export function EditCasePage() {
       const finalData = {
         ...cleanedData,
         notes_images: notesImages,
-        tags: tags ? tags.split(',').map((t: any) => t.trim()).filter(Boolean) : [],
+        tags: selectedTags,
         additional_search_regions: additional_search_regions
           ? additional_search_regions.split(',').map((r: any) => r.trim()).filter(Boolean)
           : [],
@@ -769,15 +772,11 @@ export function EditCasePage() {
                 )}
               </div>
 
-              <Input
-                label="Теги (через кому)"
-                placeholder="дитина, літня людина, деменція"
+              <TagsCheckboxGroup
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
                 error={errors.tags?.message}
-                {...register('tags')}
               />
-              <p className="text-xs text-gray-500 -mt-2">
-                Введіть теги через кому для полегшення пошуку (наприклад: дитина, пожилий, деменція)
-              </p>
             </CardContent>
           </Card>
 

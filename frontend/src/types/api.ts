@@ -245,6 +245,7 @@ export interface MissingPerson {
   last_seen_datetime: string | null;
   last_seen_place: string | null;
   photos: string[];
+  videos: string[];
   description: string | null;
   special_signs: string | null;
   diseases: string | null;
