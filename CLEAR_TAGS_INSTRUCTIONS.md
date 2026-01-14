@@ -61,8 +61,9 @@ cd ~/Milena_CRM
 ### Шаг 2: Бэкап базы данных (ОБЯЗАТЕЛЬНО!)
 
 ```bash
-# Создать бэкап
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db pg_dump -U milena_user -d milenacrm > backup_before_clear_tags_$(date +%Y%m%d_%H%M%S).sql
+# Создать бэкап (ВАЖНО: используйте правильные credentials из .env.production)
+# На production: POSTGRES_USER=crm_user_prod, POSTGRES_DB=crm_production
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db pg_dump -U crm_user_prod -d crm_production > backup_before_clear_tags_$(date +%Y%m%d_%H%M%S).sql
 
 # Проверить что бэкап создан
 ls -lh backup_before_clear_tags_*.sql
@@ -72,17 +73,17 @@ ls -lh backup_before_clear_tags_*.sql
 
 ```bash
 # Выполнить скрипт очистки тегов
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T db psql -U milena_user -d milenacrm < clear_old_tags.sql
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T db psql -U crm_user_prod -d crm_production < clear_old_tags.sql
 ```
 
 ### Шаг 4: Проверка результата
 
 ```bash
 # Проверить количество заявок с непустыми тегами (должно быть 0)
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db psql -U milena_user -d milenacrm -c "SELECT COUNT(*) FROM cases WHERE tags != ARRAY[]::varchar[];"
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db psql -U crm_user_prod -d crm_production -c "SELECT COUNT(*) FROM cases WHERE tags != ARRAY[]::varchar[];"
 
 # Посмотреть несколько заявок
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db psql -U milena_user -d milenacrm -c "SELECT id, applicant_first_name, applicant_last_name, tags FROM cases LIMIT 5;"
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec db psql -U crm_user_prod -d crm_production -c "SELECT id, applicant_first_name, applicant_last_name, tags FROM cases LIMIT 5;"
 ```
 
 ---
@@ -100,7 +101,7 @@ sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec d
 
 ```bash
 # Восстановить из бэкапа
-sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T db psql -U milena_user -d milenacrm < backup_before_clear_tags_YYYYMMDD_HHMMSS.sql
+sudo docker-compose -f docker-compose.prod.yml --env-file .env.production exec -T db psql -U crm_user_prod -d crm_production < backup_before_clear_tags_YYYYMMDD_HHMMSS.sql
 ```
 
 ---
@@ -145,8 +146,17 @@ UPDATE cases SET tags = ARRAY[]::varchar[] WHERE tags IS NULL;
 
 ## Troubleshooting
 
-### Ошибка: "permission denied for table cases"
-**Решение:** Убедитесь что используете правильного пользователя БД (crm_user на localhost, milena_user на production)
+### Ошибка: "permission denied for table cases" или "role does not exist"
+**Решение:** Убедитесь что используете правильного пользователя БД из .env файла:
+- Localhost: `crm_user` / `crm`
+- Production: `crm_user_prod` / `crm_production`
+
+Проверьте credentials:
+```bash
+# На production
+grep POSTGRES_USER .env.production
+grep POSTGRES_DB .env.production
+```
 
 ### Ошибка: "column tags does not exist"
 **Решение:** Убедитесь что структура таблицы содержит поле tags (было добавлено в более ранних миграциях)
