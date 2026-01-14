@@ -91,6 +91,7 @@ export function CreateCasePage() {
           first_name: '',
           middle_name: '',
           photos: [],
+          videos: [],
         },
       ],
     },
@@ -185,9 +186,12 @@ export function CreateCasePage() {
             delete processedMp.last_seen_datetime;
           }
 
-          // Ensure photos is an array
+          // Ensure photos and videos are arrays
           if (!processedMp.photos) {
             processedMp.photos = [];
+          }
+          if (!processedMp.videos) {
+            processedMp.videos = [];
           }
 
           append(processedMp);
@@ -391,6 +395,7 @@ export function CreateCasePage() {
                   last_name: '',
                   first_name: '',
                   photos: [],
+                  videos: [],
                 })}
                 className="inline-flex items-center gap-2"
               >

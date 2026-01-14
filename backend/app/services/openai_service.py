@@ -328,6 +328,10 @@ class OpenAIService:
                 for key, value in result["additional"].items():
                     flat_result[key] = normalize_field_value(value, key)
 
+            # Tags - can be at top level or inside additional
+            if "tags" in result and result["tags"]:
+                flat_result["tags"] = normalize_field_value(result["tags"], "tags")
+
             # Police data
             if "police" in result and result["police"] and isinstance(result["police"], dict):
                 for key, value in result["police"].items():

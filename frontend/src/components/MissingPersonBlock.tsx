@@ -26,6 +26,7 @@ export function MissingPersonBlock({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
   const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState<number>(0);
 
   // Watch photos and videos for this missing person
   const photos = watch(`missing_persons.${index}.photos`) || [];
@@ -62,6 +63,7 @@ export function MissingPersonBlock({
 
     setIsVideoUploading(true);
     setVideoUploadError(null);
+    setVideoUploadProgress(0);
 
     try {
       const filesArray = Array.from(files);
@@ -74,14 +76,19 @@ export function MissingPersonBlock({
         }
       }
 
+      setVideoUploadProgress(30); // Simulate progress
       const uploadedUrls = await uploadApi.uploadMedia(filesArray);
+
+      setVideoUploadProgress(80);
       const currentVideos = videos || [];
       setValue(`missing_persons.${index}.videos`, [...currentVideos, ...uploadedUrls]);
+      setVideoUploadProgress(100);
     } catch (error: any) {
       setVideoUploadError(error.message || 'Помилка завантаження відео');
     } finally {
       setIsVideoUploading(false);
       e.target.value = '';
+      setTimeout(() => setVideoUploadProgress(0), 1000);
     }
   };
 
@@ -247,7 +254,7 @@ export function MissingPersonBlock({
           </label>
 
           <div className="mb-3">
-            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               <Upload className="h-4 w-4" />
               <span>{isVideoUploading ? 'Завантаження...' : 'Вибрати відео'}</span>
               <input
@@ -263,6 +270,18 @@ export function MissingPersonBlock({
               Макс. 100 МБ на файл. Формати: MP4, MOV, AVI, MKV, WebM
             </p>
           </div>
+
+          {isVideoUploading && videoUploadProgress > 0 && (
+            <div className="mb-3">
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${videoUploadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">Завантаження: {videoUploadProgress}%</p>
+            </div>
+          )}
 
           {videoUploadError && (
             <p className="text-sm text-red-600 mb-2">{videoUploadError}</p>

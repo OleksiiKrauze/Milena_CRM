@@ -90,7 +90,7 @@ export function EditCasePage() {
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
-      missing_persons: [{ last_name: '', first_name: '', photos: [] }],
+      missing_persons: [{ last_name: '', first_name: '', photos: [], videos: [] }],
     },
   });
   const { register, handleSubmit, formState, reset, setValue, getValues, watch, control } = form;
@@ -136,13 +136,14 @@ export function EditCasePage() {
               last_seen_time: mp.last_seen_datetime ? utcToLocalDateTimeInput(mp.last_seen_datetime).split('T')[1] : '',
               last_seen_place: mp.last_seen_place || '',
               photos: mp.photos || [],
+              videos: mp.videos || [],
               description: mp.description || '',
               special_signs: mp.special_signs || '',
               diseases: mp.diseases || '',
               clothing: mp.clothing || '',
               belongings: mp.belongings || '',
             }))
-          : [{ last_name: '', first_name: '', photos: [] }],
+          : [{ last_name: '', first_name: '', photos: [], videos: [] }],
         additional_search_regions: caseData.additional_search_regions?.join(', ') || '',
         search_terrain_type: caseData.search_terrain_type || '',
         disappearance_circumstances: caseData.disappearance_circumstances || '',
@@ -234,9 +235,12 @@ export function EditCasePage() {
             delete processedMp.last_seen_datetime;
           }
 
-          // Ensure photos is an array
+          // Ensure photos and videos are arrays
           if (!processedMp.photos) {
             processedMp.photos = [];
+          }
+          if (!processedMp.videos) {
+            processedMp.videos = [];
           }
 
           append(processedMp);
@@ -482,6 +486,7 @@ export function EditCasePage() {
                   last_name: '',
                   first_name: '',
                   photos: [],
+                  videos: [],
                 })}
                 className="inline-flex items-center gap-2"
               >
