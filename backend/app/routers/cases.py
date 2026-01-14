@@ -165,7 +165,7 @@ def list_cases(
     date_from: str = Query(None, description="Filter cases from this date (YYYY-MM-DD)"),
     date_to: str = Query(None, description="Filter cases to this date (YYYY-MM-DD)"),
     period: str = Query(None, description="Quick filter: 10d, 30d, all"),
-    search_query: str = Query(None, description="Search by missing person's last name"),
+    search_query: str = Query(None, description="Universal search by name, initial_info, or phone"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -179,14 +179,22 @@ def list_cases(
         joinedload(Case.missing_persons)
     )
 
-    # Search by missing person's last name (search across all missing persons)
+    # Universal search: search by missing person's name, initial_info, applicant phone
     if search_query:
         search_term = f"%{search_query}%"
-        # Search in both legacy field and new missing_persons table
+        # Search in multiple fields: names, initial_info, phone
         query = query.outerjoin(MissingPerson).filter(
             or_(
+                # Search in missing person's last name
                 Case.missing_last_name.ilike(search_term),
-                MissingPerson.last_name.ilike(search_term)
+                MissingPerson.last_name.ilike(search_term),
+                # Search in missing person's first name
+                Case.missing_first_name.ilike(search_term),
+                MissingPerson.first_name.ilike(search_term),
+                # Search in initial_info (primary information text)
+                Case.initial_info.ilike(search_term),
+                # Search in applicant's phone
+                Case.applicant_phone.ilike(search_term)
             )
         ).distinct()
 

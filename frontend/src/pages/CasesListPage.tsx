@@ -78,13 +78,13 @@ export function CasesListPage() {
             {/* Search Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Пошук за прізвищем зниклого
+                Пошук по заявці
               </label>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Введіть прізвище..."
+                placeholder="ПІБ, телефон, текст з первинної інформації..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
