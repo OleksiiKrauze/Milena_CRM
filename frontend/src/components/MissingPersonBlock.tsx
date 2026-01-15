@@ -197,20 +197,16 @@ export function MissingPersonBlock({
             }`}
           >
             <option value="">Оберіть область</option>
-            <optgroup label="━━━ Пріоритетні області ━━━" className="font-bold">
-              {PRIORITY_REGIONS.map((region) => (
-                <option key={region} value={region} className="font-bold">
-                  {region}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="━━━ Інші області ━━━">
-              {OTHER_REGIONS.map((region) => (
-                <option key={region} value={region}>
-                  {region}
-                </option>
-              ))}
-            </optgroup>
+            {PRIORITY_REGIONS.map((region) => (
+              <option key={region} value={region} className="font-bold">
+                {region}
+              </option>
+            ))}
+            {OTHER_REGIONS.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
           </select>
           {errors?.missing_persons?.[index]?.region && (
             <p className="text-sm text-red-600 mt-1">
