@@ -37,9 +37,9 @@ self.addEventListener('push', (event: PushEvent) => {
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   console.log('[Service Worker] Notification clicked', event);
 
-  // Don't close the notification automatically - let user close it manually
-  // This prevents notifications from disappearing for other users
-  // event.notification.close();
+  // Close notification when clicked (standard behavior)
+  // Each user has unique tag (includes user_id), so won't affect other users
+  event.notification.close();
 
   // Get the URL to open from notification data
   const urlToOpen = event.notification.data?.url || '/';

@@ -84,11 +84,12 @@ class PushNotificationService:
             return {"sent": 0, "failed": 0, "reason": "disabled_by_user"}
 
         # Prepare notification payload
-        # Create unique tag to prevent notifications from replacing each other
-        # Include case_id if available in data, otherwise use timestamp
-        unique_tag = notification_type.value
+        # Create unique tag per user to prevent notifications from interfering with each other
+        # Include user_id to ensure each user has independent notifications
+        # This prevents one user's interaction from affecting other users' notifications
+        unique_tag = f"{notification_type.value}-user{user_id}"
         if data and "case_id" in data:
-            unique_tag = f"{notification_type.value}-{data['case_id']}"
+            unique_tag = f"{notification_type.value}-case{data['case_id']}-user{user_id}"
 
         payload = {
             "title": title,
