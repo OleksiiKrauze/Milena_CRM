@@ -203,7 +203,7 @@ def create_telegram_case(
             "basis": "Заявка з Telegram",
             "initial_info": case_data.initial_info,
             "decision_type": "На розгляді",
-            "tags": ["Заявка з Telegram"],
+            "tags": [],
         }
 
         # If autofill worked, merge extracted fields (filter out None values)

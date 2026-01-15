@@ -145,7 +145,7 @@ class PublicCaseCreate(BaseModel):
             "additional_info": self.additional_info,
             # Set decision type for public submissions
             "decision_type": "На розгляді",
-            "tags": ["Заявка з сайту"],
+            "tags": [],
             "police_report_filed": bool(self.police_report_info),
         }
 
