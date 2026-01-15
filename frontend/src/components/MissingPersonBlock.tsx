@@ -2,6 +2,7 @@ import { Input } from '@/components/ui';
 import { Upload, X, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { uploadApi } from '@/api/upload';
+import { PRIORITY_REGIONS, OTHER_REGIONS } from '@/constants/regions';
 
 interface MissingPersonBlockProps {
   index: number;
@@ -183,12 +184,40 @@ export function MissingPersonBlock({
           {...register(`missing_persons.${index}.settlement`)}
         />
 
-        <Input
-          label="Область"
-          placeholder="Київська"
-          error={errors?.missing_persons?.[index]?.region?.message}
-          {...register(`missing_persons.${index}.region`)}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Область
+          </label>
+          <select
+            {...register(`missing_persons.${index}.region`)}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+              errors?.missing_persons?.[index]?.region
+                ? 'border-red-500'
+                : 'border-gray-300'
+            }`}
+          >
+            <option value="">Оберіть область</option>
+            <optgroup label="━━━ Пріоритетні області ━━━" className="font-bold">
+              {PRIORITY_REGIONS.map((region) => (
+                <option key={region} value={region} className="font-bold">
+                  {region}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="━━━ Інші області ━━━">
+              {OTHER_REGIONS.map((region) => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+          {errors?.missing_persons?.[index]?.region && (
+            <p className="text-sm text-red-600 mt-1">
+              {errors.missing_persons[index].region.message}
+            </p>
+          )}
+        </div>
 
         <Input
           label="Адреса проживання"
