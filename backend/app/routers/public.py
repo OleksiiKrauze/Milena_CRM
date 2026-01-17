@@ -15,6 +15,7 @@ from app.schemas.public_case import (
 )
 from app.schemas.case import CaseCreate
 from app.models.case import Case
+from app.models.missing_person import MissingPerson
 from app.middleware.rate_limit import check_public_rate_limit, get_client_ip
 from app.core.logging_config import get_logger
 import os
@@ -113,6 +114,34 @@ def create_public_case(
         )
 
         db.add(db_case)
+        db.flush()  # Flush to get case ID before creating missing person
+
+        # Create MissingPerson record from legacy fields
+        # This ensures compatibility with new missing_persons array structure
+        db_missing_person = MissingPerson(
+            case_id=db_case.id,
+            last_name=validated_data.missing_last_name or "Невідомо",
+            first_name=validated_data.missing_first_name or "Невідомо",
+            middle_name=validated_data.missing_middle_name,
+            gender=validated_data.missing_gender,
+            birthdate=validated_data.missing_birthdate,
+            phone=validated_data.missing_phone,
+            settlement=validated_data.missing_settlement,
+            region=validated_data.missing_region,
+            address=validated_data.missing_address,
+            last_seen_datetime=validated_data.missing_last_seen_datetime,
+            last_seen_place=validated_data.missing_last_seen_place,
+            photos=validated_data.missing_photos or [],
+            videos=[],  # Public form doesn't support videos yet
+            description=validated_data.missing_description,
+            special_signs=validated_data.missing_special_signs,
+            diseases=validated_data.missing_diseases,
+            clothing=validated_data.missing_clothing,
+            belongings=validated_data.missing_belongings,
+            order_index=0
+        )
+        db.add(db_missing_person)
+
         db.commit()
         db.refresh(db_case)
 
@@ -269,6 +298,34 @@ def create_telegram_case(
         )
 
         db.add(db_case)
+        db.flush()  # Flush to get case ID before creating missing person
+
+        # Create MissingPerson record from legacy fields
+        # This ensures compatibility with new missing_persons array structure
+        db_missing_person = MissingPerson(
+            case_id=db_case.id,
+            last_name=validated_data.missing_last_name or "Невідомо",
+            first_name=validated_data.missing_first_name or "Невідомо",
+            middle_name=validated_data.missing_middle_name,
+            gender=validated_data.missing_gender,
+            birthdate=validated_data.missing_birthdate,
+            phone=validated_data.missing_phone,
+            settlement=validated_data.missing_settlement,
+            region=validated_data.missing_region,
+            address=validated_data.missing_address,
+            last_seen_datetime=validated_data.missing_last_seen_datetime,
+            last_seen_place=validated_data.missing_last_seen_place,
+            photos=validated_data.missing_photos or [],
+            videos=[],  # Telegram doesn't support videos in initial submission
+            description=validated_data.missing_description,
+            special_signs=validated_data.missing_special_signs,
+            diseases=validated_data.missing_diseases,
+            clothing=validated_data.missing_clothing,
+            belongings=validated_data.missing_belongings,
+            order_index=0
+        )
+        db.add(db_missing_person)
+
         db.commit()
         db.refresh(db_case)
 
