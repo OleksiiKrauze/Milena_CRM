@@ -13,7 +13,7 @@ from app.schemas.user import (
     DirectionResponse,
 )
 from app.models.user import User, Role, Direction, UserStatus
-from app.routers.auth import get_current_user, require_role
+from app.routers.auth import get_current_user, require_role, require_permission
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -41,7 +41,7 @@ def list_directions(
 @router.get("/brief", response_model=List[UserBrief])
 def list_users_brief(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("users:read"))
 ):
     """Get brief list of active users (id and full_name only) - available to all authenticated users"""
     users = db.query(User).filter(User.status == UserStatus.active).all()
@@ -71,7 +71,7 @@ def list_users(
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("users:read"))
 ):
     """Get user by ID"""
     db_user = db.query(User).filter(User.id == user_id).first()

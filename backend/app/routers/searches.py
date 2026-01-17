@@ -8,7 +8,7 @@ from app.models.search import Search, SearchStatus
 from app.models.case import Case
 from app.models.user import User
 from app.models.event import Event
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/searches", tags=["Searches"])
 def create_search(
     search_data: SearchCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:create"))
 ):
     """Create a new search for a case"""
     # Verify case exists
@@ -94,7 +94,7 @@ def list_searches(
     status_filter: Optional[str] = Query(None, description="Filter by search status"),
     result_filter: Optional[str] = Query(None, description="Filter by search result"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:read"))
 ):
     """Get list of searches with pagination and filters"""
     query = db.query(Search).options(
@@ -131,7 +131,7 @@ def list_searches(
 def get_search(
     search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:read"))
 ):
     """Get search by ID with latest orientation image"""
     from app.models.orientation import Orientation
@@ -166,7 +166,7 @@ def update_search(
     search_id: int,
     search_data: SearchUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:update"))
 ):
     """Update search by ID"""
     db_search = db.query(Search).filter(Search.id == search_id).first()
@@ -217,7 +217,7 @@ def update_search(
 def delete_search(
     search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:delete"))
 ):
     """Delete search by ID"""
     db_search = db.query(Search).filter(Search.id == search_id).first()
@@ -238,7 +238,7 @@ def delete_search(
 def get_search_full(
     search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("searches:read"))
 ):
     """Get search by ID with all related data (flyers, orientations, distributions, map grids, events)"""
     db_search = db.query(Search).options(

@@ -5,7 +5,7 @@ from sqlalchemy import func
 from app.db import get_db
 from app.schemas.role import RoleCreate, RoleUpdate, RoleResponse, PermissionsListResponse
 from app.models.user import Role, User, user_roles
-from app.routers.auth import get_current_user, require_role
+from app.routers.auth import get_current_user, require_role, require_permission
 from app.core.permissions import get_all_permissions, get_permission_info, get_permissions_by_resource
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
@@ -61,7 +61,7 @@ def create_role(
 @router.get("/", response_model=List[RoleResponse])
 def list_roles(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("roles:read"))
 ):
     """Get list of all roles with user counts"""
     roles = db.query(Role).order_by(Role.name).all()
@@ -84,7 +84,7 @@ def list_roles(
 def get_role(
     role_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("roles:read"))
 ):
     """Get role by ID with user count"""
     db_role = db.query(Role).filter(Role.id == role_id).first()
@@ -209,7 +209,7 @@ def delete_role(
 @router.get("/permissions/list", response_model=PermissionsListResponse)
 def get_permissions_list(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("roles:read"))
 ):
     """
     Get all available permissions for UI.

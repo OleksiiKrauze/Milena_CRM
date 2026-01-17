@@ -15,7 +15,7 @@ from app.models.search import Search
 from app.models.case import Case
 from app.models.flyer_template import FlyerTemplate, TemplateType
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 from app.services.openai_service import get_openai_service
 
 router = APIRouter(prefix="/orientations", tags=["Orientations"])
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/orientations", tags=["Orientations"])
 def create_orientation(
     orientation_data: OrientationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:create"))
 ):
     """Create a new orientation for a search"""
 
@@ -63,7 +63,7 @@ def list_orientations(
     search_id: Optional[int] = Query(None, description="Filter by search ID"),
     is_approved: Optional[bool] = Query(None, description="Filter by approval status"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:read"))
 ):
     """Get list of orientations with pagination and filters"""
 
@@ -95,7 +95,7 @@ def list_orientations(
 def get_orientation(
     orientation_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:read"))
 ):
     """Get a specific orientation by ID"""
 
@@ -118,7 +118,7 @@ def update_orientation(
     orientation_id: int,
     orientation_data: OrientationUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:update"))
 ):
     """Update an orientation"""
 
@@ -146,7 +146,7 @@ def update_orientation(
 def delete_orientation(
     orientation_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:delete"))
 ):
     """Delete an orientation"""
 
@@ -168,7 +168,7 @@ def delete_orientation(
 def generate_orientation_text(
     request_data: GenerateOrientationTextRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("orientations:create"))
 ):
     """Generate orientation text using ChatGPT based on case data and template prompt"""
 

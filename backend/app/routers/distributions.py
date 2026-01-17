@@ -7,7 +7,7 @@ from app.models.distribution import Distribution, DistributionStatus
 from app.models.search import Search
 from app.models.flyer import Flyer
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 
 router = APIRouter(prefix="/distributions", tags=["Distributions"])
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/distributions", tags=["Distributions"])
 def create_distribution(
     distribution_data: DistributionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("distributions:create"))
 ):
     """Create a new distribution for a search"""
     # Verify search exists
@@ -80,7 +80,7 @@ def list_distributions(
     search_id: Optional[int] = Query(None, description="Filter by search ID"),
     status_filter: Optional[str] = Query(None, description="Filter by distribution status"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("distributions:read"))
 ):
     """Get list of distributions with pagination and filters"""
     query = db.query(Distribution)
@@ -110,7 +110,7 @@ def list_distributions(
 def get_distribution(
     distribution_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("distributions:read"))
 ):
     """Get distribution by ID"""
     db_distribution = db.query(Distribution).filter(Distribution.id == distribution_id).first()
@@ -129,7 +129,7 @@ def update_distribution(
     distribution_id: int,
     distribution_data: DistributionUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("distributions:update"))
 ):
     """Update distribution by ID"""
     db_distribution = db.query(Distribution).filter(Distribution.id == distribution_id).first()
@@ -184,7 +184,7 @@ def update_distribution(
 def delete_distribution(
     distribution_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("distributions:delete"))
 ):
     """Delete distribution by ID"""
     db_distribution = db.query(Distribution).filter(Distribution.id == distribution_id).first()

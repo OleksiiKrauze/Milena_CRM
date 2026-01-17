@@ -20,6 +20,8 @@ def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """Extract user from JWT token"""
+    from app.models.user import UserStatus
+
     token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,6 +41,13 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
+
+    # Check if user is active
+    if user.status != UserStatus.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is not active"
+        )
 
     return user
 

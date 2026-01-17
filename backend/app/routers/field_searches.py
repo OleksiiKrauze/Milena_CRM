@@ -15,7 +15,7 @@ from app.models.case import Case
 from app.models.search import Search
 from app.models.flyer import Flyer
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 from app.services.gpx_service import generate_gpx, transliterate_ukrainian
 
 router = APIRouter(prefix="/field_searches", tags=["Field Searches"])
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/field_searches", tags=["Field Searches"])
 def create_field_search(
     field_search_data: FieldSearchCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:create"))
 ):
     """Create a new field search for a search"""
     # Verify search exists
@@ -128,7 +128,7 @@ def list_field_searches(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     status_filter: Optional[str] = Query(None, description="Filter by field search status"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:read"))
 ):
     """Get list of field searches with pagination and filters"""
     from app.models.orientation import Orientation
@@ -165,7 +165,7 @@ def list_field_searches(
 def get_field_search(
     field_search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:read"))
 ):
     """Get field search by ID with latest orientation image from search"""
     from app.models.orientation import Orientation
@@ -203,7 +203,7 @@ def update_field_search(
     field_search_id: int,
     field_search_data: FieldSearchUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:update"))
 ):
     """Update field search by ID"""
     db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
@@ -266,7 +266,7 @@ def update_field_search(
 def delete_field_search(
     field_search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:delete"))
 ):
     """Delete field search by ID and all associated files"""
     db_field_search = db.query(FieldSearch).filter(FieldSearch.id == field_search_id).first()
@@ -320,7 +320,7 @@ def add_participants(
     field_search_id: int,
     participants_data: AddParticipantsRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:update"))
 ):
     """Add participants to field search"""
     # Verify field search exists
@@ -404,7 +404,7 @@ def add_participants(
 def get_participants(
     field_search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:read"))
 ):
     """Get list of participants for a field search"""
     # Verify field search exists
@@ -437,7 +437,7 @@ def remove_participant(
     field_search_id: int,
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:delete"))
 ):
     """Remove a participant from field search"""
     # Verify field search exists
@@ -469,7 +469,7 @@ def remove_participant(
 def generate_grid(
     field_search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:update"))
 ):
     """
     Generate GPX grid file for field search based on grid parameters.
@@ -585,7 +585,7 @@ def generate_grid(
 def download_grid(
     field_search_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("field_searches:read"))
 ):
     """
     Download the generated GPX grid file with proper headers for mobile browsers.

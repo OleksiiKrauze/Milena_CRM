@@ -9,7 +9,7 @@ from app.schemas.case import (
 from app.models.case import Case
 from app.models.missing_person import MissingPerson
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 from app.services.openai_service import get_openai_service
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/cases", tags=["Cases"])
 def create_case(
     case_data: CaseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:create"))
 ):
     """Create a new case (заявка на поиск)"""
     db_case = Case(
@@ -167,7 +167,7 @@ def list_cases(
     period: str = Query(None, description="Quick filter: 10d, 30d, all"),
     search_query: str = Query(None, description="Universal search by name, initial_info, or phone"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:read"))
 ):
     """Get list of cases with pagination and filters"""
     from datetime import datetime, timedelta
@@ -254,7 +254,7 @@ def list_cases(
 def get_case(
     case_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:read"))
 ):
     """Get case by ID"""
     db_case = db.query(Case).options(
@@ -275,7 +275,7 @@ def update_case(
     case_id: int,
     case_data: CaseUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:update"))
 ):
     """Update case by ID"""
     db_case = db.query(Case).options(
@@ -360,7 +360,7 @@ def update_case(
 def delete_case(
     case_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:delete"))
 ):
     """Delete case by ID"""
     db_case = db.query(Case).filter(Case.id == case_id).first()
@@ -381,7 +381,7 @@ def delete_case(
 def get_case_full(
     case_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:read"))
 ):
     """Get case by ID with all related data (searches, field searches, institutions calls, missing persons)"""
     db_case = db.query(Case).options(
@@ -401,7 +401,7 @@ def get_case_full(
 def autofill_case_fields(
     request: CaseAutofillRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("cases:create"))
 ):
     """
     Autofill case fields using ChatGPT based on initial_info text.

@@ -4,7 +4,7 @@ from app.db import get_db
 from app.schemas.settings import SettingsResponse, SettingsUpdate
 from app.models.settings import Settings
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 
 router = APIRouter(prefix="/settings", tags=["Settings"])
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/settings", tags=["Settings"])
 @router.get("/", response_model=SettingsResponse)
 def get_settings(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("settings:read"))
 ):
     """Get application settings"""
     settings = db.query(Settings).filter(Settings.id == 1).first()
@@ -31,7 +31,7 @@ def get_settings(
 def update_settings(
     settings_data: SettingsUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("settings:update"))
 ):
     """Update application settings"""
     settings = db.query(Settings).filter(Settings.id == 1).first()

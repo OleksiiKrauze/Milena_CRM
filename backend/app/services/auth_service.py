@@ -44,6 +44,9 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
         return None
     if not verify_password(password, user.password_hash):
         return None
+    # Only allow active users to login
+    if user.status != UserStatus.active:
+        return None
     return user
 
 

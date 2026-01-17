@@ -9,7 +9,7 @@ from app.schemas.event import (
 from app.models.event import Event
 from app.models.search import Search
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_user, require_permission
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/events", tags=["Events"])
 def create_event(
     event_data: EventCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("events:create"))
 ):
     """Create a new event for a search"""
     # Verify search exists
@@ -52,7 +52,7 @@ def list_events(
     search_id: Optional[int] = Query(None, description="Filter by search ID"),
     event_type: Optional[str] = Query(None, description="Filter by event type"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("events:read"))
 ):
     """Get list of events with pagination and filters"""
     query = db.query(Event)
@@ -76,7 +76,7 @@ def list_events(
 def get_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("events:read"))
 ):
     """Get event by ID"""
     db_event = db.query(Event).filter(Event.id == event_id).first()
@@ -95,7 +95,7 @@ def update_event(
     event_id: int,
     event_data: EventUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("events:update"))
 ):
     """Update event by ID"""
     db_event = db.query(Event).filter(Event.id == event_id).first()
@@ -126,7 +126,7 @@ def update_event(
 def delete_event(
     event_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permission("events:delete"))
 ):
     """Delete event by ID"""
     db_event = db.query(Event).filter(Event.id == event_id).first()
