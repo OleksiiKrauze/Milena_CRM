@@ -5,11 +5,14 @@ import { casesApi } from '@/api/cases';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Loading, Button } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function CaseDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data: caseData, isLoading, error } = useQuery({
@@ -63,22 +66,28 @@ export function CaseDetailsPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={() => navigate(`/cases/${caseData.id}/edit`)}
-              fullWidth
-              variant="outline"
-            >
-              Редагувати заявку
-            </Button>
-            <Button
-              onClick={() => setShowDeleteModal(true)}
-              variant="outline"
-              className="text-red-600 border-red-300 hover:bg-red-50"
-            >
-              Видалити
-            </Button>
-          </div>
+          {(hasPermission(user, 'cases:update') || hasPermission(user, 'cases:delete')) && (
+            <div className="flex gap-3">
+              {hasPermission(user, 'cases:update') && (
+                <Button
+                  onClick={() => navigate(`/cases/${caseData.id}/edit`)}
+                  fullWidth
+                  variant="outline"
+                >
+                  Редагувати заявку
+                </Button>
+              )}
+              {hasPermission(user, 'cases:delete') && (
+                <Button
+                  onClick={() => setShowDeleteModal(true)}
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  Видалити
+                </Button>
+              )}
+            </div>
+          )}
           {/* Main Info */}
           <Card>
             <CardHeader>

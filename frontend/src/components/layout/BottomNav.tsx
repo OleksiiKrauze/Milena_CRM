@@ -2,27 +2,34 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, FolderOpen, PlusCircle, User, Settings } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
-const baseNavItems = [
-  { path: '/', label: 'Головна', icon: Home },
-  { path: '/cases', label: 'Заявки', icon: FolderOpen },
-  { path: '/cases/new', label: 'Створити', icon: PlusCircle },
-  { path: '/profile', label: 'Профіль', icon: User },
+interface NavItem {
+  path: string;
+  label: string;
+  icon: typeof Home;
+  permission?: string; // Permission required to see this nav item
+}
+
+const allNavItems: NavItem[] = [
+  { path: '/', label: 'Головна', icon: Home }, // Always visible
+  { path: '/cases', label: 'Заявки', icon: FolderOpen, permission: 'cases:read' },
+  { path: '/cases/new', label: 'Створити', icon: PlusCircle, permission: 'cases:create' },
+  { path: '/settings', label: 'Налаштування', icon: Settings, permission: 'settings:read' },
+  { path: '/profile', label: 'Профіль', icon: User }, // Always visible
 ];
-
-const adminNavItem = { path: '/settings', label: 'Налаштування', icon: Settings };
 
 export function BottomNav() {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
 
-  // Check if user is admin
-  const isAdmin = user?.roles.some((role) => role.name === 'admin');
-
-  // Add admin nav item if user is admin
-  const navItems = isAdmin
-    ? [...baseNavItems.slice(0, 3), adminNavItem, baseNavItems[3]]
-    : baseNavItems;
+  // Filter nav items based on user permissions
+  const navItems = allNavItems.filter((item) => {
+    // Always show items without permission requirement
+    if (!item.permission) return true;
+    // Check if user has required permission
+    return hasPermission(user, item.permission);
+  });
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-bottom">
