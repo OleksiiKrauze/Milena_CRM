@@ -128,7 +128,7 @@ export function DashboardPage() {
                     onClick={() => navigate('/field-searches?status_filter=planning')}
                   >
                     <p className="text-2xl font-bold text-yellow-600">
-                      {stats?.field_searches?.by_status?.planned || 0}
+                      {stats?.field_searches?.by_status?.planning || 0}
                     </p>
                     <p className="text-xs text-gray-600">Заплановано</p>
                   </div>
