@@ -5,9 +5,12 @@ import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Input, Loading } from '@/components/ui';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function DirectionsManagementPage() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [showForm, setShowForm] = useState(false);
   const [editingDirection, setEditingDirection] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', responsible_user_id: '' });
@@ -103,7 +106,7 @@ export function DirectionsManagementPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Add Button */}
-          {!showForm && (
+          {!showForm && hasPermission(user, 'settings:update') && (
             <Button fullWidth onClick={() => setShowForm(true)}>
               <Plus className="h-5 w-5 mr-2" />
               Додати напрямок
@@ -206,21 +209,23 @@ export function DirectionsManagementPage() {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => handleEdit(direction)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(direction.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {hasPermission(user, 'settings:update') && (
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={() => handleEdit(direction)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(direction.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

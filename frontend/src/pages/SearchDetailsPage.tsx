@@ -7,11 +7,14 @@ import { uploadApi } from '@/api/upload';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/utils/formatters';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function SearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [uploadingOrientationId, setUploadingOrientationId] = useState<number | null>(null);
@@ -213,23 +216,29 @@ export function SearchDetailsPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Edit and Delete Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => navigate(`/searches/${searchData.id}/edit`)}
-              fullWidth
-              variant="outline"
-            >
-              Редагувати пошук
-            </Button>
-            <Button
-              onClick={() => setShowDeleteSearchConfirm(true)}
-              fullWidth
-              variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50"
-            >
-              Видалити пошук
-            </Button>
-          </div>
+          {(hasPermission(user, 'searches:update') || hasPermission(user, 'searches:delete')) && (
+            <div className="flex gap-2">
+              {hasPermission(user, 'searches:update') && (
+                <Button
+                  onClick={() => navigate(`/searches/${searchData.id}/edit`)}
+                  fullWidth
+                  variant="outline"
+                >
+                  Редагувати пошук
+                </Button>
+              )}
+              {hasPermission(user, 'searches:delete') && (
+                <Button
+                  onClick={() => setShowDeleteSearchConfirm(true)}
+                  fullWidth
+                  variant="outline"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                >
+                  Видалити пошук
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Main Info */}
           <Card>

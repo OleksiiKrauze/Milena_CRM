@@ -5,6 +5,7 @@ import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function UserDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -121,7 +122,8 @@ export function UserDetailsPage() {
     );
   }
 
-  const isAdmin = currentUser?.roles.some((r) => r.name === 'admin');
+  const canUpdate = hasPermission(currentUser, 'users:update');
+  const canDelete = hasPermission(currentUser, 'users:delete');
 
   return (
     <div className="min-h-screen pb-nav">
@@ -289,39 +291,47 @@ export function UserDetailsPage() {
           </Card>
 
           {/* Actions */}
-          {isAdmin && (
+          {(canUpdate || canDelete) && (
             <div className="space-y-3">
               {editMode ? (
                 <>
-                  <Button
-                    fullWidth
-                    onClick={handleSave}
-                    loading={updateMutation.isPending}
-                  >
-                    Зберегти зміни
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="secondary"
-                    onClick={() => setEditMode(false)}
-                    disabled={updateMutation.isPending}
-                  >
-                    Скасувати
-                  </Button>
+                  {canUpdate && (
+                    <>
+                      <Button
+                        fullWidth
+                        onClick={handleSave}
+                        loading={updateMutation.isPending}
+                      >
+                        Зберегти зміни
+                      </Button>
+                      <Button
+                        fullWidth
+                        variant="secondary"
+                        onClick={() => setEditMode(false)}
+                        disabled={updateMutation.isPending}
+                      >
+                        Скасувати
+                      </Button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
-                  <Button fullWidth onClick={handleEdit}>
-                    Редагувати
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="danger"
-                    onClick={handleDelete}
-                    loading={deleteMutation.isPending}
-                  >
-                    Видалити користувача
-                  </Button>
+                  {canUpdate && (
+                    <Button fullWidth onClick={handleEdit}>
+                      Редагувати
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      fullWidth
+                      variant="danger"
+                      onClick={handleDelete}
+                      loading={deleteMutation.isPending}
+                    >
+                      Видалити користувача
+                    </Button>
+                  )}
                 </>
               )}
             </div>

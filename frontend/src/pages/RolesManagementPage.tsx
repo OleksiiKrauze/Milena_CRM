@@ -5,9 +5,12 @@ import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Input, Loading } from '@/components/ui';
 import { Plus, Edit2, Trash2, X, Shield, Users, CheckSquare, Square } from 'lucide-react';
 import type { Role, RoleCreate, RoleUpdate, ResourcePermissions } from '@/types/api';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function RolesManagementPage() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [showForm, setShowForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [formData, setFormData] = useState<{
@@ -175,7 +178,7 @@ export function RolesManagementPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Add Button */}
-          {!showForm && (
+          {!showForm && hasPermission(user, 'roles:create') && (
             <Button fullWidth onClick={() => setShowForm(true)}>
               <Plus className="h-5 w-5 mr-2" />
               Додати роль
@@ -341,25 +344,29 @@ export function RolesManagementPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(role)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {!role.is_system && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(role)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {(hasPermission(user, 'roles:update') || hasPermission(user, 'roles:delete')) && (
+                      <div className="flex gap-2">
+                        {hasPermission(user, 'roles:update') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(role)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {!role.is_system && hasPermission(user, 'roles:delete') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(role)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -5,11 +5,14 @@ import { eventsApi } from '@/api/events';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Button, Loading } from '@/components/ui';
 import { formatDateTime } from '@/utils/formatters';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: eventData, isLoading, error } = useQuery({
@@ -64,23 +67,29 @@ export function EventDetailsPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Edit and Delete Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => navigate(`/events/${eventData.id}/edit`)}
-              fullWidth
-              variant="outline"
-            >
-              Редагувати подію
-            </Button>
-            <Button
-              onClick={() => setShowDeleteConfirm(true)}
-              fullWidth
-              variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50"
-            >
-              Видалити подію
-            </Button>
-          </div>
+          {(hasPermission(user, 'events:update') || hasPermission(user, 'events:delete')) && (
+            <div className="flex gap-2">
+              {hasPermission(user, 'events:update') && (
+                <Button
+                  onClick={() => navigate(`/events/${eventData.id}/edit`)}
+                  fullWidth
+                  variant="outline"
+                >
+                  Редагувати подію
+                </Button>
+              )}
+              {hasPermission(user, 'events:delete') && (
+                <Button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  fullWidth
+                  variant="outline"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                >
+                  Видалити подію
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Main Info */}
           <Card>

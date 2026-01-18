@@ -6,10 +6,13 @@ import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Loading, Button, getStatusBadgeVariant } from '@/components/ui';
 import { formatDate, formatDateTime, getOriginalFilename } from '@/utils/formatters';
 import { FileText } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 export function FieldSearchDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const [isOrientationFullscreen, setIsOrientationFullscreen] = useState(false);
 
   const { data: fieldSearchData, isLoading, error } = useQuery({
@@ -95,13 +98,15 @@ export function FieldSearchDetailsPage() {
       <Container className="py-6">
         <div className="space-y-4">
           {/* Edit Button */}
-          <Button
-            onClick={() => navigate(`/field-searches/${fieldSearchData.id}/edit`)}
-            fullWidth
-            variant="outline"
-          >
-            Редагувати виїзд
-          </Button>
+          {hasPermission(user, 'field_searches:update') && (
+            <Button
+              onClick={() => navigate(`/field-searches/${fieldSearchData.id}/edit`)}
+              fullWidth
+              variant="outline"
+            >
+              Редагувати виїзд
+            </Button>
+          )}
 
           {/* Main Info */}
           <Card>
