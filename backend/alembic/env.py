@@ -24,6 +24,7 @@ from app.models.institutions_call import InstitutionsCall
 from app.models.field_search import FieldSearch
 from app.models.settings import Settings
 from app.models.forum_import import ForumImportStatus
+from app.models.organization import Organization
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -101,6 +101,40 @@ export interface DirectionUpdate {
   responsible_user_id?: number;
 }
 
+export interface Organization {
+  id: number;
+  created_at: string;
+  created_by_user_id: number | null;
+  created_by: UserBrief | null;
+  updated_at: string | null;
+  updated_by_user_id: number | null;
+  updated_by: UserBrief | null;
+  name: string;
+  type: string;
+  region: string | null;
+  city: string | null;
+  address: string | null;
+  contact_info: string | null;
+  notes: string | null;
+}
+
+export interface OrganizationCreate {
+  name: string;
+  type: string;
+  region?: string;
+  city?: string;
+  address?: string;
+  contact_info?: string;
+  notes?: string;
+}
+
+export interface OrganizationUpdate extends Partial<OrganizationCreate> {}
+
+export interface OrganizationListResponse {
+  total: number;
+  organizations: Organization[];
+}
+
 export interface UserUpdate {
   status?: string;
   comment?: string;

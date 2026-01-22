@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FolderOpen, PlusCircle, User, Settings } from 'lucide-react';
+import { Home, FolderOpen, Building2, PlusCircle, User } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAuthStore } from '@/store/authStore';
 import { hasPermission } from '@/utils/permissions';
@@ -14,8 +14,8 @@ interface NavItem {
 const allNavItems: NavItem[] = [
   { path: '/', label: 'Головна', icon: Home }, // Always visible
   { path: '/cases', label: 'Заявки', icon: FolderOpen, permission: 'cases:read' },
+  { path: '/organizations', label: 'Довідник', icon: Building2, permission: 'organizations:read' },
   { path: '/cases/new', label: 'Створити', icon: PlusCircle, permission: 'cases:create' },
-  { path: '/settings', label: 'Налаштування', icon: Settings, permission: 'settings:read' },
   { path: '/profile', label: 'Профіль', icon: User }, // Always visible
 ];
 

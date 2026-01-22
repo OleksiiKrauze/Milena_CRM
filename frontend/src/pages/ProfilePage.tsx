@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/api/auth';
 import { usersApi } from '@/api/users';
 import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardHeader, CardTitle, CardContent, Badge, Button, Loading, Input } from '@/components/ui';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { formatPhone } from '@/utils/formatters';
-import { LogOut, Mail, Phone, MapPin, Lock } from 'lucide-react';
+import { LogOut, Mail, Phone, MapPin, Lock, Settings } from 'lucide-react';
 
 export function ProfilePage() {
   const navigate = useNavigate();
@@ -188,6 +189,18 @@ export function ProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Settings Button */}
+          {hasPermission(user, 'settings:read') && (
+            <Button
+              fullWidth
+              variant="outline"
+              onClick={() => navigate('/settings')}
+            >
+              <Settings className="h-5 w-5 mr-2" />
+              Налаштування системи
+            </Button>
+          )}
 
           {/* Push Notifications */}
           <NotificationSettings />

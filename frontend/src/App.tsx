@@ -31,6 +31,10 @@ import { EditEventPage } from '@/pages/EditEventPage';
 import { FlyerTemplatesPage } from '@/pages/FlyerTemplatesPage';
 import { CreateOrientationPage } from '@/pages/CreateOrientationPage';
 import { ForumImportPage } from '@/pages/ForumImportPage';
+import { OrganizationsListPage } from '@/pages/OrganizationsListPage';
+import { OrganizationDetailsPage } from '@/pages/OrganizationDetailsPage';
+import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage';
+import { EditOrganizationPage } from '@/pages/EditOrganizationPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -132,6 +136,38 @@ export function App() {
             element={
               <ProtectedRoute>
                 <CreateSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizations"
+            element={
+              <ProtectedRoute>
+                <OrganizationsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizations/new"
+            element={
+              <ProtectedRoute>
+                <CreateOrganizationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizations/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditOrganizationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizations/:id"
+            element={
+              <ProtectedRoute>
+                <OrganizationDetailsPage />
               </ProtectedRoute>
             }
           />

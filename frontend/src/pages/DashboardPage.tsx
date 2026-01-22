@@ -146,6 +146,26 @@ export function DashboardPage() {
             </Card>
           )}
 
+          {/* Organizations */}
+          {hasPermission(user, 'organizations:read') && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Довідник організацій</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                  onClick={() => navigate('/organizations')}
+                >
+                  <p className="text-sm text-gray-600">
+                    Довідник організацій (поліція, медичні заклади, транспорт, релігійні організації, прихистки)
+                  </p>
+                  <p className="text-primary-600 font-medium mt-2">Перейти до довідника →</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Other Stats */}
           {(hasPermission(user, 'orientations:read') ||
             hasPermission(user, 'distributions:read')) && (

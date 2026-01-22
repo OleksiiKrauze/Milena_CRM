@@ -16,6 +16,7 @@ class Resource(str, Enum):
     USERS = "users"
     ROLES = "roles"
     SETTINGS = "settings"
+    ORGANIZATIONS = "organizations"
 
 
 class Action(str, Enum):
@@ -61,6 +62,7 @@ RESOURCE_LABELS = {
     Resource.USERS: "Користувачі",
     Resource.ROLES: "Ролі",
     Resource.SETTINGS: "Налаштування",
+    Resource.ORGANIZATIONS: "Організації",
 }
 
 ACTION_LABELS = {
@@ -139,6 +141,7 @@ PREDEFINED_ROLES = {
             "orientations:read", "orientations:create", "orientations:update", "orientations:delete",
             "distributions:read", "distributions:create", "distributions:update", "distributions:delete",
             "events:read", "events:create", "events:update", "events:delete",
+            "organizations:read", "organizations:create", "organizations:update", "organizations:delete",
             # Read-only for users and settings
             "users:read",
             "settings:read",
@@ -158,6 +161,7 @@ PREDEFINED_ROLES = {
             "orientations:read",
             "distributions:read",
             "events:read",
+            "organizations:read",
         ],
         "is_system": False,
     },

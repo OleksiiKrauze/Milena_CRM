@@ -37,6 +37,7 @@ from app.routers import settings
 from app.routers import forum_import
 from app.routers import public
 from app.routers import push_notifications
+from app.routers import organizations
 import app.models  # Import all models to register them with Base
 from pathlib import Path
 
@@ -144,6 +145,7 @@ app.include_router(upload.router)
 app.include_router(settings.router)
 app.include_router(forum_import.router)
 app.include_router(push_notifications.router)
+app.include_router(organizations.router)
 
 # Mount uploads directory for static file serving
 UPLOAD_DIR = Path("/app/uploads")
