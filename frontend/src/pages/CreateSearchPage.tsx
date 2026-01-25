@@ -207,6 +207,7 @@ export function CreateSearchPage() {
                   <option value="dead">Виявлено</option>
                   <option value="location_known">Місцезнаходження відомо</option>
                   <option value="not_found">Пошук припинено</option>
+                  <option value="person_identified">Особу встановлено</option>
                 </select>
               </div>
 

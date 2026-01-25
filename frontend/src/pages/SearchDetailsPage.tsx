@@ -205,6 +205,7 @@ export function SearchDetailsPage() {
       case 'dead': return 'Виявлено';
       case 'location_known': return 'Місцезнаходження відомо';
       case 'not_found': return 'Пошук припинено';
+      case 'person_identified': return 'Особу встановлено';
       default: return result;
     }
   };

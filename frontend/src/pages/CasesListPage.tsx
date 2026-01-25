@@ -208,6 +208,7 @@ export function CasesListPage() {
                 <option value="dead">Виявлено</option>
                 <option value="location_known">Місцезнаходження відомо</option>
                 <option value="not_found">Пошук припинено</option>
+                <option value="person_identified">Особу встановлено</option>
               </select>
             </div>
 
@@ -276,7 +277,7 @@ export function CasesListPage() {
                   textColor = 'text-white';
                 } else if (caseItem.decision_type === 'Пошук') {
                   // Если у заявки есть поиск с результатом
-                  if (caseItem.latest_search_result === 'dead') {
+                  if (caseItem.latest_search_result === 'dead' || caseItem.latest_search_result === 'person_identified') {
                     bgColor = 'bg-gray-500';
                     textColor = 'text-white';
                   } else if (caseItem.latest_search_result === 'alive') {
@@ -297,6 +298,7 @@ export function CasesListPage() {
                     case 'dead': return 'Виявлено';
                     case 'location_known': return 'Місцезнаходження відомо';
                     case 'not_found': return 'Пошук припинено';
+                    case 'person_identified': return 'Особу встановлено';
                     default: return result;
                   }
                 };

@@ -479,7 +479,8 @@ export function CaseDetailsPage() {
                             {search.result === 'dead' && 'Виявлено'}
                             {search.result === 'location_known' && 'Місцезнаходження відомо'}
                             {search.result === 'not_found' && 'Пошук припинено'}
-                            {!['alive', 'dead', 'location_known', 'not_found'].includes(search.result) && search.result}
+                            {search.result === 'person_identified' && 'Особу встановлено'}
+                            {!['alive', 'dead', 'location_known', 'not_found', 'person_identified'].includes(search.result) && search.result}
                           </p>
                         )}
                       </div>

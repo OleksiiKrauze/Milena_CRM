@@ -93,6 +93,7 @@ export function SearchListPage() {
                   <option value="dead">Виявлено</option>
                   <option value="location_known">Місцезнаходження відомо</option>
                   <option value="not_found">Пошук припинено</option>
+                  <option value="person_identified">Особу встановлено</option>
                 </select>
               </div>
 
@@ -156,7 +157,7 @@ export function SearchListPage() {
                 let textColor = 'text-gray-900'; // По умолчанию черный текст
                 if (search.result === 'alive') {
                   bgColor = 'bg-green-300';
-                } else if (search.result === 'dead') {
+                } else if (search.result === 'dead' || search.result === 'person_identified') {
                   bgColor = 'bg-gray-500';
                   textColor = 'text-white';
                 } else if (search.result === 'not_found') {
@@ -218,7 +219,8 @@ export function SearchListPage() {
                             {search.result === 'dead' && 'Виявлено'}
                             {search.result === 'location_known' && 'Місцезнаходження відомо'}
                             {search.result === 'not_found' && 'Пошук припинено'}
-                            {!['alive', 'dead', 'location_known', 'not_found'].includes(search.result) && search.result}
+                            {search.result === 'person_identified' && 'Особу встановлено'}
+                            {!['alive', 'dead', 'location_known', 'not_found', 'person_identified'].includes(search.result) && search.result}
                           </p>
                         )}
                       </div>

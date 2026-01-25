@@ -19,6 +19,7 @@ class SearchResult(str, enum.Enum):
     dead = "dead"
     location_known = "location_known"
     not_found = "not_found"
+    person_identified = "person_identified"
 
 
 class Search(Base):
