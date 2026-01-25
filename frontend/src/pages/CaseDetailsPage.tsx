@@ -193,6 +193,12 @@ export function CaseDetailsPage() {
                 <p className="text-sm text-gray-600">Ким приходиться</p>
                 <p className="font-medium">{caseData.applicant_relation || '-'}</p>
               </div>
+              {caseData.applicant_other_contacts && (
+                <div>
+                  <p className="text-sm text-gray-600">Інші контакти</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.applicant_other_contacts}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

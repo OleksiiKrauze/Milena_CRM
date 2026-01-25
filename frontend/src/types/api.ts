@@ -305,6 +305,7 @@ export interface Case {
   applicant_middle_name: string | null;
   applicant_phone: string | null;
   applicant_relation: string | null;
+  applicant_other_contacts: string | null;
   // Missing person - location fields
   missing_settlement: string | null;
   missing_region: string | null;
@@ -360,6 +361,7 @@ export interface CaseCreate {
   applicant_middle_name?: string;
   applicant_phone?: string;
   applicant_relation?: string;
+  applicant_other_contacts?: string;
   // Missing person - location fields
   missing_settlement?: string;
   missing_region?: string;

@@ -24,6 +24,7 @@ class Case(Base):
     applicant_middle_name = Column(String(100))
     applicant_phone = Column(String(50))
     applicant_relation = Column(String(100))
+    applicant_other_contacts = Column(Text)  # Інші контакти (родичі, друзі, колеги)
 
     # Missing person data - location fields
     missing_settlement = Column(String(200))

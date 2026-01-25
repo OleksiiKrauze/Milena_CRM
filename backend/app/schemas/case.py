@@ -23,6 +23,7 @@ class CaseCreate(BaseModel):
     applicant_middle_name: Optional[str] = Field(None, max_length=100)
     applicant_phone: Optional[str] = Field(None, max_length=50)
     applicant_relation: Optional[str] = Field(None, max_length=100)
+    applicant_other_contacts: Optional[str] = None
 
     # Missing person info - location fields
     missing_settlement: Optional[str] = Field(None, max_length=200)
@@ -86,6 +87,7 @@ class CaseUpdate(BaseModel):
     applicant_middle_name: Optional[str] = Field(None, max_length=100)
     applicant_phone: Optional[str] = Field(None, max_length=50)
     applicant_relation: Optional[str] = Field(None, max_length=100)
+    applicant_other_contacts: Optional[str] = None
 
     # Missing person info - location fields
     missing_settlement: Optional[str] = Field(None, max_length=200)
@@ -153,6 +155,7 @@ class CaseResponse(BaseModel):
     applicant_middle_name: Optional[str]
     applicant_phone: Optional[str]
     applicant_relation: Optional[str]
+    applicant_other_contacts: Optional[str]
 
     # Missing person info - location fields
     missing_settlement: Optional[str]

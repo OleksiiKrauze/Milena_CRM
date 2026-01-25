@@ -46,6 +46,7 @@ const createCaseSchema = z.object({
   applicant_middle_name: z.string().optional(),
   applicant_phone: z.string().optional(),
   applicant_relation: z.string().optional(),
+  applicant_other_contacts: z.string().optional(),
   // Location fields (shared for all missing persons)
   missing_settlement: z.string().optional(),
   missing_region: z.string().optional(),
@@ -381,6 +382,21 @@ export function CreateCasePage() {
                 error={errors.applicant_relation?.message}
                 {...register('applicant_relation')}
               />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Інші контакти
+                </label>
+                <textarea
+                  {...register('applicant_other_contacts')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={3}
+                  placeholder="Контакти інших людей, які шукають зниклого (родичі, друзі, колеги)..."
+                />
+                {errors.applicant_other_contacts && (
+                  <p className="text-sm text-red-600 mt-1">{errors.applicant_other_contacts.message}</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
