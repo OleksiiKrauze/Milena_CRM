@@ -252,14 +252,14 @@ sudo certbot certonly --standalone \
 
 Скопировать сертификаты в проект:
 ```bash
-sudo cp /etc/letsencrypt/live/crm.przmilena.click/fullchain.pem ~/MilenaCRM/nginx/ssl/
-sudo cp /etc/letsencrypt/live/crm.przmilena.click/privkey.pem ~/MilenaCRM/nginx/ssl/
-sudo chown ubuntu:ubuntu ~/MilenaCRM/nginx/ssl/*.pem
+sudo cp /etc/letsencrypt/live/crm.przmilena.click/fullchain.pem ~/Milena_CRM/nginx/ssl/
+sudo cp /etc/letsencrypt/live/crm.przmilena.click/privkey.pem ~/Milena_CRM/nginx/ssl/
+sudo chown ubuntu:ubuntu ~/Milena_CRM/nginx/ssl/*.pem
 ```
 
 Запустить nginx:
 ```bash
-cd ~/MilenaCRM
+cd ~/Milena_CRM
 sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d nginx
 ```
 
@@ -279,12 +279,12 @@ sudo nano /usr/local/bin/renew-ssl-cert.sh
 Содержимое:
 ```bash
 #!/bin/bash
-cd /home/ubuntu/MilenaCRM
+cd /home/ubuntu/Milena_CRM
 docker-compose -f docker-compose.prod.yml stop nginx
 certbot renew --quiet
-cp /etc/letsencrypt/live/crm.przmilena.click/fullchain.pem /home/ubuntu/MilenaCRM/nginx/ssl/
-cp /etc/letsencrypt/live/crm.przmilena.click/privkey.pem /home/ubuntu/MilenaCRM/nginx/ssl/
-chown ubuntu:ubuntu /home/ubuntu/MilenaCRM/nginx/ssl/*.pem
+cp /etc/letsencrypt/live/crm.przmilena.click/fullchain.pem /home/ubuntu/Milena_CRM/nginx/ssl/
+cp /etc/letsencrypt/live/crm.przmilena.click/privkey.pem /home/ubuntu/Milena_CRM/nginx/ssl/
+chown ubuntu:ubuntu /home/ubuntu/Milena_CRM/nginx/ssl/*.pem
 docker-compose -f docker-compose.prod.yml up -d nginx
 ```
 
@@ -310,7 +310,7 @@ sudo chown ubuntu:ubuntu /data/backups/postgres
 
 Обновить скрипт backup-db.sh (добавить sudo):
 ```bash
-nano ~/MilenaCRM/scripts/backup-db.sh
+nano ~/Milena_CRM/scripts/backup-db.sh
 ```
 
 Найти строку:
@@ -325,12 +325,12 @@ sudo docker exec crm_db pg_dump -U crm_user_prod crm_production > $BACKUP_FILE
 
 Сделать исполняемым:
 ```bash
-chmod +x ~/MilenaCRM/scripts/backup-db.sh
+chmod +x ~/Milena_CRM/scripts/backup-db.sh
 ```
 
 Протестировать:
 ```bash
-~/MilenaCRM/scripts/backup-db.sh
+~/Milena_CRM/scripts/backup-db.sh
 ls -lh /data/backups/postgres/
 ```
 
@@ -338,13 +338,13 @@ ls -lh /data/backups/postgres/
 ```bash
 crontab -e
 # Добавить строку:
-0 2 * * * /home/ubuntu/MilenaCRM/scripts/backup-db.sh >> /var/log/db-backup.log 2>&1
+0 2 * * * /home/ubuntu/Milena_CRM/scripts/backup-db.sh >> /var/log/db-backup.log 2>&1
 ```
 
 ### Шаг 12: Создание администратора
 
 ```bash
-sudo docker cp ~/MilenaCRM/backend/create_admin.py crm_backend:/app/create_admin.py
+sudo docker cp ~/Milena_CRM/backend/create_admin.py crm_backend:/app/create_admin.py
 sudo docker exec crm_backend python /app/create_admin.py
 ```
 
@@ -381,7 +381,7 @@ git push origin main
 ssh -i your-key.pem ubuntu@<ELASTIC_IP>
 
 # Перейти в проект
-cd ~/MilenaCRM
+cd ~/Milena_CRM
 
 # Получить последние изменения
 git pull origin main
@@ -407,7 +407,7 @@ sudo docker-compose -f docker-compose.prod.yml logs -f
 #### 3. Если изменился только фронтенд
 
 ```bash
-cd ~/MilenaCRM
+cd ~/Milena_CRM
 git pull origin main
 
 cd frontend
@@ -422,7 +422,7 @@ sudo docker-compose -f docker-compose.prod.yml --env-file .env.production restar
 #### 4. Если изменился только backend
 
 ```bash
-cd ~/MilenaCRM
+cd ~/Milena_CRM
 git pull origin main
 
 # Пересобрать backend контейнер
@@ -447,7 +447,7 @@ sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d 
 **Решение:**
 1. Убедиться что `frontend/.env.production` существует:
    ```bash
-   cat ~/MilenaCRM/frontend/.env.production
+   cat ~/Milena_CRM/frontend/.env.production
    # Должно быть: VITE_API_URL=/api
    ```
 
@@ -462,7 +462,7 @@ sudo docker-compose -f docker-compose.prod.yml --env-file .env.production up -d 
 
 3. Пересобрать фронтенд:
    ```bash
-   cd ~/MilenaCRM/frontend
+   cd ~/Milena_CRM/frontend
    npm run build
    cd ..
    sudo docker-compose -f docker-compose.prod.yml --env-file .env.production restart nginx
@@ -722,7 +722,7 @@ sudo docker exec crm_backend curl http://localhost:8000/health
 
 ```bash
 # Проверить срок действия
-openssl x509 -in ~/MilenaCRM/nginx/ssl/fullchain.pem -noout -dates
+openssl x509 -in ~/Milena_CRM/nginx/ssl/fullchain.pem -noout -dates
 
 # Обновить вручную
 sudo /usr/local/bin/renew-ssl-cert.sh
