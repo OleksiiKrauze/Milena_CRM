@@ -124,7 +124,7 @@ export function CallRecordingsPage() {
     }
   };
 
-  const thClass = (field: SortField) =>
+  const thClass = (_field: SortField) =>
     `px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide cursor-pointer select-none hover:text-gray-900 whitespace-nowrap`;
 
   return (
