@@ -19,6 +19,10 @@ requests==2.32.3
 py-vapid==1.9.1
 pywebpush==1.14.1
 
+# IP ATC (Asterisk/FreePBX) integration
+pymysql==1.1.1
+paramiko==3.5.0
+
 # Testing dependencies
 pytest==8.3.4
 httpx==0.28.1

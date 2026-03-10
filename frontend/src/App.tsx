@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { HamburgerMenu } from '@/components/layout/HamburgerMenu';
 
 // Pages - will be created next
 import { LoginPage } from '@/pages/LoginPage';
@@ -35,6 +36,9 @@ import { OrganizationsListPage } from '@/pages/OrganizationsListPage';
 import { OrganizationDetailsPage } from '@/pages/OrganizationDetailsPage';
 import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage';
 import { EditOrganizationPage } from '@/pages/EditOrganizationPage';
+import { IpAtcSettingsPage } from '@/pages/IpAtcSettingsPage';
+import { IpAtcConfigPage } from '@/pages/IpAtcConfigPage';
+import { CallRecordingsPage } from '@/pages/CallRecordingsPage';
 
 // Protected route wrapper
 interface ProtectedRouteProps {
@@ -52,6 +56,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     <>
       {children}
       <BottomNav />
+      <HamburgerMenu />
     </>
   );
 }
@@ -339,6 +344,32 @@ export function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/settings/ip-atc"
+            element={
+              <ProtectedRoute>
+                <IpAtcSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/ip-atc/config"
+            element={
+              <ProtectedRoute>
+                <IpAtcConfigPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/telephony/recordings"
+            element={
+              <ProtectedRoute>
+                <CallRecordingsPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Legacy redirect */}
+          <Route path="/settings/ip-atc/recordings" element={<Navigate to="/telephony/recordings" replace />} />
 
           {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

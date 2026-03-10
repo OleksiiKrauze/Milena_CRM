@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent } from '@/components/ui';
-import { Users, Shield, MapPin, FileText, FileEdit, ChevronRight, Download } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
+import { Users, Shield, MapPin, FileText, FileEdit, ChevronRight, Download, Phone } from 'lucide-react';
 
 export function SettingsPage() {
+  const user = useAuthStore(state => state.user);
+
   const settingsOptions = [
     {
       title: 'Користувачі',
@@ -55,6 +59,8 @@ export function SettingsPage() {
     },
   ];
 
+  const canConfigureAtc = hasPermission(user, 'settings:update');
+
   return (
     <div className="min-h-screen pb-nav">
       <Header title="Налаштування" />
@@ -82,6 +88,31 @@ export function SettingsPage() {
               </Link>
             );
           })}
+
+          {/* IP ATC config — only for admins */}
+          {canConfigureAtc && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-4 px-1">
+                Телефонія
+              </p>
+              <Link to="/settings/ip-atc/config">
+                <Card className="active:bg-gray-50 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-violet-50 mr-4">
+                        <Phone className="h-6 w-6 text-violet-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">Налаштування IP АТС</h3>
+                        <p className="text-sm text-gray-600">Підключення до Asterisk/FreePBX</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </>
+          )}
         </div>
       </Container>
     </div>

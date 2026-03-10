@@ -540,6 +540,37 @@ export interface OrientationListResponse {
   orientations: Orientation[];
 }
 
+// IP ATC (Asterisk) types
+export interface CallRecording {
+  uniqueid: string;
+  calldate: string;
+  src: string;
+  dst: string;
+  duration: number;
+  billsec: number;
+  disposition: string;
+  recordingfile: string;
+}
+
+export interface CallRecordingsResponse {
+  total: number;
+  items: CallRecording[];
+}
+
+export interface AsteriskSettings {
+  asterisk_cdr_host: string | null;
+  asterisk_cdr_port: number | null;
+  asterisk_cdr_db: string | null;
+  asterisk_cdr_user: string | null;
+  asterisk_cdr_password: string | null;
+  asterisk_ssh_host: string | null;
+  asterisk_ssh_port: number | null;
+  asterisk_ssh_user: string | null;
+  asterisk_ssh_password: string | null;
+  asterisk_ssh_key: string | null;
+  asterisk_recordings_path: string | null;
+}
+
 // API Error types
 export interface APIError {
   error: {

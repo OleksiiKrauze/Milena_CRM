@@ -17,6 +17,7 @@ class Resource(str, Enum):
     ROLES = "roles"
     SETTINGS = "settings"
     ORGANIZATIONS = "organizations"
+    IP_ATC = "ip_atc"
 
 
 class Action(str, Enum):
@@ -63,6 +64,7 @@ RESOURCE_LABELS = {
     Resource.ROLES: "Ролі",
     Resource.SETTINGS: "Налаштування",
     Resource.ORGANIZATIONS: "Організації",
+    Resource.IP_ATC: "IP АТС",
 }
 
 ACTION_LABELS = {
@@ -145,6 +147,8 @@ PREDEFINED_ROLES = {
             # Read-only for users and settings
             "users:read",
             "settings:read",
+            # IP ATC recordings
+            "ip_atc:read",
         ],
         "is_system": False,
     },

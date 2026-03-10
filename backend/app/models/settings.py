@@ -102,3 +102,16 @@ class Settings(Base):
     forum_username = Column(String, nullable=True)
     forum_password = Column(String, nullable=True)
     forum_subforum_id = Column(Integer, nullable=True, default=150)
+
+    # IP ATC (Asterisk/FreePBX) settings
+    asterisk_cdr_host = Column(String, nullable=True)
+    asterisk_cdr_port = Column(Integer, nullable=True, default=3306)
+    asterisk_cdr_db = Column(String, nullable=True, default="asteriskcdrdb")
+    asterisk_cdr_user = Column(String, nullable=True)
+    asterisk_cdr_password = Column(String, nullable=True)
+    asterisk_ssh_host = Column(String, nullable=True)
+    asterisk_ssh_port = Column(Integer, nullable=True, default=22)
+    asterisk_ssh_user = Column(String, nullable=True)
+    asterisk_ssh_password = Column(String, nullable=True)
+    asterisk_ssh_key = Column(Text, nullable=True)  # PEM private key content
+    asterisk_recordings_path = Column(String, nullable=True, default="/var/spool/asterisk/monitor")
