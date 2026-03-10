@@ -47,8 +47,6 @@ export function HamburgerMenu() {
   const visibleMain = mainItems.filter(i => !i.permission || hasPermission(user, i.permission));
   const visibleTelephony = telephonyItems.filter(i => !i.permission || hasPermission(user, i.permission));
 
-  if (visibleTelephony.length === 0) return null;
-
   return (
     <>
       {/* Toggle button — fixed top-right */}

@@ -220,14 +220,7 @@ def download_recording(
             detail="SSH-доступ до сервера Asterisk не налаштований."
         )
 
-    # Determine remote path
-    if filename.startswith("/"):
-        remote_path = filename
-    else:
-        base_dir = (settings.asterisk_recordings_path or "/var/spool/asterisk/monitor").rstrip("/")
-        remote_path = f"{base_dir}/{filename}"
-
-    # Connect via SFTP
+    # Connect via SSH+SFTP
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -264,6 +257,44 @@ def download_recording(
             detail=f"Не вдалося підключитися до сервера Asterisk по SSH: {e}"
         )
 
+    # Determine remote path — if file not at root, search recursively via find
+    base_dir = (settings.asterisk_recordings_path or "/var/spool/asterisk/monitor").rstrip("/")
+    basename = os.path.basename(filename)
+
+    if filename.startswith("/"):
+        remote_path = filename
+    else:
+        direct_path = f"{base_dir}/{filename}"
+        # Try direct path first
+        try:
+            sftp.stat(direct_path)
+            remote_path = direct_path
+        except FileNotFoundError:
+            # Search recursively using find
+            try:
+                _, stdout, _ = ssh.exec_command(
+                    f"find {base_dir} -name {repr(basename)} -type f 2>/dev/null | head -1"
+                )
+                found = stdout.read().decode().strip()
+                if found:
+                    remote_path = found
+                else:
+                    sftp.close()
+                    ssh.close()
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Файл запису не знайдено: {basename}"
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                sftp.close()
+                ssh.close()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Помилка пошуку файлу: {e}"
+                )
+
     try:
         file_obj = sftp.open(remote_path, "rb")
         data = file_obj.read()
@@ -289,7 +320,6 @@ def download_recording(
         except Exception:
             pass
 
-    basename = os.path.basename(remote_path)
     ext = os.path.splitext(basename)[1].lower()
     content_type = "audio/wav" if ext == ".wav" else "audio/mpeg" if ext == ".mp3" else "application/octet-stream"
 
