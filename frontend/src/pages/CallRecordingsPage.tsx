@@ -13,9 +13,6 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronsUpDown,
-  Phone,
-  Clock,
-  Calendar,
 } from 'lucide-react';
 
 type SortField = 'calldate' | 'src' | 'dst' | 'duration' | 'billsec';
@@ -176,9 +173,9 @@ export function CallRecordingsPage() {
         {/* Desktop table */}
         {data && data.items.length > 0 && (
           <>
-            <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+            <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: 'calc(100vh - 260px)' }}>
               <table className="w-full bg-white text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                   <tr>
                     <th className={thClass('calldate')} onClick={() => handleSort('calldate')}>
                       Дата та час <SortIcon field="calldate" current={sortBy} dir={sortDir} />
@@ -236,68 +233,6 @@ export function CallRecordingsPage() {
               </table>
             </div>
 
-            {/* Mobile cards */}
-            <div className="md:hidden space-y-3">
-              {/* Sort controls for mobile */}
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {(['calldate', 'src', 'dst', 'duration'] as SortField[]).map(f => (
-                  <button
-                    key={f}
-                    onClick={() => handleSort(f)}
-                    className={`flex-shrink-0 px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                      sortBy === f
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-600 border-gray-300'
-                    }`}
-                  >
-                    {f === 'calldate' ? 'Дата' : f === 'src' ? 'Від' : f === 'dst' ? 'Кому' : 'Тривалість'}
-                    {sortBy === f && (sortDir === 'asc' ? ' ↑' : ' ↓')}
-                  </button>
-                ))}
-              </div>
-
-              {data.items.map((rec) => {
-                const disp = dispositionLabel(rec.disposition);
-                return (
-                  <Card key={rec.uniqueid}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <PhoneCall className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${disp.cls}`}>
-                            {disp.text}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleDownload(rec)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
-                        >
-                          <Download className="h-3 w-3" />
-                          Завантажити
-                        </button>
-                      </div>
-
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span>{formatDate(rec.calldate)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                          <span className="font-mono text-blue-700">{rec.src || '—'}</span>
-                          <span className="text-gray-400">→</span>
-                          <span className="font-mono text-green-700">{rec.dst || '—'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span>Тривалість: {formatDuration(rec.duration)} / Розмова: {formatDuration(rec.billsec)}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
