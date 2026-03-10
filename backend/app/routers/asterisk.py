@@ -257,43 +257,37 @@ def download_recording(
             detail=f"Не вдалося підключитися до сервера Asterisk по SSH: {e}"
         )
 
-    # Determine remote path — if file not at root, search recursively via find
+    # Determine remote path — always search via find to handle subdirectories
     base_dir = (settings.asterisk_recordings_path or "/var/spool/asterisk/monitor").rstrip("/")
     basename = os.path.basename(filename)
 
     if filename.startswith("/"):
         remote_path = filename
     else:
-        direct_path = f"{base_dir}/{filename}"
-        # Try direct path first
         try:
-            sftp.stat(direct_path)
-            remote_path = direct_path
-        except FileNotFoundError:
-            # Search recursively using find
-            try:
-                _, stdout, _ = ssh.exec_command(
-                    f"find {base_dir} -name {repr(basename)} -type f 2>/dev/null | head -1"
-                )
-                found = stdout.read().decode().strip()
-                if found:
-                    remote_path = found
-                else:
-                    sftp.close()
-                    ssh.close()
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"Файл запису не знайдено: {basename}"
-                    )
-            except HTTPException:
-                raise
-            except Exception as e:
+            _, stdout, stderr = ssh.exec_command(
+                f"find {base_dir} -name '{basename}' -type f 2>/dev/null | head -1"
+            )
+            stdout.channel.settimeout(15)
+            found = stdout.read().decode().strip()
+            if found:
+                remote_path = found
+            else:
                 sftp.close()
                 ssh.close()
                 raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Помилка пошуку файлу: {e}"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Файл запису не знайдено: {basename}"
                 )
+        except HTTPException:
+            raise
+        except Exception as e:
+            sftp.close()
+            ssh.close()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Помилка пошуку файлу: {e}"
+            )
 
     try:
         file_obj = sftp.open(remote_path, "rb")
