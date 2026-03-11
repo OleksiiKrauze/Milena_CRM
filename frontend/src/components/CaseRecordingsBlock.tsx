@@ -1,56 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { asteriskApi } from '@/api/asterisk';
 import type { CallRecording, RecordingLink } from '@/types/api';
-import { PhoneCall, Play, Download, Unlink, Link2, Search, X, Loader2 } from 'lucide-react';
+import { PhoneCall, Play, Pause, Download, Unlink, Link2, Search, X, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui';
 
 // ── Audio Player ──────────────────────────────────────────────────────────────
 
-function AudioPlayer({ recordingfile }: { recordingfile: string }) {
+export function AudioPlayer({ recordingfile }: { recordingfile: string }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     return () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
   }, [blobUrl]);
 
-  const handleLoad = async () => {
-    setLoading(true);
-    try {
-      const blob = await asteriskApi.downloadRecording(recordingfile);
-      setBlobUrl(URL.createObjectURL(blob));
-    } catch {
-      alert('Помилка завантаження аудіо');
-    } finally {
-      setLoading(false);
+  const handleToggle = async () => {
+    if (!blobUrl) {
+      setLoading(true);
+      try {
+        const blob = await asteriskApi.downloadRecording(recordingfile);
+        const url = URL.createObjectURL(blob);
+        setBlobUrl(url);
+        // play will be triggered via useEffect after blobUrl is set
+      } catch {
+        alert('Помилка завантаження аудіо');
+        setLoading(false);
+      }
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+    } else {
+      audio.play();
     }
   };
 
-  if (blobUrl) {
-    return (
-      <audio
-        controls
-        src={blobUrl}
-        autoPlay
-        className="w-full mt-2"
-        style={{ height: 36 }}
-      />
-    );
-  }
+  // Auto-play once blob URL is first set
+  useEffect(() => {
+    if (blobUrl && audioRef.current) {
+      audioRef.current.play().catch(() => {});
+      setLoading(false);
+    }
+  }, [blobUrl]);
 
   return (
-    <button
-      type="button"
-      onClick={handleLoad}
-      disabled={loading}
-      title="Прослухати"
-      className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-40"
-    >
-      {loading
-        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        : <Play className="h-3.5 w-3.5" />}
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={loading}
+        title={playing ? 'Пауза' : 'Прослухати'}
+        className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-40"
+      >
+        {loading
+          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          : playing
+            ? <Pause className="h-3.5 w-3.5" />
+            : <Play className="h-3.5 w-3.5" />}
+      </button>
+      {blobUrl && (
+        <audio
+          ref={audioRef}
+          src={blobUrl}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          className="hidden"
+        />
+      )}
+    </div>
   );
 }
 

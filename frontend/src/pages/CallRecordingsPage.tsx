@@ -6,6 +6,7 @@ import { Container, Card, CardContent, Loading } from '@/components/ui';
 import { asteriskApi } from '@/api/asterisk';
 import { casesApi } from '@/api/cases';
 import type { CallRecording } from '@/types/api';
+import { AudioPlayer } from '@/components/CaseRecordingsBlock';
 import {
   PhoneCall,
   Download,
@@ -221,7 +222,12 @@ function RecordingCard({ rec, onDownload, onLink, onCreateCase }: RecordingCardP
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Play/Pause */}
+          {rec.recordingfile && (
+            <AudioPlayer recordingfile={rec.recordingfile} />
+          )}
+
           {/* Download */}
           <button
             onClick={() => onDownload(rec)}
