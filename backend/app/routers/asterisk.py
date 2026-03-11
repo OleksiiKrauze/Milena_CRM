@@ -11,6 +11,8 @@ import os
 from app.db import get_db
 from app.models.settings import Settings
 from app.models.user import User
+from app.models.call_recording_link import CallRecordingLink
+from app.models.case import Case
 from app.routers.auth import require_permission
 
 router = APIRouter(prefix="/asterisk", tags=["IP ATC"])
@@ -32,6 +34,40 @@ class CallRecording(BaseModel):
 class CallRecordingsResponse(BaseModel):
     total: int
     items: List[CallRecording]
+
+
+class LinkRecordingRequest(BaseModel):
+    uniqueid: str
+    case_id: int
+    # CDR data to cache
+    calldate: Optional[str] = None
+    src: Optional[str] = None
+    dst: Optional[str] = None
+    duration: Optional[int] = None
+    billsec: Optional[int] = None
+    disposition: Optional[str] = None
+    recordingfile: Optional[str] = None
+
+
+class RecordingLinkResponse(BaseModel):
+    id: int
+    uniqueid: str
+    case_id: int
+    calldate: Optional[str]
+    src: Optional[str]
+    dst: Optional[str]
+    duration: Optional[int]
+    billsec: Optional[int]
+    disposition: Optional[str]
+    recordingfile: Optional[str]
+    linked_at: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class CaseRecordingsResponse(BaseModel):
+    items: List[RecordingLinkResponse]
 
 
 class AsteriskSettingsResponse(BaseModel):
@@ -322,3 +358,90 @@ def download_recording(
         media_type=content_type,
         headers={"Content-Disposition": f'attachment; filename="{basename}"'},
     )
+
+
+# ── Recording ↔ Case links ─────────────────────────────────────────────────────
+
+@router.post("/recordings/link", response_model=RecordingLinkResponse, status_code=status.HTTP_201_CREATED)
+def link_recording_to_case(
+    data: LinkRecordingRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("ip_atc:read")),
+):
+    """Link a call recording to a case (idempotent — same uniqueid+case_id won't duplicate)."""
+    # Verify case exists
+    case = db.query(Case).filter(Case.id == data.case_id).first()
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Заявку не знайдено")
+
+    # Check duplicate
+    existing = (
+        db.query(CallRecordingLink)
+        .filter(CallRecordingLink.uniqueid == data.uniqueid, CallRecordingLink.case_id == data.case_id)
+        .first()
+    )
+    if existing:
+        return existing
+
+    link = CallRecordingLink(
+        uniqueid=data.uniqueid,
+        case_id=data.case_id,
+        calldate=data.calldate,
+        src=data.src,
+        dst=data.dst,
+        duration=data.duration,
+        billsec=data.billsec,
+        disposition=data.disposition,
+        recordingfile=data.recordingfile,
+        linked_by_user_id=current_user.id,
+    )
+    db.add(link)
+    db.commit()
+    db.refresh(link)
+    return link
+
+
+@router.delete("/recordings/link/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unlink_recording(
+    link_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("ip_atc:read")),
+):
+    """Remove a recording↔case link."""
+    link = db.query(CallRecordingLink).filter(CallRecordingLink.id == link_id).first()
+    if not link:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Зв'язок не знайдено")
+    db.delete(link)
+    db.commit()
+
+
+@router.get("/recordings/by-case/{case_id}", response_model=CaseRecordingsResponse)
+def get_recordings_by_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("ip_atc:read")),
+):
+    """Get all recordings linked to a specific case."""
+    links = (
+        db.query(CallRecordingLink)
+        .filter(CallRecordingLink.case_id == case_id)
+        .order_by(CallRecordingLink.linked_at.desc())
+        .all()
+    )
+    return {"items": links}
+
+
+@router.get("/recordings/links-by-uniqueid/{uniqueid}", response_model=CaseRecordingsResponse)
+def get_links_by_uniqueid(
+    uniqueid: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("ip_atc:read")),
+):
+    """Get all case links for a given CDR uniqueid."""
+    links = (
+        db.query(CallRecordingLink)
+        .filter(CallRecordingLink.uniqueid == uniqueid)
+        .order_by(CallRecordingLink.linked_at.desc())
+        .all()
+    )
+    return {"items": links}

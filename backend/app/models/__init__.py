@@ -12,6 +12,7 @@ from app.models.institutions_call import InstitutionsCall
 from app.models.event import Event
 from app.models.push_subscription import PushSubscription
 from app.models.notification_setting import NotificationSetting
+from app.models.call_recording_link import CallRecordingLink
 
 __all__ = [
     'User', 'Role', 'Direction', 'UserStatus', 'user_roles', 'user_directions',
@@ -28,4 +29,5 @@ __all__ = [
     'Event',
     'PushSubscription',
     'NotificationSetting',
+    'CallRecordingLink',
 ]

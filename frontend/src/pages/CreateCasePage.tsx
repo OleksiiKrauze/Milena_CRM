@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { casesApi } from '@/api/cases';
+import { asteriskApi } from '@/api/asterisk';
 import { uploadApi } from '@/api/upload';
 import { usersApi } from '@/api/users';
 import { Header } from '@/components/layout/Header';
@@ -13,6 +14,10 @@ import { Container, Button, Input, Card, CardContent } from '@/components/ui';
 import { X, Upload, Sparkles, Plus } from 'lucide-react';
 import { MissingPersonBlock } from '@/components/MissingPersonBlock';
 import { TagsCheckboxGroup } from '@/components/TagsCheckboxGroup';
+import { CaseRecordingsBlock } from '@/components/CaseRecordingsBlock';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
+import type { CallRecording } from '@/types/api';
 
 // Schema for a single missing person
 const missingPersonSchema = z.object({
@@ -74,18 +79,26 @@ const createCaseSchema = z.object({
 
 export function CreateCasePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const canReadAtc = hasPermission(user, 'ip_atc:read');
   const [apiError, setApiError] = useState<string | null>(null);
   const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [pendingRecordings, setPendingRecordings] = useState<CallRecording[]>([]);
+
+  // Pre-filled data from navigation state (e.g. from call recordings)
+  const prefill = (location.state as { applicant_phone?: string } | null) || {};
 
   const form: any = useForm({
     resolver: zodResolver(createCaseSchema) as any,
     defaultValues: {
       police_report_filed: false,
       decision_type: 'На розгляді',
+      applicant_phone: prefill.applicant_phone || '',
       missing_persons: [
         {
           last_name: '',
@@ -245,7 +258,7 @@ export function CreateCasePage() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: async (data: any) => {
       const { tags, additional_search_regions, ...rest } = data;
 
       // Clean empty strings - convert to undefined
@@ -267,9 +280,14 @@ export function CreateCasePage() {
           : [],
       };
 
-      return casesApi.create(finalData);
+      const createdCase = await casesApi.create(finalData);
+      // Link any pending recordings
+      for (const rec of pendingRecordings) {
+        try { await asteriskApi.linkRecording(rec, createdCase.id); } catch { /* ignore */ }
+      }
+      return createdCase;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       // Invalidate cases list cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
@@ -399,6 +417,14 @@ export function CreateCasePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Call Recordings */}
+          {canReadAtc && (
+            <CaseRecordingsBlock
+              pendingLinks={pendingRecordings}
+              onPendingChange={setPendingRecordings}
+            />
+          )}
 
           {/* Missing Persons - Dynamic Blocks */}
           <div className="space-y-4">

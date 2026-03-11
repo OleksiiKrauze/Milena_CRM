@@ -7,6 +7,7 @@ import { Container, Card, CardHeader, CardTitle, CardContent, Loading, Button } 
 import { formatDate, formatDateTime } from '@/utils/formatters';
 import { useAuthStore } from '@/store/authStore';
 import { hasPermission } from '@/utils/permissions';
+import { CaseRecordingsBlock } from '@/components/CaseRecordingsBlock';
 
 export function CaseDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,8 @@ export function CaseDetailsPage() {
       navigate('/cases');
     },
   });
+
+  const canReadAtc = hasPermission(user, 'ip_atc:read');
 
   const handleDeleteConfirm = () => {
     deleteMutation.mutate();
@@ -201,6 +204,9 @@ export function CaseDetailsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Call Recordings */}
+          {canReadAtc && <CaseRecordingsBlock caseId={caseData.id} />}
 
           {/* Missing Persons - Display all */}
           {caseData.missing_persons && caseData.missing_persons.length > 0 ? (

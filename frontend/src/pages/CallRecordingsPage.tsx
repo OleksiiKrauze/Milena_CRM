@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent, Loading } from '@/components/ui';
 import { asteriskApi } from '@/api/asterisk';
+import { casesApi } from '@/api/cases';
 import type { CallRecording } from '@/types/api';
 import {
   PhoneCall,
@@ -13,6 +15,10 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronsUpDown,
+  Link2,
+  Unlink,
+  Plus,
+  X,
 } from 'lucide-react';
 
 type SortField = 'calldate' | 'src' | 'dst' | 'duration' | 'billsec';
@@ -62,12 +68,152 @@ function SortIcon({ field, current, dir }: { field: SortField; current: SortFiel
     : <ArrowDown className="h-3 w-3 ml-1 text-blue-600 inline" />;
 }
 
+/** Pick the "external" phone: the one longer than 5 digits. Falls back to src. */
+function externalPhone(src: string, dst: string): string {
+  if ((dst || '').replace(/\D/g, '').length > 5) return dst;
+  if ((src || '').replace(/\D/g, '').length > 5) return src;
+  return src || dst || '';
+}
+
+// ── Link-to-case modal ─────────────────────────────────────────────────────────
+
+interface LinkModalProps {
+  recording: CallRecording;
+  onClose: () => void;
+  onLinked: () => void;
+}
+
+function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const { data: casesData, isLoading } = useQuery({
+    queryKey: ['cases-search-modal', debouncedSearch],
+    queryFn: () => casesApi.list({ search_query: debouncedSearch || undefined, limit: 20 }),
+    enabled: true,
+  });
+
+  // Already-linked cases for this recording
+  const { data: linksData } = useQuery({
+    queryKey: ['recording-links', recording.uniqueid],
+    queryFn: () => asteriskApi.getLinksByUniqueid(recording.uniqueid),
+  });
+
+  const linkedCaseIds = new Set((linksData?.items || []).map(l => l.case_id));
+
+  const linkMutation = useMutation({
+    mutationFn: (caseId: number) => asteriskApi.linkRecording(recording, caseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recording-links', recording.uniqueid] });
+      queryClient.invalidateQueries({ queryKey: ['case-recordings'] });
+      onLinked();
+    },
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: (linkId: number) => asteriskApi.unlinkRecording(linkId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recording-links', recording.uniqueid] });
+      queryClient.invalidateQueries({ queryKey: ['case-recordings'] });
+    },
+  });
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    clearTimeout((window as any)._caseModalTimer);
+    (window as any)._caseModalTimer = setTimeout(() => setDebouncedSearch(value), 350);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="font-semibold text-gray-900">Прив'язати до заявки</h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100">
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Current links */}
+        {linksData && linksData.items.length > 0 && (
+          <div className="px-4 pt-3 pb-2 border-b bg-gray-50">
+            <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Прив'язані заявки</p>
+            <div className="space-y-1">
+              {linksData.items.map(link => (
+                <div key={link.id} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
+                  <span className="text-gray-800">Заявка #{link.case_id}</span>
+                  <button
+                    onClick={() => unlinkMutation.mutate(link.id)}
+                    disabled={unlinkMutation.isPending}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-700 text-xs"
+                  >
+                    <Unlink className="h-3.5 w-3.5" /> Відв'язати
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="p-4 border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="Пошук заявки за ПІБ або номером..."
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Cases list */}
+        <div className="flex-1 overflow-y-auto p-2">
+          {isLoading && <Loading />}
+          {casesData?.cases.map(c => {
+            const alreadyLinked = linkedCaseIds.has(c.id);
+            return (
+              <button
+                key={c.id}
+                disabled={alreadyLinked || linkMutation.isPending}
+                onClick={() => linkMutation.mutate(c.id)}
+                className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-default flex items-center justify-between gap-2 mb-0.5 transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-900">#{c.id} — {c.missing_full_name}</p>
+                  <p className="text-xs text-gray-500">{c.applicant_full_name} · {c.decision_type}</p>
+                </div>
+                {alreadyLinked && (
+                  <span className="text-xs text-green-600 font-medium shrink-0">Прив'язано</span>
+                )}
+              </button>
+            );
+          })}
+          {casesData?.cases.length === 0 && (
+            <p className="text-sm text-gray-500 text-center py-4">Заявок не знайдено</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export function CallRecordingsPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortField>('calldate');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
+  const [linkingRecording, setLinkingRecording] = useState<CallRecording | null>(null);
   const limit = 50;
 
   // Debounce search
@@ -116,9 +262,14 @@ export function CallRecordingsPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (e) {
+    } catch {
       alert('Помилка завантаження файлу');
     }
+  };
+
+  const handleCreateCase = (recording: CallRecording) => {
+    const phone = externalPhone(recording.src, recording.dst);
+    navigate('/cases/new', { state: { applicant_phone: phone } });
   };
 
   const thClass = (_field: SortField) =>
@@ -170,7 +321,7 @@ export function CallRecordingsPage() {
 
         {isLoading && <Loading />}
 
-        {/* Desktop table */}
+        {/* Table */}
         {data && data.items.length > 0 && (
           <>
             <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: 'calc(100vh - 260px)' }}>
@@ -195,8 +346,8 @@ export function CallRecordingsPage() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       Статус
                     </th>
-                    <th className="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Завантажити
+                    <th className="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
+                      Дії
                     </th>
                   </tr>
                 </thead>
@@ -204,35 +355,19 @@ export function CallRecordingsPage() {
                   {data.items.map((rec) => {
                     const disp = dispositionLabel(rec.disposition);
                     return (
-                      <tr key={rec.uniqueid} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-3 py-3 text-gray-800 whitespace-nowrap">
-                          {formatDate(rec.calldate)}
-                        </td>
-                        <td className="px-3 py-3 font-mono text-blue-700">{rec.src || '—'}</td>
-                        <td className="px-3 py-3 font-mono text-green-700">{rec.dst || '—'}</td>
-                        <td className="px-3 py-3 text-gray-600">{formatDuration(rec.duration)}</td>
-                        <td className="px-3 py-3 text-gray-600">{formatDuration(rec.billsec)}</td>
-                        <td className="px-3 py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${disp.cls}`}>
-                            {disp.text}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <button
-                            onClick={() => handleDownload(rec)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            <Download className="h-3 w-3" />
-                            Завантажити
-                          </button>
-                        </td>
-                      </tr>
+                      <RecordingRow
+                        key={rec.uniqueid}
+                        rec={rec}
+                        disp={disp}
+                        onDownload={handleDownload}
+                        onLink={() => setLinkingRecording(rec)}
+                        onCreateCase={() => handleCreateCase(rec)}
+                      />
                     );
                   })}
                 </tbody>
               </table>
             </div>
-
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -272,6 +407,85 @@ export function CallRecordingsPage() {
           </Card>
         )}
       </Container>
+
+      {/* Link modal */}
+      {linkingRecording && (
+        <LinkCaseModal
+          recording={linkingRecording}
+          onClose={() => setLinkingRecording(null)}
+          onLinked={() => {
+            queryClient.invalidateQueries({ queryKey: ['case-recordings'] });
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// ── Row sub-component (loads its own links count) ─────────────────────────────
+
+interface RecordingRowProps {
+  rec: CallRecording;
+  disp: { text: string; cls: string };
+  onDownload: (rec: CallRecording) => void;
+  onLink: () => void;
+  onCreateCase: () => void;
+}
+
+function RecordingRow({ rec, disp, onDownload, onLink, onCreateCase }: RecordingRowProps) {
+  const { data: linksData } = useQuery({
+    queryKey: ['recording-links', rec.uniqueid],
+    queryFn: () => asteriskApi.getLinksByUniqueid(rec.uniqueid),
+    staleTime: 30_000,
+  });
+
+  const linkCount = linksData?.items.length ?? 0;
+
+  return (
+    <tr className="hover:bg-gray-50 transition-colors">
+      <td className="px-3 py-3 text-gray-800 whitespace-nowrap">{formatDate(rec.calldate)}</td>
+      <td className="px-3 py-3 font-mono text-blue-700">{rec.src || '—'}</td>
+      <td className="px-3 py-3 font-mono text-green-700">{rec.dst || '—'}</td>
+      <td className="px-3 py-3 text-gray-600">{formatDuration(rec.duration)}</td>
+      <td className="px-3 py-3 text-gray-600">{formatDuration(rec.billsec)}</td>
+      <td className="px-3 py-3">
+        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${disp.cls}`}>
+          {disp.text}
+        </span>
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-1.5 justify-center">
+          {/* Download */}
+          <button
+            onClick={() => onDownload(rec)}
+            title="Завантажити"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="h-3 w-3" />
+          </button>
+          {/* Link to case */}
+          <button
+            onClick={onLink}
+            title="Прив'язати до заявки"
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+              linkCount > 0
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Link2 className="h-3 w-3" />
+            {linkCount > 0 && <span>{linkCount}</span>}
+          </button>
+          {/* Create case */}
+          <button
+            onClick={onCreateCase}
+            title="Створити заявку"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-100 text-violet-700 text-xs rounded-lg hover:bg-violet-200 transition-colors"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }

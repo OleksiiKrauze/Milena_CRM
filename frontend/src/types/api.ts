@@ -557,6 +557,24 @@ export interface CallRecordingsResponse {
   items: CallRecording[];
 }
 
+export interface RecordingLink {
+  id: number;
+  uniqueid: string;
+  case_id: number;
+  calldate: string | null;
+  src: string | null;
+  dst: string | null;
+  duration: number | null;
+  billsec: number | null;
+  disposition: string | null;
+  recordingfile: string | null;
+  linked_at: string | null;
+}
+
+export interface CaseRecordingsResponse {
+  items: RecordingLink[];
+}
+
 export interface AsteriskSettings {
   asterisk_cdr_host: string | null;
   asterisk_cdr_port: number | null;

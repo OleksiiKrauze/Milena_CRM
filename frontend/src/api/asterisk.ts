@@ -1,5 +1,5 @@
 import api from './client';
-import type { CallRecordingsResponse, AsteriskSettings } from '@/types/api';
+import type { CallRecording, CallRecordingsResponse, AsteriskSettings, RecordingLink, CaseRecordingsResponse } from '@/types/api';
 
 export interface RecordingsListParams {
   skip?: number;
@@ -37,6 +37,35 @@ export const asteriskApi = {
 
   updateSettings: async (data: Partial<AsteriskSettings>): Promise<AsteriskSettings> => {
     const response = await api.put<AsteriskSettings>('/asterisk/settings', data);
+    return response.data;
+  },
+
+  linkRecording: async (recording: CallRecording, caseId: number): Promise<RecordingLink> => {
+    const response = await api.post<RecordingLink>('/asterisk/recordings/link', {
+      uniqueid: recording.uniqueid,
+      case_id: caseId,
+      calldate: recording.calldate,
+      src: recording.src,
+      dst: recording.dst,
+      duration: recording.duration,
+      billsec: recording.billsec,
+      disposition: recording.disposition,
+      recordingfile: recording.recordingfile,
+    });
+    return response.data;
+  },
+
+  unlinkRecording: async (linkId: number): Promise<void> => {
+    await api.delete(`/asterisk/recordings/link/${linkId}`);
+  },
+
+  getRecordingsByCase: async (caseId: number): Promise<CaseRecordingsResponse> => {
+    const response = await api.get<CaseRecordingsResponse>(`/asterisk/recordings/by-case/${caseId}`);
+    return response.data;
+  },
+
+  getLinksByUniqueid: async (uniqueid: string): Promise<CaseRecordingsResponse> => {
+    const response = await api.get<CaseRecordingsResponse>(`/asterisk/recordings/links-by-uniqueid/${encodeURIComponent(uniqueid)}`);
     return response.data;
   },
 };

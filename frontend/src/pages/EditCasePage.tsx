@@ -13,6 +13,9 @@ import { Container, Button, Input, Card, CardContent, Loading } from '@/componen
 import { X, Upload, Sparkles, Plus } from 'lucide-react';
 import { MissingPersonBlock } from '@/components/MissingPersonBlock';
 import { TagsCheckboxGroup } from '@/components/TagsCheckboxGroup';
+import { CaseRecordingsBlock } from '@/components/CaseRecordingsBlock';
+import { useAuthStore } from '@/store/authStore';
+import { hasPermission } from '@/utils/permissions';
 
 // Schema for a single missing person
 const missingPersonSchema = z.object({
@@ -74,6 +77,8 @@ export function EditCasePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  const canReadAtc = hasPermission(user, 'ip_atc:read');
   const [apiError, setApiError] = useState<string | null>(null);
   const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isNotesUploading, setIsNotesUploading] = useState(false);
@@ -491,6 +496,9 @@ export function EditCasePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Call Recordings */}
+          {canReadAtc && id && <CaseRecordingsBlock caseId={Number(id)} />}
 
           {/* Missing Persons - Dynamic Blocks */}
           <div className="space-y-4">
