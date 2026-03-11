@@ -12,16 +12,13 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  ChevronsUpDown,
   Link2,
   Unlink,
   Plus,
   X,
+  Phone,
+  Clock,
 } from 'lucide-react';
-
-type SortField = 'calldate' | 'src' | 'dst' | 'duration' | 'billsec';
 
 function formatDuration(seconds: number): string {
   if (!seconds) return '0:00';
@@ -32,14 +29,9 @@ function formatDuration(seconds: number): string {
 
 function formatDate(dateStr: string): string {
   try {
-    const d = new Date(dateStr);
-    return d.toLocaleString('uk-UA', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return new Date(dateStr).toLocaleString('uk-UA', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
     });
   } catch {
     return dateStr;
@@ -48,34 +40,22 @@ function formatDate(dateStr: string): string {
 
 function dispositionLabel(d: string): { text: string; cls: string } {
   switch (d?.toUpperCase()) {
-    case 'ANSWERED':
-      return { text: 'Відповів', cls: 'bg-green-100 text-green-700' };
-    case 'NO ANSWER':
-      return { text: 'Без відповіді', cls: 'bg-yellow-100 text-yellow-700' };
-    case 'BUSY':
-      return { text: 'Зайнято', cls: 'bg-red-100 text-red-700' };
-    case 'FAILED':
-      return { text: 'Збій', cls: 'bg-gray-100 text-gray-700' };
-    default:
-      return { text: d || '—', cls: 'bg-gray-100 text-gray-600' };
+    case 'ANSWERED':   return { text: 'Відповів',       cls: 'bg-green-100 text-green-700' };
+    case 'NO ANSWER':  return { text: 'Без відповіді',  cls: 'bg-yellow-100 text-yellow-700' };
+    case 'BUSY':       return { text: 'Зайнято',        cls: 'bg-red-100 text-red-700' };
+    case 'FAILED':     return { text: 'Збій',           cls: 'bg-gray-100 text-gray-700' };
+    default:           return { text: d || '—',         cls: 'bg-gray-100 text-gray-600' };
   }
 }
 
-function SortIcon({ field, current, dir }: { field: SortField; current: SortField; dir: 'asc' | 'desc' }) {
-  if (field !== current) return <ChevronsUpDown className="h-3 w-3 ml-1 text-gray-400 inline" />;
-  return dir === 'asc'
-    ? <ArrowUp className="h-3 w-3 ml-1 text-blue-600 inline" />
-    : <ArrowDown className="h-3 w-3 ml-1 text-blue-600 inline" />;
-}
-
-/** Pick the "external" phone: the one longer than 5 digits. Falls back to src. */
+/** Pick the "external" phone: longer than 5 digits. Falls back to src. */
 function externalPhone(src: string, dst: string): string {
   if ((dst || '').replace(/\D/g, '').length > 5) return dst;
   if ((src || '').replace(/\D/g, '').length > 5) return src;
   return src || dst || '';
 }
 
-// ── Link-to-case modal ─────────────────────────────────────────────────────────
+// ── Link-to-case modal ────────────────────────────────────────────────────────
 
 interface LinkModalProps {
   recording: CallRecording;
@@ -91,10 +71,8 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
   const { data: casesData, isLoading } = useQuery({
     queryKey: ['cases-search-modal', debouncedSearch],
     queryFn: () => casesApi.list({ search_query: debouncedSearch || undefined, limit: 20 }),
-    enabled: true,
   });
 
-  // Already-linked cases for this recording
   const { data: linksData } = useQuery({
     queryKey: ['recording-links', recording.uniqueid],
     queryFn: () => asteriskApi.getLinksByUniqueid(recording.uniqueid),
@@ -128,7 +106,6 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold text-gray-900">Прив'язати до заявки</h2>
           <button onClick={onClose} className="p-1 rounded hover:bg-gray-100">
@@ -136,7 +113,6 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
           </button>
         </div>
 
-        {/* Current links */}
         {linksData && linksData.items.length > 0 && (
           <div className="px-4 pt-3 pb-2 border-b bg-gray-50">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Прив'язані заявки</p>
@@ -157,7 +133,6 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
           </div>
         )}
 
-        {/* Search */}
         <div className="p-4 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -172,7 +147,6 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
           </div>
         </div>
 
-        {/* Cases list */}
         <div className="flex-1 overflow-y-auto p-2">
           {isLoading && <Loading />}
           {casesData?.cases.map(c => {
@@ -188,9 +162,7 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
                   <p className="text-sm font-medium text-gray-900">#{c.id} — {c.missing_full_name}</p>
                   <p className="text-xs text-gray-500">{c.applicant_full_name} · {c.decision_type}</p>
                 </div>
-                {alreadyLinked && (
-                  <span className="text-xs text-green-600 font-medium shrink-0">Прив'язано</span>
-                )}
+                {alreadyLinked && <span className="text-xs text-green-600 font-medium shrink-0">Прив'язано</span>}
               </button>
             );
           })}
@@ -203,6 +175,90 @@ function LinkCaseModal({ recording, onClose, onLinked }: LinkModalProps) {
   );
 }
 
+// ── Recording card ────────────────────────────────────────────────────────────
+
+interface RecordingCardProps {
+  rec: CallRecording;
+  onDownload: (rec: CallRecording) => void;
+  onLink: (rec: CallRecording) => void;
+  onCreateCase: (rec: CallRecording) => void;
+}
+
+function RecordingCard({ rec, onDownload, onLink, onCreateCase }: RecordingCardProps) {
+  const { data: linksData } = useQuery({
+    queryKey: ['recording-links', rec.uniqueid],
+    queryFn: () => asteriskApi.getLinksByUniqueid(rec.uniqueid),
+    staleTime: 30_000,
+  });
+
+  const linkCount = linksData?.items.length ?? 0;
+  const disp = dispositionLabel(rec.disposition);
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        {/* Top row: date + status */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-800">{formatDate(rec.calldate)}</span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${disp.cls}`}>{disp.text}</span>
+        </div>
+
+        {/* Phone numbers */}
+        <div className="flex items-center gap-2 mb-2">
+          <Phone className="h-4 w-4 text-gray-400 shrink-0" />
+          <span className="font-mono text-sm text-blue-700">{rec.src || '—'}</span>
+          <span className="text-gray-400">→</span>
+          <span className="font-mono text-sm text-green-700">{rec.dst || '—'}</span>
+        </div>
+
+        {/* Duration */}
+        <div className="flex items-center gap-2 mb-3">
+          <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-600">
+            Тривалість: {formatDuration(rec.duration)}
+            {rec.billsec > 0 && <> · Розмова: {formatDuration(rec.billsec)}</>}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {/* Download */}
+          <button
+            onClick={() => onDownload(rec)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Завантажити
+          </button>
+
+          {/* Link to case */}
+          <button
+            onClick={() => onLink(rec)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+              linkCount > 0
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            {linkCount > 0 ? `Заявок: ${linkCount}` : 'Заявка'}
+          </button>
+
+          {/* Create case */}
+          <button
+            onClick={() => onCreateCase(rec)}
+            title="Створити заявку"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 text-violet-700 text-xs rounded-lg hover:bg-violet-200 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Нова заявка
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function CallRecordingsPage() {
@@ -210,13 +266,10 @@ export function CallRecordingsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sortBy, setSortBy] = useState<SortField>('calldate');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(0);
   const [linkingRecording, setLinkingRecording] = useState<CallRecording | null>(null);
   const limit = 50;
 
-  // Debounce search
   const handleSearchChange = (value: string) => {
     setSearch(value);
     clearTimeout((window as any)._recordingSearchTimer);
@@ -226,23 +279,13 @@ export function CallRecordingsPage() {
     }, 400);
   };
 
-  const handleSort = (field: SortField) => {
-    if (field === sortBy) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortDir('desc');
-    }
-    setPage(0);
-  };
-
   const { data, isLoading, error } = useQuery({
-    queryKey: ['call-recordings', debouncedSearch, sortBy, sortDir, page],
+    queryKey: ['call-recordings', debouncedSearch, page],
     queryFn: () => asteriskApi.listRecordings({
       skip: page * limit,
       limit,
-      sort_by: sortBy,
-      sort_dir: sortDir,
+      sort_by: 'calldate',
+      sort_dir: 'desc',
       search: debouncedSearch || undefined,
     }),
     retry: 1,
@@ -272,9 +315,6 @@ export function CallRecordingsPage() {
     navigate('/cases/new', { state: { applicant_phone: phone, pending_recording: recording } });
   };
 
-  const thClass = (_field: SortField) =>
-    `px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide cursor-pointer select-none hover:text-gray-900 whitespace-nowrap`;
-
   return (
     <div className="min-h-screen pb-nav">
       <Header title="Записи розмов" showBack />
@@ -297,14 +337,12 @@ export function CallRecordingsPage() {
           </CardContent>
         </Card>
 
-        {/* Stats line */}
         {data && (
           <p className="text-sm text-gray-500 mb-3">
             Знайдено записів: <span className="font-semibold text-gray-800">{data.total}</span>
           </p>
         )}
 
-        {/* Error */}
         {error && (
           <Card className="mb-4 border-red-200 bg-red-50">
             <CardContent className="p-4">
@@ -321,55 +359,21 @@ export function CallRecordingsPage() {
 
         {isLoading && <Loading />}
 
-        {/* Table */}
+        {/* Cards list */}
         {data && data.items.length > 0 && (
           <>
-            <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: 'calc(100vh - 260px)' }}>
-              <table className="w-full bg-white text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                  <tr>
-                    <th className={thClass('calldate')} onClick={() => handleSort('calldate')}>
-                      Дата та час <SortIcon field="calldate" current={sortBy} dir={sortDir} />
-                    </th>
-                    <th className={thClass('src')} onClick={() => handleSort('src')}>
-                      Від <SortIcon field="src" current={sortBy} dir={sortDir} />
-                    </th>
-                    <th className={thClass('dst')} onClick={() => handleSort('dst')}>
-                      Кому <SortIcon field="dst" current={sortBy} dir={sortDir} />
-                    </th>
-                    <th className={thClass('duration')} onClick={() => handleSort('duration')}>
-                      Тривалість <SortIcon field="duration" current={sortBy} dir={sortDir} />
-                    </th>
-                    <th className={thClass('billsec')} onClick={() => handleSort('billsec')}>
-                      Розмова <SortIcon field="billsec" current={sortBy} dir={sortDir} />
-                    </th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Статус
-                    </th>
-                    <th className="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">
-                      Дії
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.items.map((rec) => {
-                    const disp = dispositionLabel(rec.disposition);
-                    return (
-                      <RecordingRow
-                        key={rec.uniqueid}
-                        rec={rec}
-                        disp={disp}
-                        onDownload={handleDownload}
-                        onLink={() => setLinkingRecording(rec)}
-                        onCreateCase={() => handleCreateCase(rec)}
-                      />
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="space-y-3">
+              {data.items.map(rec => (
+                <RecordingCard
+                  key={rec.uniqueid}
+                  rec={rec}
+                  onDownload={handleDownload}
+                  onLink={r => setLinkingRecording(r)}
+                  onCreateCase={handleCreateCase}
+                />
+              ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4">
                 <button
@@ -380,7 +384,7 @@ export function CallRecordingsPage() {
                   <ChevronLeft className="h-4 w-4" /> Назад
                 </button>
                 <span className="text-sm text-gray-600">
-                  Сторінка {page + 1} з {totalPages}
+                  {page + 1} / {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages - 1}
@@ -394,7 +398,6 @@ export function CallRecordingsPage() {
           </>
         )}
 
-        {/* Empty state */}
         {data && data.items.length === 0 && !isLoading && (
           <Card>
             <CardContent className="p-8 text-center">
@@ -408,7 +411,6 @@ export function CallRecordingsPage() {
         )}
       </Container>
 
-      {/* Link modal */}
       {linkingRecording && (
         <LinkCaseModal
           recording={linkingRecording}
@@ -419,73 +421,5 @@ export function CallRecordingsPage() {
         />
       )}
     </div>
-  );
-}
-
-// ── Row sub-component (loads its own links count) ─────────────────────────────
-
-interface RecordingRowProps {
-  rec: CallRecording;
-  disp: { text: string; cls: string };
-  onDownload: (rec: CallRecording) => void;
-  onLink: () => void;
-  onCreateCase: () => void;
-}
-
-function RecordingRow({ rec, disp, onDownload, onLink, onCreateCase }: RecordingRowProps) {
-  const { data: linksData } = useQuery({
-    queryKey: ['recording-links', rec.uniqueid],
-    queryFn: () => asteriskApi.getLinksByUniqueid(rec.uniqueid),
-    staleTime: 30_000,
-  });
-
-  const linkCount = linksData?.items.length ?? 0;
-
-  return (
-    <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-3 py-3 text-gray-800 whitespace-nowrap">{formatDate(rec.calldate)}</td>
-      <td className="px-3 py-3 font-mono text-blue-700">{rec.src || '—'}</td>
-      <td className="px-3 py-3 font-mono text-green-700">{rec.dst || '—'}</td>
-      <td className="px-3 py-3 text-gray-600">{formatDuration(rec.duration)}</td>
-      <td className="px-3 py-3 text-gray-600">{formatDuration(rec.billsec)}</td>
-      <td className="px-3 py-3">
-        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${disp.cls}`}>
-          {disp.text}
-        </span>
-      </td>
-      <td className="px-3 py-3">
-        <div className="flex items-center gap-1.5 justify-center">
-          {/* Download */}
-          <button
-            onClick={() => onDownload(rec)}
-            title="Завантажити"
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download className="h-3 w-3" />
-          </button>
-          {/* Link to case */}
-          <button
-            onClick={onLink}
-            title="Прив'язати до заявки"
-            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
-              linkCount > 0
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <Link2 className="h-3 w-3" />
-            {linkCount > 0 && <span>{linkCount}</span>}
-          </button>
-          {/* Create case */}
-          <button
-            onClick={onCreateCase}
-            title="Створити заявку"
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-100 text-violet-700 text-xs rounded-lg hover:bg-violet-200 transition-colors"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-        </div>
-      </td>
-    </tr>
   );
 }
