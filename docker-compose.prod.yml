@@ -75,6 +75,66 @@ services:
     networks:
       - crm_network
 
+  # ── Voice Bot (LiveKit + OpenAI Realtime API) ──────────────────────────────
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: crm_livekit
+    restart: unless-stopped
+    command: --config /etc/livekit/livekit.yaml
+    environment:
+      # Format: "api_key:api_secret"
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./voice-bot/config/livekit.yaml:/etc/livekit/livekit.yaml:ro
+    ports:
+      - "7880:7880"           # HTTP API (internal, for agent + SIP service)
+      - "7881:7881/tcp"       # WebRTC TCP fallback
+      - "50000-50200:50000-50200/udp"  # WebRTC UDP media
+    networks:
+      - crm_network
+
+  livekit-sip:
+    image: livekit/sip:latest
+    container_name: crm_livekit_sip
+    restart: unless-stopped
+    environment:
+      SIP_SERVER_HOST: "0.0.0.0"
+      SIP_SERVER_PORT: "5060"
+      LIVEKIT_URL: "ws://livekit:7880"
+      LIVEKIT_API_KEY: "${LIVEKIT_API_KEY}"
+      LIVEKIT_API_SECRET: "${LIVEKIT_API_SECRET}"
+    ports:
+      - "5060:5060/udp"       # SIP signaling (open in AWS Security Group!)
+      - "5060:5060/tcp"
+      - "10000-10200:10000-10200/udp"  # RTP media
+    depends_on:
+      - livekit
+    networks:
+      - crm_network
+
+  voice-bot:
+    build:
+      context: ./voice-bot/agent
+      dockerfile: Dockerfile
+    container_name: crm_voice_bot
+    restart: unless-stopped
+    environment:
+      LIVEKIT_URL: "ws://livekit:7880"
+      LIVEKIT_API_KEY: "${LIVEKIT_API_KEY}"
+      LIVEKIT_API_SECRET: "${LIVEKIT_API_SECRET}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      CRM_API_URL: "http://backend:8000"
+      CRM_API_KEY: "${PUBLIC_API_KEY}"
+    volumes:
+      - voice_recordings:/recordings
+    depends_on:
+      - livekit
+      backend:
+        condition: service_healthy
+    networks:
+      - crm_network
+
 volumes:
   postgres_data:
     driver: local
@@ -83,6 +143,8 @@ volumes:
   nginx_logs:
     driver: local
   backend_logs:
+    driver: local
+  voice_recordings:
     driver: local
 
 networks:

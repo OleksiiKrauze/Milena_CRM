@@ -1,0 +1,126 @@
+"""
+MilenaCRM Voice Bot — LiveKit Agent with OpenAI Realtime API.
+
+Flow:
+  FreePBX IVR (option 2)
+    → SIP trunk → LiveKit SIP service
+    → LiveKit room
+    → this agent joins, uses OpenAI Realtime API
+    → on call end: saves transcript, creates CRM draft case
+"""
+import asyncio
+import logging
+import uuid
+from datetime import datetime
+
+from livekit import rtc
+from livekit.agents import (
+    AutoSubscribe,
+    JobContext,
+    JobProcess,
+    WorkerOptions,
+    cli,
+)
+from livekit.agents.multimodal import MultimodalAgent
+from livekit.plugins.openai import realtime
+
+from questions import SYSTEM_PROMPT
+from crm import create_draft_case, save_transcript
+
+logger = logging.getLogger("milena-bot")
+logging.basicConfig(level=logging.INFO)
+
+
+def prewarm(proc: JobProcess):
+    """Called once on worker start — preload heavy resources here."""
+    pass
+
+
+async def entrypoint(ctx: JobContext):
+    call_id = str(uuid.uuid4())[:8]
+    logger.info(f"[{call_id}] New call: room={ctx.room.name}")
+
+    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+
+    # Wait for the SIP participant (the caller)
+    participant = await ctx.wait_for_participant()
+    logger.info(f"[{call_id}] Caller joined: {participant.identity}")
+
+    # Conversation transcript accumulator
+    transcript: list[dict] = []
+
+    # ── OpenAI Realtime model ────────────────────────────────────────────────
+    model = realtime.RealtimeModel(
+        instructions=SYSTEM_PROMPT,
+        voice="alloy",          # alloy | echo | fable | onyx | nova | shimmer
+        temperature=0.7,
+        modalities=["text", "audio"],
+    )
+
+    # ── Agent ────────────────────────────────────────────────────────────────
+    agent = MultimodalAgent(model=model)
+    agent.start(ctx.room, participant)
+
+    # Trigger the opening greeting
+    session = model.sessions[0]
+    session.response.create()
+
+    # ── Transcript collection ─────────────────────────────────────────────────
+    @session.on("response_done")
+    def on_response_done(response):
+        """Capture bot's text output."""
+        for output in response.output:
+            if output.type == "message" and output.role == "assistant":
+                for content in output.content:
+                    if hasattr(content, "transcript") and content.transcript:
+                        transcript.append({
+                            "role": "assistant",
+                            "text": content.transcript,
+                            "ts": datetime.now().isoformat(),
+                        })
+                        logger.info(f"[{call_id}] Bot: {content.transcript[:60]}...")
+
+    @session.on("input_speech_transcription_completed")
+    def on_user_speech(event):
+        """Capture caller's speech transcription."""
+        text = event.transcript
+        if text and text.strip():
+            transcript.append({
+                "role": "user",
+                "text": text,
+                "ts": datetime.now().isoformat(),
+            })
+            logger.info(f"[{call_id}] User: {text[:60]}...")
+
+    # ── Wait for call to end ──────────────────────────────────────────────────
+    disconnect_event = asyncio.Event()
+
+    @ctx.room.on("participant_disconnected")
+    def on_disconnect(p: rtc.RemoteParticipant):
+        if p.identity == participant.identity:
+            logger.info(f"[{call_id}] Caller disconnected")
+            disconnect_event.set()
+
+    # Timeout: 15 minutes max
+    try:
+        await asyncio.wait_for(disconnect_event.wait(), timeout=900)
+    except asyncio.TimeoutError:
+        logger.warning(f"[{call_id}] Call timeout (15 min)")
+
+    # ── Post-call processing ──────────────────────────────────────────────────
+    logger.info(f"[{call_id}] Call ended. Transcript items: {len(transcript)}")
+
+    if transcript:
+        save_transcript(call_id, transcript)
+        await create_draft_case(call_id, transcript)
+    else:
+        logger.warning(f"[{call_id}] Empty transcript, skipping CRM")
+
+
+if __name__ == "__main__":
+    cli.run_app(
+        WorkerOptions(
+            entrypoint_fnc=entrypoint,
+            prewarm_fnc=prewarm,
+        )
+    )

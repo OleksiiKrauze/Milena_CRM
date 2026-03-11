@@ -1,0 +1,13 @@
+# LiveKit Server configuration
+# Keys are loaded from environment: LIVEKIT_KEYS="<api_key>:<api_secret>"
+port: 7880
+log_level: info
+
+rtc:
+  # WebRTC TCP fallback port (for clients behind strict firewalls)
+  tcp_port: 7881
+  # Tell LiveKit to use the public IP for ICE candidates
+  use_external_ip: true
+  # UDP port range for WebRTC media (open these in AWS Security Group!)
+  port_range_start: 50000
+  port_range_end: 50200
