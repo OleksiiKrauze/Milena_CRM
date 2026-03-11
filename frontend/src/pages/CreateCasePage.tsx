@@ -83,15 +83,18 @@ export function CreateCasePage() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const canReadAtc = hasPermission(user, 'ip_atc:read');
+
+  // Pre-filled data from navigation state (e.g. from call recordings)
+  const prefill = (location.state as { applicant_phone?: string; pending_recording?: CallRecording } | null) || {};
+
   const [apiError, setApiError] = useState<string | null>(null);
   const [notesImages, setNotesImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [pendingRecordings, setPendingRecordings] = useState<CallRecording[]>([]);
-
-  // Pre-filled data from navigation state (e.g. from call recordings)
-  const prefill = (location.state as { applicant_phone?: string } | null) || {};
+  const [pendingRecordings, setPendingRecordings] = useState<CallRecording[]>(
+    prefill.pending_recording ? [prefill.pending_recording] : []
+  );
 
   const form: any = useForm({
     resolver: zodResolver(createCaseSchema) as any,

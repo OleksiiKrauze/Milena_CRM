@@ -269,7 +269,7 @@ export function CallRecordingsPage() {
 
   const handleCreateCase = (recording: CallRecording) => {
     const phone = externalPhone(recording.src, recording.dst);
-    navigate('/cases/new', { state: { applicant_phone: phone } });
+    navigate('/cases/new', { state: { applicant_phone: phone, pending_recording: recording } });
   };
 
   const thClass = (_field: SortField) =>
