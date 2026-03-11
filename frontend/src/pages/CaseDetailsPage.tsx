@@ -129,6 +129,35 @@ export function CaseDetailsPage() {
                   <p className="font-medium">{caseData.decision_comment}</p>
                 </div>
               )}
+              {(() => {
+                const searches = caseData.searches;
+                if (!searches || searches.length === 0) return null;
+                const latest = searches.reduce((a: any, b: any) =>
+                  new Date(a.created_at) > new Date(b.created_at) ? a : b
+                );
+                if (!latest.result) return null;
+                const resultLabels: Record<string, string> = {
+                  alive: 'Живий',
+                  dead: 'Виявлено',
+                  location_known: 'Місцезнаходження відомо',
+                  not_found: 'Пошук припинено',
+                  person_identified: 'Особу встановлено',
+                };
+                return (
+                  <>
+                    <div>
+                      <p className="text-sm text-gray-600">Результат пошуку</p>
+                      <p className="font-medium">{resultLabels[latest.result] || latest.result}</p>
+                    </div>
+                    {latest.result_comment && (
+                      <div>
+                        <p className="text-sm text-gray-600">Коментар до результату пошуку</p>
+                        <p className="font-medium whitespace-pre-wrap">{latest.result_comment}</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {caseData.tags && caseData.tags.length > 0 && (
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Теги</p>
@@ -169,35 +198,6 @@ export function CaseDetailsPage() {
                   <p className="font-medium whitespace-pre-wrap">{caseData.decision_comment}</p>
                 </div>
               )}
-              {(() => {
-                const searches = caseData.searches;
-                if (!searches || searches.length === 0) return null;
-                const latest = searches.reduce((a: any, b: any) =>
-                  new Date(a.created_at) > new Date(b.created_at) ? a : b
-                );
-                if (!latest.result) return null;
-                const resultLabels: Record<string, string> = {
-                  alive: 'Живий',
-                  dead: 'Виявлено',
-                  location_known: 'Місцезнаходження відомо',
-                  not_found: 'Пошук припинено',
-                  person_identified: 'Особу встановлено',
-                };
-                return (
-                  <>
-                    <div>
-                      <p className="text-sm text-gray-600">Результат пошуку</p>
-                      <p className="font-medium">{resultLabels[latest.result] || latest.result}</p>
-                    </div>
-                    {latest.result_comment && (
-                      <div>
-                        <p className="text-sm text-gray-600">Коментар до результату пошуку</p>
-                        <p className="font-medium whitespace-pre-wrap">{latest.result_comment}</p>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
             </CardContent>
           </Card>
 
