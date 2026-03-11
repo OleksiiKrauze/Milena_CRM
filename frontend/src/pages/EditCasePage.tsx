@@ -67,6 +67,8 @@ const editCaseSchema = z.object({
   police_contact_user_id: z.string().optional(),
   // Notes
   notes_text: z.string().optional(),
+  // Call transcript
+  call_transcript: z.string().optional(),
   // Case metadata
   decision_type: z.string().optional().default('На розгляді'),
   decision_comment: z.string().optional(),
@@ -161,6 +163,7 @@ export function EditCasePage() {
         police_department: caseData.police_department || '',
         police_contact_user_id: caseData.police_contact_user_id ? String(caseData.police_contact_user_id) : '',
         notes_text: caseData.notes_text || '',
+        call_transcript: caseData.call_transcript || '',
         decision_type: caseData.decision_type,
         decision_comment: caseData.decision_comment || '',
       });
@@ -498,7 +501,12 @@ export function EditCasePage() {
           </Card>
 
           {/* Call Recordings */}
-          {canReadAtc && id && <CaseRecordingsBlock caseId={Number(id)} />}
+          {canReadAtc && id && (
+            <CaseRecordingsBlock
+              caseId={Number(id)}
+              onTranscript={(text) => setValue('call_transcript', text)}
+            />
+          )}
 
           {/* Missing Persons - Dynamic Blocks */}
           <div className="space-y-4">
@@ -625,6 +633,19 @@ export function EditCasePage() {
                 {errors.additional_info && (
                   <p className="text-sm text-red-600 mt-1">{errors.additional_info.message}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Розшифровка розмови
+                </label>
+                <textarea
+                  id="call-transcript-field"
+                  {...register('call_transcript')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows={6}
+                  placeholder="Тут з'явиться розшифровка після натискання 'Перевести в текст' у прив'язаному записі розмови..."
+                />
               </div>
             </CardContent>
           </Card>

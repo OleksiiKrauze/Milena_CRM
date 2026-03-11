@@ -68,4 +68,9 @@ export const asteriskApi = {
     const response = await api.get<CaseRecordingsResponse>(`/asterisk/recordings/links-by-uniqueid/${encodeURIComponent(uniqueid)}`);
     return response.data;
   },
+
+  transcribeRecording: async (filename: string): Promise<{ transcript: string }> => {
+    const response = await api.post<{ transcript: string }>('/asterisk/recordings/transcribe', { filename });
+    return response.data;
+  },
 };

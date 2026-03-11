@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { asteriskApi } from '@/api/asterisk';
 import type { CallRecording, RecordingLink } from '@/types/api';
-import { PhoneCall, Play, Pause, Download, Unlink, Link2, Search, X, Loader2 } from 'lucide-react';
+import { PhoneCall, Play, Pause, Download, Unlink, Link2, Search, X, Loader2, FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui';
 
 // ── Audio Player ──────────────────────────────────────────────────────────────
@@ -212,11 +212,14 @@ interface CaseRecordingsBlockProps {
   /** Controlled pending recordings list (create mode) */
   pendingLinks?: CallRecording[];
   onPendingChange?: (links: CallRecording[]) => void;
+  /** Called with transcribed text when "Перевести в текст" is clicked */
+  onTranscript?: (text: string) => void;
 }
 
-export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange }: CaseRecordingsBlockProps) {
+export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange, onTranscript }: CaseRecordingsBlockProps) {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [transcribingId, setTranscribingId] = useState<string | null>(null);
   const isCreateMode = caseId === undefined;
 
   const { data: linkedData } = useQuery({
@@ -256,6 +259,22 @@ export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange }: C
       setShowModal(false);
     } else {
       linkMutation.mutate(rec);
+    }
+  };
+
+  const handleTranscribe = async (recordingfile: string, uniqueid: string) => {
+    setTranscribingId(uniqueid);
+    try {
+      const { transcript } = await asteriskApi.transcribeRecording(recordingfile);
+      onTranscript?.(transcript);
+      // Scroll to transcript field after a short delay to allow state update
+      setTimeout(() => {
+        document.getElementById('call-transcript-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Помилка розпізнавання мови');
+    } finally {
+      setTranscribingId(null);
     }
   };
 
@@ -314,7 +333,7 @@ export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange }: C
                       {link.src || '—'} → {link.dst || '—'} · {fmtDur(link.duration)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                     {link.recordingfile && (
                       <>
                         <AudioPlayer recordingfile={link.recordingfile} />
@@ -326,6 +345,20 @@ export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange }: C
                         >
                           <Download className="h-3.5 w-3.5" />
                         </button>
+                        {onTranscript && (
+                          <button
+                            type="button"
+                            onClick={() => handleTranscribe(link.recordingfile!, link.uniqueid)}
+                            disabled={transcribingId === link.uniqueid}
+                            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors text-xs disabled:opacity-40"
+                            title="Перевести в текст"
+                          >
+                            {transcribingId === link.uniqueid
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <FileText className="h-3.5 w-3.5" />}
+                            <span className="hidden sm:inline">Перевести в текст</span>
+                          </button>
+                        )}
                       </>
                     )}
                     <button

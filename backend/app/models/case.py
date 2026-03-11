@@ -66,6 +66,9 @@ class Case(Base):
     notes_text = Column(Text)  # Текстові примітки
     notes_images = Column(ARRAY(String), default=list)  # Зображення до приміток
 
+    # Call transcript (STT via OpenAI Whisper)
+    call_transcript = Column(Text)
+
     decision_type = Column(String(50), default="На розгляді", nullable=False, index=True)
     decision_comment = Column(Text)
 

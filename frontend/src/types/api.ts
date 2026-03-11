@@ -340,6 +340,8 @@ export interface Case {
   // Notes
   notes_text: string | null;
   notes_images: string[];
+  // Call transcript
+  call_transcript: string | null;
   // Computed full names
   applicant_full_name: string;
   missing_full_name: string;
@@ -395,6 +397,8 @@ export interface CaseCreate {
   // Notes
   notes_text?: string;
   notes_images?: string[];
+  // Call transcript
+  call_transcript?: string;
   decision_type?: string;
   decision_comment?: string;
   tags?: string[];

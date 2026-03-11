@@ -22,6 +22,13 @@ export function CaseDetailsPage() {
     enabled: !!id,
   });
 
+  const saveMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => casesApi.update(Number(id), data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['case-full', id] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => casesApi.delete(Number(id)),
     onSuccess: () => {
@@ -235,7 +242,17 @@ export function CaseDetailsPage() {
           </Card>
 
           {/* Call Recordings */}
-          {canReadAtc && <CaseRecordingsBlock caseId={caseData.id} />}
+          {canReadAtc && (
+            <CaseRecordingsBlock
+              caseId={caseData.id}
+              onTranscript={(text) => {
+                saveMutation.mutate({ call_transcript: text });
+                setTimeout(() => {
+                  document.getElementById('call-transcript-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+              }}
+            />
+          )}
 
           {/* Missing Persons - Display all */}
           {caseData.missing_persons && caseData.missing_persons.length > 0 ? (
@@ -399,6 +416,12 @@ export function CaseDetailsPage() {
                 <p className="text-sm text-gray-600">Додаткова інформація</p>
                 <p className="font-medium whitespace-pre-wrap">{caseData.additional_info || '-'}</p>
               </div>
+              {caseData.call_transcript && (
+                <div id="call-transcript-field">
+                  <p className="text-sm text-gray-600">Розшифровка розмови</p>
+                  <p className="font-medium whitespace-pre-wrap">{caseData.call_transcript}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -8,6 +8,7 @@ import pymysql
 import paramiko
 import io
 import os
+from openai import OpenAI
 
 from app.db import get_db
 from app.models.settings import Settings
@@ -430,6 +431,123 @@ def get_recordings_by_case(
         .all()
     )
     return {"items": links}
+
+
+@router.post("/recordings/transcribe")
+def transcribe_recording(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("ip_atc:read")),
+):
+    """Transcribe a call recording via OpenAI Whisper STT."""
+    filename = data.get("filename")
+    if not filename:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filename is required")
+
+    settings = _get_or_create_settings(db)
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="OPENAI_API_KEY не налаштований"
+        )
+
+    if not settings.asterisk_ssh_host:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SSH-доступ до сервера Asterisk не налаштований."
+        )
+
+    # Download file via SFTP (same logic as download_recording)
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        pkey = None
+        if settings.asterisk_ssh_key:
+            key_file = io.StringIO(settings.asterisk_ssh_key.strip())
+            for key_class in (paramiko.RSAKey, paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.DSSKey):
+                try:
+                    pkey = key_class.from_private_key(key_file)
+                    break
+                except Exception:
+                    key_file.seek(0)
+
+        ssh.connect(
+            hostname=settings.asterisk_ssh_host,
+            port=settings.asterisk_ssh_port or 22,
+            username=settings.asterisk_ssh_user or "root",
+            password=settings.asterisk_ssh_password or None,
+            pkey=pkey,
+            timeout=15,
+            look_for_keys=False,
+            allow_agent=False,
+        )
+        sftp = ssh.open_sftp()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Не вдалося підключитися до сервера Asterisk по SSH: {e}"
+        )
+
+    base_dir = (settings.asterisk_recordings_path or "/var/spool/asterisk/monitor").rstrip("/")
+    basename = os.path.basename(filename)
+
+    if filename.startswith("/"):
+        remote_path = filename
+    else:
+        try:
+            _, stdout, _ = ssh.exec_command(
+                f"find {base_dir} -name '{basename}' -type f 2>/dev/null | head -1"
+            )
+            stdout.channel.settimeout(15)
+            found = stdout.read().decode().strip()
+            if found:
+                remote_path = found
+            else:
+                sftp.close()
+                ssh.close()
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Файл запису не знайдено: {basename}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            sftp.close()
+            ssh.close()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Помилка пошуку файлу: {e}")
+
+    try:
+        file_obj = sftp.open(remote_path, "rb")
+        audio_bytes = file_obj.read()
+        file_obj.close()
+    except Exception as e:
+        sftp.close()
+        ssh.close()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Помилка читання файлу: {e}")
+    finally:
+        try:
+            sftp.close()
+            ssh.close()
+        except Exception:
+            pass
+
+    # Determine content type
+    ext = os.path.splitext(basename)[1].lower()
+    content_type = "audio/wav" if ext == ".wav" else "audio/mpeg" if ext == ".mp3" else "audio/ogg" if ext == ".ogg" else "application/octet-stream"
+
+    # Send to OpenAI Whisper
+    try:
+        client = OpenAI(api_key=api_key)
+        result = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=(basename, audio_bytes, content_type),
+        )
+        return {"transcript": result.text}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Помилка розпізнавання мови: {e}"
+        )
 
 
 @router.get("/recordings/links-by-uniqueid/{uniqueid}", response_model=CaseRecordingsResponse)

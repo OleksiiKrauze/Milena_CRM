@@ -67,6 +67,9 @@ class CaseCreate(BaseModel):
     notes_text: Optional[str] = None
     notes_images: Optional[List[str]] = []
 
+    # Call transcript
+    call_transcript: Optional[str] = None
+
     # Case metadata
     decision_type: Optional[str] = "На розгляді"
     decision_comment: Optional[str] = None
@@ -129,6 +132,9 @@ class CaseUpdate(BaseModel):
     # Notes
     notes_text: Optional[str] = None
     notes_images: Optional[List[str]] = None
+
+    # Call transcript
+    call_transcript: Optional[str] = None
 
     # Case metadata
     decision_type: Optional[str] = None
@@ -199,6 +205,9 @@ class CaseResponse(BaseModel):
     # Notes
     notes_text: Optional[str]
     notes_images: Optional[List[str]] = []
+
+    # Call transcript
+    call_transcript: Optional[str]
 
     # Computed full names
     applicant_full_name: str
