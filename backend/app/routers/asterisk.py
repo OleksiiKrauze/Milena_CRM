@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional, List
+from datetime import datetime
 from pydantic import BaseModel
 import pymysql
 import paramiko
@@ -60,7 +61,7 @@ class RecordingLinkResponse(BaseModel):
     billsec: Optional[int]
     disposition: Optional[str]
     recordingfile: Optional[str]
-    linked_at: Optional[str]
+    linked_at: Optional[datetime]
 
     class Config:
         from_attributes = True

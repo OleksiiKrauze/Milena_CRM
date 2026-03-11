@@ -568,7 +568,7 @@ export interface RecordingLink {
   billsec: number | null;
   disposition: string | null;
   recordingfile: string | null;
-  linked_at: string | null;
+  linked_at: string | null;  // ISO datetime string from backend
 }
 
 export interface CaseRecordingsResponse {
