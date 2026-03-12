@@ -612,6 +612,16 @@ def _phone_variants(phone: str) -> set[str]:
     return variants
 
 
+def _normalize_digits(phone: str) -> str:
+    """Strip non-digits and normalize to 9-digit suffix for comparison."""
+    digits = re.sub(r"\D", "", phone or "")
+    if digits.startswith("380") and len(digits) >= 12:
+        return digits[3:]
+    if digits.startswith("0") and len(digits) >= 10:
+        return digits[1:]
+    return digits
+
+
 class VoiceBotCreateCaseRequest(BaseModel):
     transcript: str
     caller_phone: Optional[str] = None
