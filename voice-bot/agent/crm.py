@@ -23,7 +23,7 @@ MIN_USER_RESPONSES = 2
 def format_transcript(items: list[dict]) -> str:
     lines = []
     for item in items:
-        role = "Бот" if item["role"] == "assistant" else "Заявник"
+        role = "Питання" if item["role"] == "assistant" else "Відповідь"
         text = item.get("text", "").strip()
         if text:
             lines.append(f"{role}: {text}")

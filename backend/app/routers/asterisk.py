@@ -725,7 +725,6 @@ def voice_bot_create_case(
         search_terrain_type=validated.search_terrain_type,
         disappearance_circumstances=validated.disappearance_circumstances,
         initial_info=validated.initial_info,
-        call_transcript=data.transcript,
         decision_type=validated.decision_type,
         tags=validated.tags or [],
     )
