@@ -651,7 +651,15 @@ def voice_bot_create_case(
         "tags": [],
     }
     if extracted_fields:
-        case_dict.update({k: v for k, v in extracted_fields.items() if v is not None})
+        filtered = {k: v for k, v in extracted_fields.items() if v is not None}
+        # Fix None strings in missing_persons array items
+        if "missing_persons" in filtered and filtered["missing_persons"]:
+            for mp in filtered["missing_persons"]:
+                if not mp.get("last_name"):
+                    mp["last_name"] = "Невідомо"
+                if not mp.get("first_name"):
+                    mp["first_name"] = "Невідомо"
+        case_dict.update(filtered)
 
     for field, fallback in [
         ("applicant_last_name", "Невідомо"),
