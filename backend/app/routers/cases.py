@@ -371,6 +371,11 @@ def delete_case(
             detail=f"Case with id {case_id} not found"
         )
 
+    # Delete related recording links before deleting the case
+    # (case_id is NOT NULL so SQLAlchemy cannot SET NULL on cascade)
+    from app.models.call_recording_link import CallRecordingLink
+    db.query(CallRecordingLink).filter(CallRecordingLink.case_id == case_id).delete()
+
     db.delete(db_case)
     db.commit()
 
