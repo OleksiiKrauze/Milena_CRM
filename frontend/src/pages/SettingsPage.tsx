@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { hasPermission } from '@/utils/permissions';
-import { Users, Shield, MapPin, FileText, FileEdit, ChevronRight, Download, Phone } from 'lucide-react';
+import { Users, Shield, MapPin, FileText, FileEdit, ChevronRight, Download, Phone, Bot } from 'lucide-react';
 
 export function SettingsPage() {
   const user = useAuthStore(state => state.user);
@@ -105,6 +105,22 @@ export function SettingsPage() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">Налаштування IP АТС</h3>
                         <p className="text-sm text-gray-600">Підключення до Asterisk/FreePBX</p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/settings/ip-atc/voice-bot">
+                <Card className="active:bg-gray-50 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-violet-50 mr-4">
+                        <Bot className="h-6 w-6 text-violet-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">Бот збору інформації</h3>
+                        <p className="text-sm text-gray-600">Промпт голосового бота гарячої лінії</p>
                       </div>
                       <ChevronRight className="h-5 w-5 text-gray-400" />
                     </div>
