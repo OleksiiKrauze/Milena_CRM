@@ -36,7 +36,7 @@ async def fetch_prompt() -> str:
     """Fetch system prompt from CRM settings. Falls back to default if unavailable."""
     try:
         async with httpx.AsyncClient(timeout=5) as client:
-            resp = await client.get(f"{CRM_API_URL}/api/asterisk/bot-prompt")
+            resp = await client.get(f"{CRM_API_URL}/asterisk/bot-prompt")
             if resp.status_code == 200:
                 data = resp.json()
                 return data.get("prompt") or SYSTEM_PROMPT

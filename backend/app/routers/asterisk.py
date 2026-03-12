@@ -612,6 +612,210 @@ def _phone_variants(phone: str) -> set[str]:
     return variants
 
 
+class VoiceBotCreateCaseRequest(BaseModel):
+    transcript: str
+    caller_phone: Optional[str] = None
+
+
+@router.post("/voice-bot/create-case")
+def voice_bot_create_case(
+    data: VoiceBotCreateCaseRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Internal endpoint for voice bot to create a case after a call.
+    No auth required — internal service-to-service call on Docker network.
+    Mirrors the Telegram case creation flow.
+    """
+    import logging as _logging
+    _log = _logging.getLogger("milena-bot.create-case")
+
+    from app.models.missing_person import MissingPerson
+    from app.schemas.case import CaseCreate
+
+    # Step 1: autofill via GPT
+    extracted_fields: dict = {}
+    try:
+        from app.services.openai_service import get_openai_service
+        openai_service = get_openai_service()
+        extracted_fields = openai_service.parse_case_info(db, data.transcript)
+        _log.info("Autofill successful")
+    except Exception as e:
+        _log.warning(f"Autofill failed: {e}")
+
+    # Step 2: build case dict
+    case_dict: dict = {
+        "basis": "Звернення на голосовий бот",
+        "initial_info": data.transcript,
+        "decision_type": "На розгляді",
+        "tags": [],
+    }
+    if extracted_fields:
+        case_dict.update({k: v for k, v in extracted_fields.items() if v is not None})
+
+    for field, fallback in [
+        ("applicant_last_name", "Невідомо"),
+        ("applicant_first_name", "Невідомо"),
+        ("missing_last_name", "Невідомо"),
+        ("missing_first_name", "Невідомо"),
+    ]:
+        if not case_dict.get(field):
+            case_dict[field] = fallback
+
+    # If CallerID differs from stated phone — add to other_contacts
+    stated_phone = case_dict.get("applicant_phone") or ""
+    if data.caller_phone and _normalize_digits(data.caller_phone) != _normalize_digits(stated_phone):
+        existing = case_dict.get("other_contacts") or ""
+        extra = f"Вхідний номер (CallerID): {data.caller_phone}"
+        case_dict["other_contacts"] = (existing + "\n" + extra).strip() if existing else extra
+
+    # Step 3: create case in DB
+    try:
+        validated = CaseCreate(**case_dict)
+    except Exception as e:
+        _log.error(f"CaseCreate validation error: {e}")
+        return {"ok": False, "detail": str(e)}
+
+    db_case = Case(
+        created_by_user_id=None,
+        basis=validated.basis,
+        applicant_last_name=validated.applicant_last_name,
+        applicant_first_name=validated.applicant_first_name,
+        applicant_middle_name=validated.applicant_middle_name,
+        applicant_phone=validated.applicant_phone,
+        applicant_relation=validated.applicant_relation,
+        applicant_other_contacts=case_dict.get("other_contacts"),
+        missing_settlement=validated.missing_settlement,
+        missing_region=validated.missing_region,
+        missing_address=validated.missing_address,
+        missing_last_name=validated.missing_last_name,
+        missing_first_name=validated.missing_first_name,
+        missing_middle_name=validated.missing_middle_name,
+        missing_gender=validated.missing_gender,
+        missing_birthdate=validated.missing_birthdate,
+        missing_photos=validated.missing_photos or [],
+        missing_last_seen_datetime=validated.missing_last_seen_datetime,
+        missing_last_seen_place=validated.missing_last_seen_place,
+        missing_description=validated.missing_description,
+        missing_special_signs=validated.missing_special_signs,
+        missing_diseases=validated.missing_diseases,
+        missing_phone=validated.missing_phone,
+        missing_clothing=validated.missing_clothing,
+        missing_belongings=validated.missing_belongings,
+        additional_search_regions=validated.additional_search_regions or [],
+        police_report_filed=validated.police_report_filed,
+        search_terrain_type=validated.search_terrain_type,
+        disappearance_circumstances=validated.disappearance_circumstances,
+        initial_info=validated.initial_info,
+        call_transcript=data.transcript,
+        decision_type=validated.decision_type,
+        tags=validated.tags or [],
+    )
+    db.add(db_case)
+    db.flush()
+
+    db_missing = MissingPerson(
+        case_id=db_case.id,
+        last_name=validated.missing_last_name or "Невідомо",
+        first_name=validated.missing_first_name or "Невідомо",
+        middle_name=validated.missing_middle_name,
+        gender=validated.missing_gender,
+        birthdate=validated.missing_birthdate,
+        phone=validated.missing_phone,
+        settlement=validated.missing_settlement,
+        region=validated.missing_region,
+        address=validated.missing_address,
+        last_seen_datetime=validated.missing_last_seen_datetime,
+        last_seen_place=validated.missing_last_seen_place,
+        photos=[],
+        videos=[],
+        description=validated.missing_description,
+        special_signs=validated.missing_special_signs,
+        diseases=validated.missing_diseases,
+        clothing=validated.missing_clothing,
+        belongings=validated.missing_belongings,
+        order_index=0,
+    )
+    db.add(db_missing)
+    db.commit()
+    db.refresh(db_case)
+
+    case_id = db_case.id
+    missing_name = " ".join(filter(None, [validated.missing_last_name, validated.missing_first_name])) or "невідомо"
+    _log.info(f"Voice bot case created: #{case_id} — {missing_name}")
+
+    # Step 4: push notification
+    try:
+        from app.services.push_notification_service import push_service
+        from app.core.notification_types import NotificationType
+        push_service.send_notification_to_users_with_permission(
+            db=db,
+            notification_type=NotificationType.NEW_VOICE_BOT_CASE,
+            title="Нова заявка з голосового бота",
+            body=f"Нова заявка: {missing_name}",
+            data={"case_id": case_id, "missing_name": missing_name},
+            url=f"/cases/{case_id}",
+        )
+    except Exception as e:
+        _log.warning(f"Push notification failed: {e}")
+
+    # Step 5: auto-link recordings
+    phones = [p for p in {data.caller_phone, validated.applicant_phone} if p]
+    if phones:
+        settings = _get_or_create_settings(db)
+        if settings.asterisk_cdr_host:
+            try:
+                conn = _get_cdr_connection(settings)
+                all_variants: set[str] = set()
+                for phone in phones:
+                    all_variants.update(_phone_variants(phone))
+                linked = 0
+                try:
+                    with conn.cursor() as cursor:
+                        placeholders = ",".join(["%s"] * len(all_variants))
+                        cursor.execute(
+                            f"""
+                            SELECT uniqueid, calldate, src, dst, duration, billsec, disposition, recordingfile
+                            FROM cdr
+                            WHERE src IN ({placeholders})
+                              AND calldate >= NOW() - INTERVAL %s MINUTE
+                              AND disposition = 'ANSWERED'
+                              AND recordingfile IS NOT NULL AND recordingfile != ''
+                            ORDER BY calldate DESC LIMIT 10
+                            """,
+                            list(all_variants) + [20],
+                        )
+                        for row in cursor.fetchall():
+                            exists = db.query(CallRecordingLink).filter(
+                                CallRecordingLink.uniqueid == str(row["uniqueid"]),
+                                CallRecordingLink.case_id == case_id,
+                            ).first()
+                            if exists:
+                                continue
+                            db.add(CallRecordingLink(
+                                uniqueid=str(row["uniqueid"]),
+                                case_id=case_id,
+                                calldate=str(row["calldate"]),
+                                src=row["src"] or "",
+                                dst=row["dst"] or "",
+                                duration=int(row["duration"] or 0),
+                                billsec=int(row["billsec"] or 0),
+                                disposition=row["disposition"] or "",
+                                recordingfile=row["recordingfile"] or "",
+                                linked_by_user_id=None,
+                            ))
+                            linked += 1
+                finally:
+                    conn.close()
+                if linked:
+                    db.commit()
+                _log.info(f"Auto-linked {linked} recording(s) to case #{case_id}")
+            except Exception as e:
+                _log.warning(f"Recording auto-link failed: {e}")
+
+    return {"ok": True, "case_id": case_id}
+
+
 class VoiceBotNotifyRequest(BaseModel):
     case_id: int
     missing_name: str = "невідомо"
