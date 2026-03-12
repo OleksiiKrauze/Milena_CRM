@@ -78,6 +78,7 @@ async def entrypoint(ctx: JobContext):
         voice="alloy",          # alloy | echo | fable | onyx | nova | shimmer
         temperature=0.7,
         modalities=["text", "audio"],
+        input_audio_transcription={"model": "whisper-1"},
     )
 
     # ── Agent ────────────────────────────────────────────────────────────────
@@ -130,11 +131,11 @@ async def entrypoint(ctx: JobContext):
             logger.info(f"[{call_id}] Caller disconnected")
             disconnect_event.set()
 
-    # Timeout: 15 minutes max
+    # Timeout: 10 minutes max
     try:
-        await asyncio.wait_for(disconnect_event.wait(), timeout=900)
+        await asyncio.wait_for(disconnect_event.wait(), timeout=600)
     except asyncio.TimeoutError:
-        logger.warning(f"[{call_id}] Call timeout (15 min)")
+        logger.warning(f"[{call_id}] Call timeout (10 min)")
 
     # ── Post-call processing ──────────────────────────────────────────────────
     logger.info(f"[{call_id}] Call ended. Transcript items: {len(transcript)}")

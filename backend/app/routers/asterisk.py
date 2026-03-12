@@ -662,13 +662,18 @@ def voice_bot_create_case(
     }
     if extracted_fields:
         filtered = {k: v for k, v in extracted_fields.items() if v is not None}
-        # Fix None strings in missing_persons array items
-        if "missing_persons" in filtered and filtered["missing_persons"]:
-            for mp in filtered["missing_persons"]:
-                if not mp.get("last_name"):
-                    mp["last_name"] = "Невідомо"
-                if not mp.get("first_name"):
-                    mp["first_name"] = "Невідомо"
+        # Promote missing_persons[0] to flat missing_* fields so they populate the Case and MissingPerson records
+        mp_list = filtered.get("missing_persons") or []
+        if mp_list and isinstance(mp_list[0], dict):
+            mp0 = mp_list[0]
+            for mp_key in (
+                "last_name", "first_name", "middle_name", "gender", "birthdate", "phone",
+                "settlement", "region", "address", "last_seen_datetime", "last_seen_place",
+                "description", "special_signs", "diseases", "clothing", "belongings",
+            ):
+                flat_key = f"missing_{mp_key}"
+                if mp0.get(mp_key) and not filtered.get(flat_key):
+                    filtered[flat_key] = mp0[mp_key]
         case_dict.update(filtered)
 
     for field, fallback in [
