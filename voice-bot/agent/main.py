@@ -92,16 +92,22 @@ async def entrypoint(ctx: JobContext):
     @session.on("response_done")
     def on_response_done(response):
         """Capture bot's text output."""
-        for output in response.output:
-            if output.type == "message" and output.role == "assistant":
-                for content in output.content:
-                    if hasattr(content, "transcript") and content.transcript:
+        output_items = response.output if hasattr(response, "output") else (response.get("output") or [])
+        for output in output_items:
+            # Support both object and dict format depending on SDK version
+            out_type = output.get("type") if isinstance(output, dict) else getattr(output, "type", None)
+            out_role = output.get("role") if isinstance(output, dict) else getattr(output, "role", None)
+            if out_type == "message" and out_role == "assistant":
+                content_items = output.get("content") if isinstance(output, dict) else getattr(output, "content", [])
+                for content in (content_items or []):
+                    text = content.get("transcript") if isinstance(content, dict) else getattr(content, "transcript", None)
+                    if text:
                         transcript.append({
                             "role": "assistant",
-                            "text": content.transcript,
+                            "text": text,
                             "ts": datetime.now().isoformat(),
                         })
-                        logger.info(f"[{call_id}] Bot: {content.transcript[:60]}...")
+                        logger.info(f"[{call_id}] Bot: {text[:60]}...")
 
     @session.on("input_speech_transcription_completed")
     def on_user_speech(event):
