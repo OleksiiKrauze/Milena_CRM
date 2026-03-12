@@ -31,17 +31,13 @@ async def setup():
         api.CreateSIPInboundTrunkRequest(
             trunk=api.SIPInboundTrunkInfo(
                 name="FreePBX Trunk",
-                # Accept SIP INVITE from FreePBX IP only (security)
                 allowed_addresses=[FREEPBX_IP] if FREEPBX_IP else [],
-                # No auth required (IP whitelist is enough),
-                # or set auth_username/auth_password to match FreePBX trunk settings
             )
         )
     )
-    print(f"✅ Inbound trunk created: {trunk.trunk.sip_trunk_id}")
+    print(f"✅ Inbound trunk created: {trunk.sip_trunk_id}")
 
     # ── 2. Dispatch rule ─────────────────────────────────────────────────────
-    # All incoming calls → create a new room → agent auto-joins
     rule = await lk.sip.create_sip_dispatch_rule(
         api.CreateSIPDispatchRuleRequest(
             rule=api.SIPDispatchRule(
@@ -49,8 +45,6 @@ async def setup():
                     room_prefix="milena-call-",
                 ),
             ),
-            # These room metadata fields are available to the agent
-            room_preset="",
             metadata="voice-bot",
         )
     )
