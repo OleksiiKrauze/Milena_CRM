@@ -73,4 +73,9 @@ export const asteriskApi = {
     const response = await api.post<{ transcript: string }>('/asterisk/recordings/transcribe', { filename });
     return response.data;
   },
+
+  getBotPrompt: async (): Promise<{ prompt: string }> => {
+    const response = await api.get<{ prompt: string }>('/asterisk/bot-prompt');
+    return response.data;
+  },
 };

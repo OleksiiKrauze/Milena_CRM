@@ -16,29 +16,29 @@ export function VoiceBotSettingsPage() {
   const [prompt, setPrompt] = useState('');
   const [saved, setSaved] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['asterisk-settings'],
-    queryFn: () => asteriskApi.getSettings(),
+  const { data: promptData, isLoading } = useQuery({
+    queryKey: ['bot-prompt'],
+    queryFn: () => asteriskApi.getBotPrompt(),
   });
 
   useEffect(() => {
-    if (data) {
-      setPrompt(data.voice_bot_prompt || '');
+    if (promptData) {
+      setPrompt(promptData.prompt);
     }
-  }, [data]);
+  }, [promptData]);
 
   const mutation = useMutation({
     mutationFn: (newPrompt: string) =>
       asteriskApi.updateSettings({ voice_bot_prompt: newPrompt || null }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['asterisk-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['bot-prompt'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     },
   });
 
   const handleReset = () => {
-    setPrompt('');
+    mutation.mutate('');
   };
 
   if (isLoading) return (
