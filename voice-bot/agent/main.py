@@ -133,9 +133,9 @@ async def entrypoint(ctx: JobContext):
 
     if transcript:
         save_transcript(call_id, transcript)
-        await create_draft_case(call_id, transcript)
+        await create_draft_case(call_id, transcript)  # crm.py checks MIN_USER_RESPONSES internally
     else:
-        logger.warning(f"[{call_id}] Empty transcript, skipping CRM")
+        logger.warning(f"[{call_id}] Empty transcript, skipping")
 
 
 if __name__ == "__main__":
