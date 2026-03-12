@@ -3,6 +3,9 @@
 port: 7880
 log_level: info
 
+redis:
+  address: livekit-redis:6379
+
 rtc:
   # WebRTC TCP fallback port (for clients behind strict firewalls)
   tcp_port: 7881
