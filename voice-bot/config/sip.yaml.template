@@ -1,5 +1,7 @@
 api_key: ${LIVEKIT_API_KEY}
 api_secret: ${LIVEKIT_API_SECRET}
 ws_url: ${LIVEKIT_URL}
+redis:
+  address: redis:6379
 logging:
   level: info

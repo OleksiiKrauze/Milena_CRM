@@ -77,6 +77,14 @@ services:
 
   # ── Voice Bot (LiveKit + OpenAI Realtime API) ──────────────────────────────
 
+  livekit-redis:
+    image: redis:7-alpine
+    container_name: crm_livekit_redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no  # no persistence, in-memory only
+    networks:
+      - crm_network
+
   livekit:
     image: livekit/livekit-server:latest
     container_name: crm_livekit
@@ -106,6 +114,7 @@ services:
       - "10000-10200:10000-10200/udp"  # RTP media
     depends_on:
       - livekit
+      - livekit-redis
     networks:
       - crm_network
 
