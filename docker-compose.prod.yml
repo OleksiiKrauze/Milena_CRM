@@ -83,8 +83,8 @@ services:
     restart: unless-stopped
     command: --config /etc/livekit/livekit.yaml
     environment:
-      # Format: "api_key:api_secret"
-      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}:${LIVEKIT_API_SECRET}"
+      # Format must be "key: secret" (with space after colon)
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
     volumes:
       - ./voice-bot/config/livekit.yaml:/etc/livekit/livekit.yaml:ro
     ports:
