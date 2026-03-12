@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { Container, Card, CardContent } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import { hasPermission } from '@/utils/permissions';
-import { PhoneCall, Settings, ChevronRight } from 'lucide-react';
+import { PhoneCall, Settings, ChevronRight, Bot } from 'lucide-react';
 
 export function IpAtcSettingsPage() {
   const user = useAuthStore(state => state.user);
@@ -27,6 +27,15 @@ export function IpAtcSettingsPage() {
       path: '/settings/ip-atc/config',
       color: 'text-gray-600',
       bgColor: 'bg-gray-50',
+      permission: canConfigure,
+    },
+    {
+      title: 'Бот збору інформації',
+      description: 'Редагування промпту голосового бота',
+      icon: Bot,
+      path: '/settings/ip-atc/voice-bot',
+      color: 'text-violet-600',
+      bgColor: 'bg-violet-50',
       permission: canConfigure,
     },
   ];

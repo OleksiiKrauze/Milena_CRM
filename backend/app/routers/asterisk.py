@@ -84,6 +84,7 @@ class AsteriskSettingsResponse(BaseModel):
     asterisk_ssh_password: Optional[str]
     asterisk_ssh_key: Optional[str]
     asterisk_recordings_path: Optional[str]
+    voice_bot_prompt: Optional[str]
 
     class Config:
         from_attributes = True
@@ -101,6 +102,7 @@ class AsteriskSettingsUpdate(BaseModel):
     asterisk_ssh_password: Optional[str] = None
     asterisk_ssh_key: Optional[str] = None
     asterisk_recordings_path: Optional[str] = "/var/spool/asterisk/monitor"
+    voice_bot_prompt: Optional[str] = None
 
 
 # ── Helper ─────────────────────────────────────────────────────────────────────
@@ -141,6 +143,41 @@ def _get_cdr_connection(settings: Settings):
 
 
 # ── Asterisk settings endpoints ────────────────────────────────────────────────
+
+DEFAULT_VOICE_BOT_PROMPT = """Ти — голосовий асистент гарячої лінії пошуку зниклих осіб організації «Мілена».
+Твоє завдання — зібрати інформацію про зниклу людину, задаючи питання по одному зі списку нижче.
+
+Правила:
+- Говори чітко, спокійно, виключно українською мовою.
+- Задавай ОДНЕ питання за раз і чекай відповіді.
+- Після кожної відповіді коротко підтверджуй почуте (1-2 слова: "Зрозуміло", "Дякую" тощо).
+- Якщо відповідь незрозуміла — перепитай одного разу.
+- Коли всі питання задані — подякуй і скажи: "Дякую, ваша заявка зареєстрована. З вами зв'яжуться найближчим часом."
+
+Список питань (задавай саме в такому порядку):
+1. Як вас звати? Назвіть, будь ласка, прізвище, ім'я та по батькові.
+2. Вкажіть ваш номер телефону для зворотного зв'язку.
+3. Ким вам доводиться зникла людина? (родич, друг, сусід тощо)
+4. Як звати зниклого? Прізвище, ім'я та по батькові повністю.
+5. Скільки років зниклому? Якщо знаєте — назвіть дату народження.
+6. Де і коли востаннє бачили зниклого? Вкажіть дату, час та місце.
+7. Опишіть зовнішність зниклого: зріст, статура, колір та довжина волосся.
+8. В якому одязі був зниклий у момент зникнення?
+9. Чи є особливі прикмети — шрами, татуювання, родимки, особливості ходи?
+10. Чи є у зниклого хронічні захворювання, проблеми з пам'яттю або орієнтацією?
+11. Чи є у зниклого мобільний телефон? Якщо так — номер?
+12. Чи подана заява до поліції? Якщо так — назвіть номер справи або відділок.
+
+Розпочни з привітання: "Доброго дня! Ви зателефонували на гарячу лінію пошуку зниклих осіб організації «Мілена». Я допоможу вам оформити заявку. Дозвольте поставити кілька запитань."
+"""
+
+
+@router.get("/bot-prompt")
+def get_bot_prompt(db: Session = Depends(get_db)):
+    """Public endpoint for voice bot to fetch its system prompt (no auth required)."""
+    settings = _get_or_create_settings(db)
+    return {"prompt": settings.voice_bot_prompt or DEFAULT_VOICE_BOT_PROMPT}
+
 
 @router.get("/settings", response_model=AsteriskSettingsResponse)
 def get_asterisk_settings(

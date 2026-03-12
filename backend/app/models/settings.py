@@ -115,3 +115,6 @@ class Settings(Base):
     asterisk_ssh_password = Column(String, nullable=True)
     asterisk_ssh_key = Column(Text, nullable=True)  # PEM private key content
     asterisk_recordings_path = Column(String, nullable=True, default="/var/spool/asterisk/monitor")
+
+    # Voice bot settings
+    voice_bot_prompt = Column(Text, nullable=True)

@@ -591,6 +591,7 @@ export interface AsteriskSettings {
   asterisk_ssh_password: string | null;
   asterisk_ssh_key: string | null;
   asterisk_recordings_path: string | null;
+  voice_bot_prompt: string | null;
 }
 
 // API Error types

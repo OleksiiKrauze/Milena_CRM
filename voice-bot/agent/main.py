@@ -10,9 +10,11 @@ Flow:
 """
 import asyncio
 import logging
+import os
 import uuid
 from datetime import datetime
 
+import httpx
 from livekit import rtc
 from livekit.agents import (
     AutoSubscribe,
@@ -26,6 +28,21 @@ from livekit.plugins.openai import realtime
 
 from questions import SYSTEM_PROMPT
 from crm import create_draft_case, save_transcript
+
+CRM_API_URL = os.getenv("CRM_API_URL", "http://backend:8000")
+
+
+async def fetch_prompt() -> str:
+    """Fetch system prompt from CRM settings. Falls back to default if unavailable."""
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(f"{CRM_API_URL}/api/asterisk/bot-prompt")
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("prompt") or SYSTEM_PROMPT
+    except Exception as e:
+        logger.warning(f"Could not fetch bot prompt from CRM: {e}, using default")
+    return SYSTEM_PROMPT
 
 logger = logging.getLogger("milena-bot")
 logging.basicConfig(level=logging.INFO)
@@ -49,9 +66,13 @@ async def entrypoint(ctx: JobContext):
     # Conversation transcript accumulator
     transcript: list[dict] = []
 
+    # ── Fetch prompt from CRM settings ───────────────────────────────────────
+    prompt = await fetch_prompt()
+    logger.info(f"[{call_id}] Using prompt ({len(prompt)} chars)")
+
     # ── OpenAI Realtime model ────────────────────────────────────────────────
     model = realtime.RealtimeModel(
-        instructions=SYSTEM_PROMPT,
+        instructions=prompt,
         voice="alloy",          # alloy | echo | fable | onyx | nova | shimmer
         temperature=0.7,
         modalities=["text", "audio"],

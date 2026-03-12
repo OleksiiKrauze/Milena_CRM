@@ -38,6 +38,7 @@ import { CreateOrganizationPage } from '@/pages/CreateOrganizationPage';
 import { EditOrganizationPage } from '@/pages/EditOrganizationPage';
 import { IpAtcSettingsPage } from '@/pages/IpAtcSettingsPage';
 import { IpAtcConfigPage } from '@/pages/IpAtcConfigPage';
+import { VoiceBotSettingsPage } from '@/pages/VoiceBotSettingsPage';
 import { CallRecordingsPage } from '@/pages/CallRecordingsPage';
 
 // Protected route wrapper
@@ -370,6 +371,14 @@ export function App() {
           />
           {/* Legacy redirect */}
           <Route path="/settings/ip-atc/recordings" element={<Navigate to="/telephony/recordings" replace />} />
+          <Route
+            path="/settings/ip-atc/voice-bot"
+            element={
+              <ProtectedRoute>
+                <VoiceBotSettingsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
