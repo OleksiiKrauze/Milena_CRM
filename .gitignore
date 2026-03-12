@@ -73,3 +73,6 @@ dmypy.json
 nginx/ssl/
 frontend/dist/
 scripts/*.log
+
+# Voice bot - generated config with secrets (create from sip.yaml.template)
+voice-bot/config/sip.yaml

@@ -98,12 +98,8 @@ services:
     image: livekit/sip:latest
     container_name: crm_livekit_sip
     restart: unless-stopped
-    environment:
-      SIP_SERVER_HOST: "0.0.0.0"
-      SIP_SERVER_PORT: "5060"
-      LIVEKIT_URL: "ws://livekit:7880"
-      LIVEKIT_API_KEY: "${LIVEKIT_API_KEY}"
-      LIVEKIT_API_SECRET: "${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./voice-bot/config/sip.yaml:/sip/config.yaml:ro
     ports:
       - "5060:5060/udp"       # SIP signaling (open in AWS Security Group!)
       - "5060:5060/tcp"

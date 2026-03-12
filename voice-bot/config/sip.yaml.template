@@ -1,0 +1,5 @@
+api_key: ${LIVEKIT_API_KEY}
+api_secret: ${LIVEKIT_API_SECRET}
+ws_url: ${LIVEKIT_URL}
+logging:
+  level: info
