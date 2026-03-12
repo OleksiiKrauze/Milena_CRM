@@ -61,7 +61,9 @@ async def entrypoint(ctx: JobContext):
 
     # Wait for the SIP participant (the caller)
     participant = await ctx.wait_for_participant()
-    logger.info(f"[{call_id}] Caller joined: {participant.identity}")
+    # LiveKit SIP sets sip.phoneNumber attribute with the caller's CallerID
+    caller_phone: str | None = (participant.attributes or {}).get("sip.phoneNumber") or None
+    logger.info(f"[{call_id}] Caller joined: {participant.identity}, phone: {caller_phone}")
 
     # Conversation transcript accumulator
     transcript: list[dict] = []
@@ -133,7 +135,7 @@ async def entrypoint(ctx: JobContext):
 
     if transcript:
         save_transcript(call_id, transcript)
-        await create_draft_case(call_id, transcript)  # crm.py checks MIN_USER_RESPONSES internally
+        await create_draft_case(call_id, transcript, caller_phone=caller_phone)
     else:
         logger.warning(f"[{call_id}] Empty transcript, skipping")
 

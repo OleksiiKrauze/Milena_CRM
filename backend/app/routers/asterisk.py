@@ -8,6 +8,7 @@ import pymysql
 import paramiko
 import io
 import os
+import re
 from openai import OpenAI
 
 from app.db import get_db
@@ -585,6 +586,121 @@ def transcribe_recording(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Помилка розпізнавання мови: {e}"
         )
+
+
+def _phone_variants(phone: str) -> set[str]:
+    """
+    Return all CDR-searchable variants of a phone number.
+    Handles: 0XXXXXXXXX / 380XXXXXXXXX / +380XXXXXXXXX
+    """
+    digits = re.sub(r"\D", "", phone)
+    variants: set[str] = set()
+    if not digits:
+        return variants
+    # Normalize to 12-digit UA format (380XXXXXXXXX)
+    if digits.startswith("380") and len(digits) == 12:
+        ua12 = digits
+    elif digits.startswith("0") and len(digits) == 10:
+        ua12 = "380" + digits[1:]
+    else:
+        # Unknown format — add as-is
+        variants.add(digits)
+        return variants
+    variants.add(ua12)                  # 380XXXXXXXXX
+    variants.add("0" + ua12[3:])        # 0XXXXXXXXX
+    variants.add("+" + ua12)            # +380XXXXXXXXX
+    return variants
+
+
+class AutoLinkRecordingsRequest(BaseModel):
+    case_id: int
+    phones: List[str]          # all known phones (SIP caller ID + stated by applicant)
+    window_minutes: int = 20   # how far back to search in CDR
+
+
+@router.post("/recordings/auto-link")
+def auto_link_recordings(
+    data: AutoLinkRecordingsRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Internal endpoint for voice bot to auto-attach recordings after case creation.
+    No auth required — internal service-to-service call on Docker network.
+    Searches CDR for calls from given phones in the last window_minutes minutes
+    and creates RecordingLink records for any that have a recordingfile.
+    """
+    settings = _get_or_create_settings(db)
+    if not settings.asterisk_cdr_host:
+        return {"linked": 0, "detail": "CDR not configured"}
+
+    case = db.query(Case).filter(Case.id == data.case_id).first()
+    if not case:
+        return {"linked": 0, "detail": "Case not found"}
+
+    # Collect all phone variants for CDR matching
+    all_variants: set[str] = set()
+    for phone in data.phones:
+        if phone:
+            all_variants.update(_phone_variants(phone))
+    if not all_variants:
+        return {"linked": 0, "detail": "No valid phone numbers"}
+
+    try:
+        conn = _get_cdr_connection(settings)
+    except HTTPException as e:
+        return {"linked": 0, "detail": str(e.detail)}
+
+    try:
+        with conn.cursor() as cursor:
+            placeholders = ",".join(["%s"] * len(all_variants))
+            cursor.execute(
+                f"""
+                SELECT uniqueid, calldate, src, dst, duration, billsec, disposition, recordingfile
+                FROM cdr
+                WHERE src IN ({placeholders})
+                  AND calldate >= NOW() - INTERVAL %s MINUTE
+                  AND disposition = 'ANSWERED'
+                  AND recordingfile IS NOT NULL AND recordingfile != ''
+                ORDER BY calldate DESC
+                LIMIT 10
+                """,
+                list(all_variants) + [data.window_minutes],
+            )
+            rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    linked = 0
+    for row in rows:
+        existing = (
+            db.query(CallRecordingLink)
+            .filter(
+                CallRecordingLink.uniqueid == str(row["uniqueid"]),
+                CallRecordingLink.case_id == data.case_id,
+            )
+            .first()
+        )
+        if existing:
+            continue
+        link = CallRecordingLink(
+            uniqueid=str(row["uniqueid"]),
+            case_id=data.case_id,
+            calldate=str(row["calldate"]),
+            src=row["src"] or "",
+            dst=row["dst"] or "",
+            duration=int(row["duration"] or 0),
+            billsec=int(row["billsec"] or 0),
+            disposition=row["disposition"] or "",
+            recordingfile=row["recordingfile"] or "",
+            linked_by_user_id=None,  # auto-linked by voice bot
+        )
+        db.add(link)
+        linked += 1
+
+    if linked:
+        db.commit()
+
+    return {"linked": linked}
 
 
 @router.get("/recordings/links-by-uniqueid/{uniqueid}", response_model=CaseRecordingsResponse)
