@@ -129,7 +129,8 @@ services:
     volumes:
       - voice_recordings:/recordings
     depends_on:
-      - livekit
+      livekit:
+        condition: service_started
       backend:
         condition: service_healthy
     networks:
