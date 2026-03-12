@@ -612,6 +612,37 @@ def _phone_variants(phone: str) -> set[str]:
     return variants
 
 
+class VoiceBotNotifyRequest(BaseModel):
+    case_id: int
+    missing_name: str = "невідомо"
+
+
+@router.post("/cases/notify")
+def notify_new_voice_bot_case(
+    data: VoiceBotNotifyRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Internal endpoint: send push notification about a new voice bot case.
+    No auth required — internal service-to-service call on Docker network.
+    """
+    try:
+        from app.services.push_notification_service import push_service
+        from app.core.notification_types import NotificationType
+
+        push_service.send_notification_to_users_with_permission(
+            db=db,
+            notification_type=NotificationType.NEW_VOICE_BOT_CASE,
+            title="Нова заявка з голосового бота",
+            body=f"Нова заявка: {data.missing_name}",
+            data={"case_id": data.case_id, "missing_name": data.missing_name},
+            url=f"/cases/{data.case_id}",
+        )
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "detail": str(e)}
+
+
 class AutoLinkRecordingsRequest(BaseModel):
     case_id: int
     phones: List[str]          # all known phones (SIP caller ID + stated by applicant)

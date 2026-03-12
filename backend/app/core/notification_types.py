@@ -12,6 +12,7 @@ class NotificationType(str, Enum):
     """Supported notification types"""
     NEW_PUBLIC_CASE = "new_public_case"
     NEW_TELEGRAM_CASE = "new_telegram_case"
+    NEW_VOICE_BOT_CASE = "new_voice_bot_case"
     FIELD_SEARCH_PARTICIPANT_ADDED = "field_search_participant_added"
 
 
@@ -20,6 +21,7 @@ class NotificationType(str, Enum):
 NOTIFICATION_PERMISSIONS: Dict[NotificationType, str] = {
     NotificationType.NEW_PUBLIC_CASE: f"{Resource.CASES.value}:{Action.READ.value}",
     NotificationType.NEW_TELEGRAM_CASE: f"{Resource.CASES.value}:{Action.READ.value}",
+    NotificationType.NEW_VOICE_BOT_CASE: f"{Resource.CASES.value}:{Action.READ.value}",
     NotificationType.FIELD_SEARCH_PARTICIPANT_ADDED: f"{Resource.FIELD_SEARCHES.value}:{Action.READ.value}",
 }
 
@@ -33,6 +35,10 @@ NOTIFICATION_LABELS: Dict[NotificationType, Dict[str, str]] = {
     NotificationType.NEW_TELEGRAM_CASE: {
         "title": "Нова заявка з Telegram",
         "description": "Отримувати сповіщення про нові заявки з Telegram бота"
+    },
+    NotificationType.NEW_VOICE_BOT_CASE: {
+        "title": "Нова заявка з голосового бота",
+        "description": "Отримувати сповіщення про нові заявки з голосової гарячої лінії"
     },
     NotificationType.FIELD_SEARCH_PARTICIPANT_ADDED: {
         "title": "Призначення на виїзд",

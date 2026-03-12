@@ -100,7 +100,7 @@ async def create_draft_case(
                 # initial_info stores the full dialogue so operators can read it
                 "initial_info": transcript,
                 "call_transcript": transcript,
-                "basis": "Дзвінок на гарячу лінію (голосовий бот)",
+                "basis": "Звернення на голосовий бот",
                 # Fallback names if autofill didn't extract them
                 "applicant_last_name": autofill_data.get("applicant_last_name") or "Невідомо",
                 "applicant_first_name": autofill_data.get("applicant_first_name") or "—",
@@ -126,7 +126,21 @@ async def create_draft_case(
             case_id = case["id"]
             logger.info(f"[{call_id}] Case created: #{case_id} ({user_count} user responses)")
 
-            # Step 3: auto-link recordings from Asterisk CDR by phone numbers
+            # Step 3: send push notification to all users with cases:read permission
+            missing_name = " ".join(filter(None, [
+                autofill_data.get("missing_last_name"),
+                autofill_data.get("missing_first_name"),
+            ])) or "невідомо"
+            try:
+                resp_notify = await client.post(
+                    f"{CRM_API_URL}/api/asterisk/cases/notify",
+                    json={"case_id": case_id, "missing_name": missing_name},
+                )
+                logger.info(f"[{call_id}] Notification sent: {resp_notify.json()}")
+            except Exception as e:
+                logger.warning(f"[{call_id}] Could not send notification: {e}")
+
+            # Step 4: auto-link recordings from Asterisk CDR by phone numbers
             phones = [p for p in {caller_phone, applicant_phone} if p]
             if phones:
                 try:
