@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     chromium \
     chromium-driver \
-    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip

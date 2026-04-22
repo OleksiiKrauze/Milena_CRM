@@ -9,7 +9,6 @@ import paramiko
 import io
 import os
 import re
-import subprocess
 from openai import OpenAI
 
 from app.db import get_db
@@ -574,30 +573,12 @@ def transcribe_recording(
     ext = os.path.splitext(basename)[1].lower()
     content_type = "audio/wav" if ext == ".wav" else "audio/mpeg" if ext == ".mp3" else "audio/ogg" if ext == ".ogg" else "application/octet-stream"
 
-    # Convert audio to MP3 via ffmpeg (handles GSM, G.711, and other Asterisk codecs)
-    send_bytes = audio_bytes
-    send_filename = basename
-    send_content_type = content_type
-    try:
-        proc = subprocess.run(
-            ["ffmpeg", "-i", "pipe:0", "-f", "mp3", "-ar", "16000", "-ac", "1", "-q:a", "4", "pipe:1"],
-            input=audio_bytes,
-            capture_output=True,
-            timeout=60,
-        )
-        if proc.returncode == 0 and proc.stdout:
-            send_bytes = proc.stdout
-            send_filename = os.path.splitext(basename)[0] + ".mp3"
-            send_content_type = "audio/mpeg"
-    except Exception:
-        pass  # fall back to original bytes
-
     # Send to OpenAI Whisper
     try:
         client = OpenAI(api_key=api_key)
         result = client.audio.transcriptions.create(
             model="whisper-1",
-            file=(send_filename, send_bytes, send_content_type),
+            file=(basename, audio_bytes, content_type),
             prompt="Розмова ведеться українською та/або російською мовою.",
         )
         return {"transcript": result.text}
