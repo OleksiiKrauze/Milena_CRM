@@ -392,14 +392,43 @@ export function CaseRecordingsBlock({ caseId, pendingLinks, onPendingChange, onT
                     </p>
                     <p className="text-xs text-violet-600 mt-0.5">Буде прив'язано після збереження</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onPendingChange?.(pendingItems.filter(r => r.uniqueid !== rec.uniqueid))}
-                    className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors shrink-0"
-                    title="Видалити"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                    {rec.recordingfile && (
+                      <>
+                        <AudioPlayer recordingfile={rec.recordingfile} />
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(rec.recordingfile!, rec.uniqueid)}
+                          className="p-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                          title="Завантажити"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                        {onTranscript && (
+                          <button
+                            type="button"
+                            onClick={() => handleTranscribe(rec.recordingfile!, rec.uniqueid)}
+                            disabled={transcribingId === rec.uniqueid}
+                            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors text-xs disabled:opacity-40"
+                            title="Перевести в текст"
+                          >
+                            {transcribingId === rec.uniqueid
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <FileText className="h-3.5 w-3.5" />}
+                            <span className="hidden sm:inline">Перевести в текст</span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onPendingChange?.(pendingItems.filter(r => r.uniqueid !== rec.uniqueid))}
+                      className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors shrink-0"
+                      title="Видалити"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

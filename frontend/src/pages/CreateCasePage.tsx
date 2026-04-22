@@ -69,6 +69,8 @@ const createCaseSchema = z.object({
   police_report_date: z.string().optional(),
   police_department: z.string().optional(),
   police_contact_user_id: z.string().optional(),
+  // Call transcript
+  call_transcript: z.string().optional(),
   // Notes
   notes_text: z.string().optional(),
   // Case metadata
@@ -154,8 +156,8 @@ export function CreateCasePage() {
     setNotesImages((prev) => prev.filter((url) => url !== imageUrl));
   };
 
-  const handleAutofill = async () => {
-    const currentInitialInfo = getValues('initial_info');
+  const handleAutofill = async (overrideText?: string) => {
+    const currentInitialInfo = overrideText ?? getValues('initial_info');
 
     if (!currentInitialInfo || currentInitialInfo.trim().length === 0) {
       setApiError('Спочатку введіть первинну інформацію для автозаповнення');
@@ -258,6 +260,12 @@ export function CreateCasePage() {
     } finally {
       setIsAutofilling(false);
     }
+  };
+
+  const handleTranscriptReceived = (text: string) => {
+    setValue('call_transcript', text);
+    setValue('initial_info', text);
+    handleAutofill(text);
   };
 
   const createMutation = useMutation({
@@ -426,6 +434,7 @@ export function CreateCasePage() {
             <CaseRecordingsBlock
               pendingLinks={pendingRecordings}
               onPendingChange={setPendingRecordings}
+              onTranscript={handleTranscriptReceived}
             />
           )}
 

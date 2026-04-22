@@ -579,6 +579,7 @@ def transcribe_recording(
         result = client.audio.transcriptions.create(
             model="whisper-1",
             file=(basename, audio_bytes, content_type),
+            prompt="Розмова ведеться українською та/або російською мовою.",
         )
         return {"transcript": result.text}
     except Exception as e:
