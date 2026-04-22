@@ -511,7 +511,7 @@ export function CreateCasePage() {
                   </label>
                   <Button
                     type="button"
-                    onClick={handleAutofill}
+                    onClick={() => handleAutofill()}
                     disabled={!initialInfo || initialInfo.trim().length === 0 || isAutofilling}
                     variant="outline"
                     size="sm"
