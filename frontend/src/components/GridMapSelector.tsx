@@ -281,7 +281,8 @@ export function GridMapSelector({
   const gridBounds = getGridBounds();
 
   // Check if API key is configured
-  const hasApiKey = GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY';
+  const hasApiKey = GOOGLE_MAPS_API_KEY &&
+    !GOOGLE_MAPS_API_KEY.startsWith('YOUR_API_KEY');
 
   if (!hasApiKey) {
     return (
