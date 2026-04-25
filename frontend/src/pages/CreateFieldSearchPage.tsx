@@ -10,7 +10,7 @@ import { Container, Card, CardHeader, CardTitle, CardContent, Input, Button, Loa
 import type { FieldSearchCreate } from '@/api/field-searches';
 import { useState } from 'react';
 import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
-import { getOriginalFilename } from '@/utils/formatters';
+import { getOriginalFilename, localDateTimeInputToUtc } from '@/utils/formatters';
 import { GridMapSelector } from '@/components/GridMapSelector';
 
 interface CreateFieldSearchForm {
@@ -170,9 +170,12 @@ export function CreateFieldSearchPage() {
         }
       }
 
-      // Convert created_at to ISO format if provided
+      // Convert datetime fields from Kyiv local time to UTC
       if (cleanedData.created_at) {
-        cleanedData.created_at = new Date(cleanedData.created_at).toISOString();
+        cleanedData.created_at = localDateTimeInputToUtc(cleanedData.created_at);
+      }
+      if (cleanedData.meeting_datetime) {
+        cleanedData.meeting_datetime = localDateTimeInputToUtc(cleanedData.meeting_datetime);
       }
 
       // Convert IDs to numbers

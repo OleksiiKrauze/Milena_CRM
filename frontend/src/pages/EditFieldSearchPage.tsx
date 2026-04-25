@@ -9,7 +9,7 @@ import { Container, Card, CardHeader, CardTitle, CardContent, Input, Button, Loa
 import type { FieldSearchUpdate } from '@/api/field-searches';
 import { useState, useEffect } from 'react';
 import { X, Upload, FileText, Image as ImageIcon } from 'lucide-react';
-import { getOriginalFilename } from '@/utils/formatters';
+import { getOriginalFilename, utcToLocalDateTimeInput, localDateTimeInputToUtc } from '@/utils/formatters';
 import { GridMapSelector } from '@/components/GridMapSelector';
 
 interface EditFieldSearchForm {
@@ -59,10 +59,10 @@ export function EditFieldSearchPage() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<EditFieldSearchForm>({
     values: fieldSearchData ? {
-      created_at: fieldSearchData.created_at ? new Date(fieldSearchData.created_at).toISOString().slice(0, 16) : '',
+      created_at: fieldSearchData.created_at ? utcToLocalDateTimeInput(fieldSearchData.created_at) : '',
       initiator_inforg_id: fieldSearchData.initiator_inforg_id?.toString() || '',
       start_date: fieldSearchData.start_date || '',
-      meeting_datetime: fieldSearchData.meeting_datetime || '',
+      meeting_datetime: fieldSearchData.meeting_datetime ? utcToLocalDateTimeInput(fieldSearchData.meeting_datetime) : '',
       meeting_place: fieldSearchData.meeting_place || '',
       coordinator_id: fieldSearchData.coordinator_id?.toString() || '',
       status: fieldSearchData.status || 'planning',
@@ -223,9 +223,12 @@ export function EditFieldSearchPage() {
         }
       }
 
-      // Convert created_at to ISO format if provided
+      // Convert datetime fields from Kyiv local time to UTC
       if (cleanedData.created_at) {
-        cleanedData.created_at = new Date(cleanedData.created_at).toISOString();
+        cleanedData.created_at = localDateTimeInputToUtc(cleanedData.created_at);
+      }
+      if (cleanedData.meeting_datetime) {
+        cleanedData.meeting_datetime = localDateTimeInputToUtc(cleanedData.meeting_datetime);
       }
 
       // Convert IDs to numbers
